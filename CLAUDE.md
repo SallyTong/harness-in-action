@@ -1,0 +1,98 @@
+# AI 作业批改工具 (AI Homework Grader)
+
+## 项目概要
+
+AI 驱动的作业批改 SaaS，帮助家长高效检查孩子的试卷和作业。拍照上传后，多模态大模型（GLM-4V）直接在原图上标注批改结果（打勾、打问号、错题解题思路），返回批改后的图片。支持错题统计和错题集试卷生成。MVP 覆盖英语和数学两门学科。
+
+详见 [`docs/interview-summary.md`](docs/interview-summary.md)。
+
+## 技术栈
+
+| 层级     | 选型                                          |
+| -------- | --------------------------------------------- |
+| 前端     | React 19, Vite 6, TypeScript 5.7, Tailwind v4 |
+| 后端     | FastAPI, Python 3.12+                         |
+| 数据库   | MySQL 8.4                                     |
+| AI 模型  | 智谱 GLM-4V-Flash（免费版先行）                |
+| 图片存储 | 本地文件系统（`data/images/`）                 |
+| 部署     | Docker Compose                                |
+
+## 项目结构
+
+```
+apps/backend/          FastAPI 后端
+  app/main.py          应用入口
+  app/routers/         API 路由（按领域拆分）
+  app/services/        业务逻辑（OCR、批改、图片标注）
+  tests/               后端测试
+apps/frontend/         React 前端（移动端优先）
+  src/pages/           页面组件
+  src/components/      可复用组件（按功能域分文件夹）
+infra/                 Docker Compose 及部署配置
+data/images/           本地图片存储（gitignore 中排除实际文件）
+docs/                  设计文档（只读，实施阶段不修改）
+contracts/             API 契约（OpenAPI 3.x）
+scripts/               开发及集成脚本
+```
+
+## 常用命令
+
+```bash
+# Docker 全栈运行
+docker compose -f infra/docker-compose.yml up -d --build
+
+# 后端
+cd apps/backend
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+pytest tests/ -v
+
+# 前端
+cd apps/frontend
+npm install
+npm run dev          # :5173, /api → 代理到后端 :8000
+npm run build        # 生产构建
+npx tsc --noEmit     # 类型检查
+
+# 开发模式一键启动
+bash scripts/dev.sh
+```
+
+## 领域边界
+
+- **后端拥有**: `apps/backend/`、`infra/`、`scripts/`、`data/`
+- **前端拥有**: `apps/frontend/`
+- **共享契约**: `contracts/openapi.yaml`——前后端均以此为准实现，不得单方面偏离
+- **设计文档**: `docs/` 在实施阶段为只读
+
+## 关键规则
+
+### 无硬编码密钥
+
+GLM-4V API Key、数据库密码等通过环境变量注入。若发现 `.env` 或含密钥文件，提示用户补充 `.gitignore`。
+
+### 图片处理管线
+
+```
+拍照 → Web端压缩（最长边2048px, JPEG Q80%） → 上传 → GLM-4V 识别+批改 → 标注回原图 → 存储+返回
+```
+
+采用多模态大模型直接理解图片，无需独立 OCR 步骤。手写+打印混合识别由模型内置能力完成。
+
+### API 调用预算
+
+GLM-4V API 月度预算 50 元。MVP 阶段优先使用免费模型 `GLM-4V-Flash`，确认效果不足后再切换付费版本。每次调用需记录 token 消耗，便于后续成本核算。
+
+### 测试要求
+
+每个后端 endpoint 必须有对应的测试用例。前端关键交互需有组件测试。合并前通过全部测试。
+
+### 移动端优先
+
+所有页面以移动端（375px 宽度基准）设计并验证，拍照上传为核心交互。使用 Tailwind 响应式断点确保后续适配桌面端。
+
+## MVP 范围（v0.1.0）
+
+**包含**: 英语+数学试卷的拍照上传、AI 批改标注、结果图片预览、历史记录浏览、错题集（按时间/题型筛选）、多人协作查看
+
+**明确排除**: 注册/登录系统、图片脱敏、小程序/App、通知提醒、PDF 导出、语文作文、报听写

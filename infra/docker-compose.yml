@@ -1,0 +1,35 @@
+services:
+  backend:
+    build:
+      context: ../apps/backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../apps/backend/app:/app/app:ro
+      - ../data/images:/app/data/images
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ../apps/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  db:
+    image: mysql:8.4
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: homework_dev
+      MYSQL_DATABASE: homework_grader
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

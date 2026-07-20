@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/backend && python -m pytest tests/ -q 2>&1 | tail -5",
+            "timeout": 30,
+            "statusMessage": "Running backend tests..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/frontend && npx tsc --noEmit 2>&1 | head -15",
+            "timeout": 60,
+            "statusMessage": "Type-checking frontend..."
+          }
+        ]
+      }
+    ]
+  }
+}

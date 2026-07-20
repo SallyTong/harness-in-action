@@ -1,0 +1,380 @@
+# AI Homework Grader API Contract
+#
+# This is the authoritative specification for all API endpoints. Both backend and
+# frontend implement against this file. Neither modifies it unilaterally.
+
+openapi: "3.1.0"
+
+info:
+  title: AI Homework Grader API
+  version: "0.1.0"
+  description: |
+    API for AI-powered homework grading. Upload exam photos, receive annotated
+    grading results, and browse error-question collections. MVP covers English
+    and Math. No authentication required in MVP.
+
+servers:
+  - url: http://localhost:8000
+    description: Local development (FastAPI backend)
+
+tags:
+  - name: System
+    description: Health and status endpoints
+  - name: Submissions
+    description: Exam submission and grading operations
+  - name: Error Collections
+    description: Error question tracking and practice sheet generation
+
+paths:
+  # ── System ────────────────────────────────────────────
+
+  /api/health:
+    get:
+      operationId: getHealth
+      tags: [System]
+      summary: Health check
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, service, version]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                  service:
+                    type: string
+                  version:
+                    type: string
+                    example: "0.1.0"
+
+  # ── Submissions ───────────────────────────────────────
+
+  /api/submissions:
+    post:
+      operationId: createSubmission
+      tags: [Submissions]
+      summary: Upload an exam image for grading
+      description: |
+        Accepts a compressed exam image, sends it to GLM-4V for recognition
+        and grading, annotates the original image, and returns the result.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image, subject, child_name]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: JPEG/PNG exam photo (pre-compressed, max 2048px)
+                subject:
+                  type: string
+                  enum: [english, math]
+                  description: Exam subject
+                child_name:
+                  type: string
+                  description: Identifier for the child (no auth in MVP)
+      responses:
+        "201":
+          description: Grading complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+
+    get:
+      operationId: listSubmissions
+      tags: [Submissions]
+      summary: List past submissions
+      parameters:
+        - name: child_name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: subject
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [english, math]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: List of submissions
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SubmissionSummary"
+                  total:
+                    type: integer
+
+  /api/submissions/{submission_id}:
+    get:
+      operationId: getSubmission
+      tags: [Submissions]
+      summary: Get a single submission with full detail
+      parameters:
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Submission detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Error Collections ────────────────────────────────
+
+  /api/error-collections:
+    get:
+      operationId: listErrorQuestions
+      tags: [Error Collections]
+      summary: List error questions with filters
+      parameters:
+        - name: child_name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: subject
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [english, math]
+        - name: question_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [choice, fill_blank, reading, composition, calculation, word_problem]
+        - name: from_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Filtered error questions
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ErrorQuestion"
+                  total:
+                    type: integer
+
+  /api/error-collections/generate:
+    post:
+      operationId: generateErrorSheet
+      tags: [Error Collections]
+      summary: Generate a practice sheet from error questions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [child_name, subject]
+              properties:
+                child_name:
+                  type: string
+                subject:
+                  type: string
+                  enum: [english, math]
+                question_types:
+                  type: array
+                  items:
+                    type: string
+                from_date:
+                  type: string
+                  format: date
+                to_date:
+                  type: string
+                  format: date
+                count:
+                  type: integer
+                  default: 10
+                  minimum: 1
+                  maximum: 50
+      responses:
+        "200":
+          description: Generated practice sheet image
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [image_url, question_count]
+                properties:
+                  image_url:
+                    type: string
+                    format: uri
+                  question_count:
+                    type: integer
+
+# ── Components ──────────────────────────────────────────
+
+components:
+  schemas:
+    SubmissionSummary:
+      type: object
+      required: [id, child_name, subject, created_at, score]
+      properties:
+        id:
+          type: string
+          format: uuid
+        child_name:
+          type: string
+        subject:
+          type: string
+          enum: [english, math]
+        score:
+          type: object
+          required: [correct, total]
+          properties:
+            correct:
+              type: integer
+            total:
+              type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    Submission:
+      allOf:
+        - $ref: "#/components/schemas/SubmissionSummary"
+        - type: object
+          required: [original_image_url, annotated_image_url, questions]
+          properties:
+            original_image_url:
+              type: string
+              format: uri
+            annotated_image_url:
+              type: string
+              format: uri
+            questions:
+              type: array
+              items:
+                $ref: "#/components/schemas/GradedQuestion"
+
+    GradedQuestion:
+      type: object
+      required: [number, is_correct, question_type]
+      properties:
+        number:
+          type: integer
+        is_correct:
+          type: boolean
+        question_type:
+          type: string
+          enum: [choice, fill_blank, reading, composition, calculation, word_problem]
+        solution_note:
+          type: string
+          description: Solution approach for incorrect answers only
+        error_category:
+          type: string
+          description: e.g., grammar, vocabulary, spelling, logic, calculation
+
+    ErrorQuestion:
+      allOf:
+        - $ref: "#/components/schemas/GradedQuestion"
+        - type: object
+          required: [submission_id, subject, child_name, created_at]
+          properties:
+            submission_id:
+              type: string
+              format: uuid
+            subject:
+              type: string
+            child_name:
+              type: string
+            created_at:
+              type: string
+              format: date-time
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [detail]
+            properties:
+              detail:
+                type: string
+                example: "Invalid subject. Must be 'english' or 'math'."
+
+    Unprocessable:
+      description: Request is valid but image cannot be processed
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [detail]
+            properties:
+              detail:
+                type: string
+                example: "Image could not be processed. Ensure it is a clear photo of an exam paper."
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [detail]
+            properties:
+              detail:
+                type: string
+                example: "Submission not found."
