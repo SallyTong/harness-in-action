@@ -58,6 +58,12 @@ npx tsc --noEmit     # 类型检查
 bash scripts/dev.sh
 ```
 
+## 设计文档
+
+- `docs/interview-summary.md` — 项目需求和目标用户画像
+- `contracts/openapi.yaml` — API 契约（前后端实现的唯一标准）
+- 后续 PRD、架构文档等将在规范阶段追加
+
 ## 领域边界
 
 - **后端拥有**: `apps/backend/`、`infra/`、`scripts/`、`data/`
