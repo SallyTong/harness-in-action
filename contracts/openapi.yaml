@@ -2,6 +2,9 @@
 #
 # This is the authoritative specification for all API endpoints. Both backend and
 # frontend implement against this file. Neither modifies it unilaterally.
+#
+# Updated to reflect PRD v1.0 and Architecture v1.0 (async flow, phone identity,
+# coordinate-based annotation, children management).
 
 openapi: "3.1.0"
 
@@ -11,7 +14,15 @@ info:
   description: |
     API for AI-powered homework grading. Upload exam photos, receive annotated
     grading results, and browse error-question collections. MVP covers English
-    and Math. No authentication required in MVP.
+    and Math. Phone number serves as lightweight parent identity (no auth in MVP).
+
+    ## Authentication (MVP temporary scheme)
+    MVP has no real authentication. Parent identity is passed as a `phone` query
+    parameter (or `X-Parent-Phone` header) on every endpoint except `/api/health`.
+    The phone is trusted without verification. This is a TEMPORARY scheme — when
+    the product opens up, it will switch to cookie-based session auth
+    (`cookieAuth` securityScheme) and the `phone` parameter will be removed.
+    Do not assume phone is permanent; do not expose phone in client-side logs.
 
 servers:
   - url: http://localhost:8000
@@ -20,19 +31,23 @@ servers:
 tags:
   - name: System
     description: Health and status endpoints
+  - name: Children
+    description: Parent-managed child profiles
   - name: Submissions
-    description: Exam submission and grading operations
+    description: Exam submission and async grading operations
   - name: Error Collections
     description: Error question tracking and practice sheet generation
 
 paths:
-  # ── System ────────────────────────────────────────────
+  # ═══════════════════════════════════════════════════════
+  # System
+  # ═══════════════════════════════════════════════════════
 
   /api/health:
     get:
       operationId: getHealth
       tags: [System]
-      summary: Health check
+      summary: Health check (no phone required)
       responses:
         "200":
           description: Service is healthy
@@ -51,42 +66,174 @@ paths:
                     type: string
                     example: "0.1.0"
 
-  # ── Submissions ───────────────────────────────────────
+  # ═══════════════════════════════════════════════════════
+  # Children
+  # ═══════════════════════════════════════════════════════
+
+  /api/children:
+    get:
+      operationId: listChildren
+      tags: [Children]
+      summary: List children for a parent
+      parameters:
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{11}$'
+          description: Parent phone number (identity)
+      responses:
+        "200":
+          description: List of children
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Child"
+
+    post:
+      operationId: createChild
+      tags: [Children]
+      summary: Add a child
+      parameters:
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+      responses:
+        "201":
+          description: Child created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Child"
+        "409":
+          description: Duplicate name for this parent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/children/{child_id}:
+    put:
+      operationId: updateChild
+      tags: [Children]
+      summary: Rename a child
+      parameters:
+        - name: child_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+      responses:
+        "200":
+          description: Child updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Child"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      operationId: deleteChild
+      tags: [Children]
+      summary: Delete a child (history preserved)
+      parameters:
+        - name: child_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Child deleted, submissions preserved
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ═══════════════════════════════════════════════════════
+  # Submissions
+  # ═══════════════════════════════════════════════════════
 
   /api/submissions:
     post:
       operationId: createSubmission
       tags: [Submissions]
-      summary: Upload an exam image for grading
+      summary: Upload an exam image for async grading
       description: |
-        Accepts a compressed exam image, sends it to GLM-4V for recognition
-        and grading, annotates the original image, and returns the result.
+        Returns immediately with 202 Accepted + submission_id. Backend processes
+        asynchronously: validates image, calls GLM-4V for recognition and grading,
+        annotates the original image, and updates the submission status. Frontend
+        polls GET /api/submissions/{id} every 2s until status is completed/failed.
+      parameters:
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Parent phone number
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
               type: object
-              required: [image, subject, child_name]
+              required: [image, subject, child_id]
               properties:
                 image:
                   type: string
                   format: binary
-                  description: JPEG/PNG exam photo (pre-compressed, max 2048px)
+                  description: JPEG/PNG exam photo (pre-compressed by frontend, max 2048px)
                 subject:
                   type: string
                   enum: [english, math]
-                  description: Exam subject
-                child_name:
-                  type: string
-                  description: Identifier for the child (no auth in MVP)
+                child_id:
+                  type: integer
+                  description: Child ID from the parent's managed list
       responses:
-        "201":
-          description: Grading complete
+        "202":
+          description: Accepted for processing
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Submission"
+                $ref: "#/components/schemas/SubmissionAccepted"
         "400":
           $ref: "#/components/responses/BadRequest"
         "422":
@@ -95,13 +242,18 @@ paths:
     get:
       operationId: listSubmissions
       tags: [Submissions]
-      summary: List past submissions
+      summary: List past submissions for a parent
       parameters:
-        - name: child_name
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: child_id
           in: query
           required: false
           schema:
-            type: string
+            type: integer
         - name: subject
           in: query
           required: false
@@ -143,17 +295,21 @@ paths:
     get:
       operationId: getSubmission
       tags: [Submissions]
-      summary: Get a single submission with full detail
+      summary: Get submission detail (used for both polling and history)
       parameters:
         - name: submission_id
           in: path
           required: true
           schema:
+            type: integer
+        - name: phone
+          in: query
+          required: true
+          schema:
             type: string
-            format: uuid
       responses:
         "200":
-          description: Submission detail
+          description: Submission detail (status may be pending/processing/completed/failed)
           content:
             application/json:
               schema:
@@ -161,7 +317,54 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  # ── Error Collections ────────────────────────────────
+  /api/submissions/{submission_id}/questions/{question_id}:
+    patch:
+      operationId: fixQuestionGrade
+      tags: [Submissions]
+      summary: Manually correct a question's grade
+      description: |
+        Allows parent to override the AI's grading for a specific question.
+        Updates GradedQuestion.is_correct, sets is_manually_fixed=true,
+        recalculates Submission.correct_count, and syncs ErrorQuestion.
+      parameters:
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: question_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [is_correct]
+              properties:
+                is_correct:
+                  type: boolean
+      responses:
+        "200":
+          description: Grade corrected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GradedQuestion"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ═══════════════════════════════════════════════════════
+  # Error Collections
+  # ═══════════════════════════════════════════════════════
 
   /api/error-collections:
     get:
@@ -169,11 +372,16 @@ paths:
       tags: [Error Collections]
       summary: List error questions with filters
       parameters:
-        - name: child_name
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: child_id
           in: query
           required: false
           schema:
-            type: string
+            type: integer
         - name: subject
           in: query
           required: false
@@ -198,6 +406,21 @@ paths:
           schema:
             type: string
             format: date
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
       responses:
         "200":
           description: Filtered error questions
@@ -219,16 +442,22 @@ paths:
       operationId: generateErrorSheet
       tags: [Error Collections]
       summary: Generate a practice sheet from error questions
+      parameters:
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [child_name, subject]
+              required: [child_id, subject]
               properties:
-                child_name:
-                  type: string
+                child_id:
+                  type: integer
                 subject:
                   type: string
                   enum: [english, math]
@@ -236,6 +465,7 @@ paths:
                   type: array
                   items:
                     type: string
+                    enum: [choice, fill_blank, reading, composition, calculation, word_problem]
                 from_date:
                   type: string
                   format: date
@@ -249,7 +479,7 @@ paths:
                   maximum: 50
       responses:
         "200":
-          description: Generated practice sheet image
+          description: Generated practice sheet
           content:
             application/json:
               schema:
@@ -259,25 +489,63 @@ paths:
                   image_url:
                     type: string
                     format: uri
+                    description: URL to the generated practice sheet image
                   question_count:
                     type: integer
 
-# ── Components ──────────────────────────────────────────
+# ═══════════════════════════════════════════════════════
+# Components
+# ═══════════════════════════════════════════════════════
 
 components:
   schemas:
-    SubmissionSummary:
+    # ── Children ──────────────────────────────────────
+
+    Child:
       type: object
-      required: [id, child_name, subject, created_at, score]
+      required: [id, name, submission_count, created_at]
       properties:
         id:
+          type: integer
+        name:
           type: string
-          format: uuid
+          example: "小明"
+        submission_count:
+          type: integer
+          description: Total submissions for this child
+        created_at:
+          type: string
+          format: date-time
+
+    # ── Submissions ───────────────────────────────────
+
+    SubmissionAccepted:
+      type: object
+      required: [submission_id, status]
+      properties:
+        submission_id:
+          type: integer
+        status:
+          type: string
+          enum: [pending]
+          description: Always "pending" on acceptance
+
+    SubmissionSummary:
+      type: object
+      required: [id, child_id, child_name, subject, status, created_at]
+      properties:
+        id:
+          type: integer
+        child_id:
+          type: integer
         child_name:
           type: string
         subject:
           type: string
           enum: [english, math]
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
         score:
           type: object
           required: [correct, total]
@@ -286,6 +554,11 @@ components:
               type: integer
             total:
               type: integer
+          description: Present only when status is "completed"
+        thumbnail_url:
+          type: string
+          format: uri
+          description: Small preview of the annotated image (null until completed)
         created_at:
           type: string
           format: date-time
@@ -294,7 +567,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/SubmissionSummary"
         - type: object
-          required: [original_image_url, annotated_image_url, questions]
+          required: [original_image_url]
           properties:
             original_image_url:
               type: string
@@ -302,79 +575,217 @@ components:
             annotated_image_url:
               type: string
               format: uri
+              description: Present only when status is "completed"
+            total_questions:
+              type: integer
+              description: Present only when status is "completed"
+            correct_count:
+              type: integer
+              description: Present only when status is "completed"
+            token_usage:
+              type: object
+              properties:
+                prompt_tokens:
+                  type: integer
+                completion_tokens:
+                  type: integer
+                total_tokens:
+                  type: integer
+              description: GLM-4V token consumption (present when completed)
             questions:
               type: array
               items:
                 $ref: "#/components/schemas/GradedQuestion"
-
-    GradedQuestion:
-      type: object
-      required: [number, is_correct, question_type]
-      properties:
-        number:
-          type: integer
-        is_correct:
-          type: boolean
-        question_type:
-          type: string
-          enum: [choice, fill_blank, reading, composition, calculation, word_problem]
-        solution_note:
-          type: string
-          description: Solution approach for incorrect answers only
-        error_category:
-          type: string
-          description: e.g., grammar, vocabulary, spelling, logic, calculation
-
-    ErrorQuestion:
-      allOf:
-        - $ref: "#/components/schemas/GradedQuestion"
-        - type: object
-          required: [submission_id, subject, child_name, created_at]
-          properties:
-            submission_id:
-              type: string
-              format: uuid
-            subject:
-              type: string
-            child_name:
-              type: string
-            created_at:
+              description: Present only when status is "completed"
+            updated_at:
               type: string
               format: date-time
 
+    # ── Grading ───────────────────────────────────────
+
+    GradedQuestion:
+      type: object
+      required:
+        - id
+        - question_number
+        - is_correct
+        - question_type
+        - is_manually_fixed
+      properties:
+        id:
+          type: integer
+        question_number:
+          type: string
+          minLength: 1
+          maxLength: 20
+          description: Question number as shown on paper (e.g., "1", "1a", "II-3")
+          example: "1a"
+        question_position:
+          type: object
+          nullable: true
+          description: Bounding box as percentage of image dimensions
+          properties:
+            x:
+              type: number
+              description: Left edge (% of image width)
+            "y":
+              type: number
+              description: Top edge (% of image height)
+            w:
+              type: number
+              description: Width (% of image width)
+            h:
+              type: number
+              description: Height (% of image height)
+        question_image_path:
+          type: string
+          nullable: true
+          description: Path to cropped question region image
+        question_type:
+          type: string
+          enum: [choice, fill_blank, reading, composition, calculation, word_problem]
+        is_correct:
+          type: boolean
+        solution_note:
+          type: string
+          nullable: true
+          description: Solution approach for incorrect answers only
+        error_category:
+          type: string
+          nullable: true
+          enum: [grammar, vocabulary, spelling, logic, calculation, careless, comprehension]
+        is_manually_fixed:
+          type: boolean
+          default: false
+          description: True if parent overrode the AI grading
+
+    # ── Error Collections ─────────────────────────────
+
+    ErrorQuestion:
+      type: object
+      required:
+        - id
+        - submission_id
+        - child_id
+        - child_name
+        - subject
+        - question_number
+        - question_type
+        - question_image_path
+        - error_count
+        - last_error_at
+        - created_at
+      properties:
+        id:
+          type: integer
+        submission_id:
+          type: integer
+        child_id:
+          type: integer
+        child_name:
+          type: string
+        subject:
+          type: string
+          enum: [english, math]
+        question_number:
+          type: string
+        question_type:
+          type: string
+          enum: [choice, fill_blank, reading, composition, calculation, word_problem]
+        question_image_path:
+          type: string
+          description: Cropped image of the error question region
+        solution_note:
+          type: string
+          nullable: true
+        error_category:
+          type: string
+          nullable: true
+          enum: [grammar, vocabulary, spelling, logic, calculation, careless, comprehension]
+        error_count:
+          type: integer
+          description: Number of times this question was answered incorrectly (within same submission)
+        error_timestamps:
+          type: array
+          items:
+            type: string
+            format: date-time
+          description: Timestamps of each error occurrence
+        is_manually_fixed:
+          type: boolean
+        last_error_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    # ── Generic ───────────────────────────────────────
+
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+
+  # ── Security Schemes ──────────────────────────────
+
+  securitySchemes:
+    parentPhone:
+      type: apiKey
+      in: query
+      name: phone
+      description: |
+        MVP temporary identity scheme. Parent phone number passed as a query
+        parameter. Not verified. Will be replaced by cookieAuth when real
+        authentication is introduced.
+    parentPhoneHeader:
+      type: apiKey
+      in: header
+      name: X-Parent-Phone
+      description: Alternative to the `phone` query parameter (header form).
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session
+      description: |
+        Future scheme — session cookie after phone+verification-code login.
+        NOT implemented in MVP; defined here so the migration path is explicit.
+
+  # ── Responses ───────────────────────────────────────
+
   responses:
     BadRequest:
-      description: Invalid request parameters
+      description: |
+        Invalid request — malformed input, unsupported format, or image that
+        cannot be processed (unclear photo, wrong format, too large). Use for
+        semantic validation failures.
       content:
         application/json:
           schema:
-            type: object
-            required: [detail]
-            properties:
-              detail:
-                type: string
-                example: "Invalid subject. Must be 'english' or 'math'."
+            $ref: "#/components/schemas/Error"
+          example:
+            detail: "Image could not be processed. Ensure it is a clear photo of an exam paper."
 
     Unprocessable:
-      description: Request is valid but image cannot be processed
+      description: |
+        Request schema validation failure (FastAPI default 422). Used when a
+        required field is missing or a field value violates its declared schema
+        (wrong type, out-of-range enum). Do NOT use this for image-processing
+        problems — those are 400.
       content:
         application/json:
           schema:
-            type: object
-            required: [detail]
-            properties:
-              detail:
-                type: string
-                example: "Image could not be processed. Ensure it is a clear photo of an exam paper."
+            $ref: "#/components/schemas/Error"
+          example:
+            detail: "Field 'subject' must be one of: english, math."
 
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
-            type: object
-            required: [detail]
-            properties:
-              detail:
-                type: string
-                example: "Submission not found."
+            $ref: "#/components/schemas/Error"
+          example:
+            detail: "Submission not found."
