@@ -100,8 +100,22 @@ bash scripts/dev.sh
 
 ### 子代理
 
+#### 项目自定义
+
 - [backend-agent](.claude/agents/backend-agent.md) — `apps/backend/`、`infra/`、`scripts/`、`data/`
 - [frontend-agent](.claude/agents/frontend-agent.md) — `apps/frontend/`
+
+#### 内置子代理（无需配置）
+
+Claude Code 内置三个子代理，适用于不需要领域专有定义的快速任务：
+
+| 代理 | 用途 | 何时使用 |
+|------|------|----------|
+| **Explore** | 只读搜索（Haiku 模型，快速便宜） | 跨多文件搜索模式、总结代码结构、追踪引用链 |
+| **Plan** | 只读设计推理 | 实现前评估方案、比较架构决策 |
+| **General-purpose** | 完整工具访问 | 需读写但不需要领域专属 system prompt 的任务 |
+
+首选内置代理。仅在需要特定工具限制、持久化 memory 或专属领域指令时才委派给项目自定义子代理。
 
 ## 领域边界
 

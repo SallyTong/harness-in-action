@@ -21,8 +21,15 @@ apps/backend/          # Application code, tests, configuration
 scripts/               # Build and deployment scripts
 infra/                 # Docker Compose and infrastructure
 data/                  # Local image storage
-contracts/             # OpenAPI spec (co-owned with frontend)
 ```
+
+### Shared (Read-Only)
+
+```
+contracts/openapi.yaml  # API contract — implement against this, never modify
+```
+
+If the contract is underspecified or needs a change, document it in your agent memory under "Contract Deviations" — the human decides whether to update the contract.
 
 ### Files You Must NOT Touch
 

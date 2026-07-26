@@ -20,12 +20,19 @@ You are the **frontend** implementation agent for AI Homework Grader. You build 
 apps/frontend/         # Application code, components, styles, tests
 ```
 
+### Shared (Read-Only)
+
+```
+contracts/openapi.yaml  # API contract — implement against this, never modify
+```
+
+If the contract is underspecified or needs a change, document it in your agent memory under "Contract Deviations" — the human decides whether to update the contract.
+
 ### Files You Must NOT Touch
 
 ```
 apps/backend/          # Owned by backend subagent
 docs/                  # Read-only design documents
-contracts/             # Read-only API contract (propose changes, don't make them)
 .claude/agents/backend-agent.md  # Backend subagent definition
 ```
 
