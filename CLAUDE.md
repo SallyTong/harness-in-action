@@ -46,6 +46,8 @@ cd apps/backend
 pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 pytest tests/ -v
+ruff check .          # 代码检查
+ruff format --check . # 格式检查
 
 # 前端
 cd apps/frontend
@@ -68,6 +70,38 @@ bash scripts/dev.sh
 - `contracts/openapi.yaml` — API 契约（前后端实现的唯一标准）
 
 实施阶段所有 `docs/` 与 `contracts/` 文档为只读；如需变更，先在 PRD/架构提出。
+
+## 项目 Harness
+
+### 路径作用域规则（`.claude/rules/`）
+
+编辑匹配路径时自动加载。详见各规则文件。
+
+| 规则 | 触发路径 |
+|------|----------|
+| [backend-conventions.md](.claude/rules/backend-conventions.md) | `apps/backend/**`, `infra/**`, `scripts/**` |
+| [frontend-conventions.md](.claude/rules/frontend-conventions.md) | `apps/frontend/**` |
+| [testing-conventions.md](.claude/rules/testing-conventions.md) | `**/*.test.*`, `**/*.spec.*` |
+| [database-conventions.md](.claude/rules/database-conventions.md) | `**/models/**`, `**/migrations/**` |
+
+### 强制技能调用
+
+以下技能在特定类型的工作中**必须**调用，不可跳过：
+
+- **`/design-check`** — 创建或修改任何 UI 组件/页面**之前**必须调用。
+- **`/security-review`** — 实现或修改任何 API 端点**之后**必须调用。
+
+其他技能按需调用：[doc-review](.claude/skills/doc-review/SKILL.md)。
+
+### 自动化 Hooks（`.claude/settings.json`）
+
+- **PreToolUse**: 写入文件前自动扫描硬编码密钥，命中则阻止写入。
+- **PostToolUse**: 编辑后端 Python 文件后运行 ruff + pytest；编辑前端 TSX 文件后运行 tsc + vitest；编辑模型文件后提醒执行 Alembic 迁移。
+
+### 子代理
+
+- [backend-agent](.claude/agents/backend-agent.md) — `apps/backend/`、`infra/`、`scripts/`、`data/`
+- [frontend-agent](.claude/agents/frontend-agent.md) — `apps/frontend/`
 
 ## 领域边界
 

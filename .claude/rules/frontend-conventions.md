@@ -3,52 +3,34 @@ paths:
   - "apps/frontend/**"
 ---
 
-# Frontend Code Conventions
+# Frontend Conventions
 
-## TypeScript
+Rules that would cause real bugs or brand violations if forgotten. Full design system is in `docs/brand-identity.md`.
 
-- Strict mode enabled. No `any` without a comment explaining why.
-- Use `type` for props, `interface` only when extending.
-- Derive types from API responses when possible; avoid duplicating shapes manually.
+## Non-Negotiable
 
-## React Components
+### Brand Compliance
+- **Forbidden Tailwind classes**: `bg-gray-*`, `bg-zinc-*`, `bg-slate-*`, `bg-neutral-*`, `text-gray-*`, `text-zinc-*`, `text-slate-*`, `text-neutral-*`. Use project tokens or indigo/red/green/amber series.
+- **Component-specific radii**: buttons `rounded-xl` (12px), cards `rounded-[14px]`, inputs `rounded-[10px]`, upload zone `rounded-2xl`, badges `rounded-full`, toasts `rounded-[10px]`. Uniform `rounded-lg` everywhere is forbidden.
+- **Typography**: Minimum 3 different font sizes per page. Score numbers use `font-mono`.
+- **Spacing**: Minimum 3 different spacing values per page. `p-4 gap-4` everywhere is forbidden.
+- **Icons**: Lucide Icons only. Sizes: 22px nav, 16px inline, 48px empty state. Status check/cross use custom SVG.
+- **Copywriting**: No "模型", "prompt", "AI 生成" in UI. Use "批改" not "AI 批改". Buttons: "开始批改", "重新批改", "保存修改", "移除".
 
-- Functional components only. Use hooks for state and side effects.
-- Keep components focused: if a component exceeds 150 lines, extract sub-components.
-- Use `export default function` for page components, named exports for shared components.
-- Co-locate component-specific types in the same file.
+### Mobile-First
+- Design at 375px. Touch targets at least 44px (`min-h-11 min-w-11`). Use `min-h-dvh` for full-screen.
+- Desktop: max-width 480px centered.
 
-## Styling (Tailwind v4)
+### API and State
+- Every API call handles **loading + success + error** states.
+- Loading states: skeleton screens matching content layout, not full-page spinners.
+- Empty states: specific message + clear action button per UX spec.
+- `fetch` only, no Axios. Phone from `localStorage`, sent as `?phone=` on every request. Never log phone.
 
-- Mobile-first: design at 375px, use `sm:`, `md:`, `lg:` breakpoints to scale up.
-- Touch targets ≥ 44px (`min-h-11`, `min-w-11`).
-- Use `min-h-dvh` for full-screen layouts (handles mobile browser chrome).
-- No custom CSS files beyond `index.css`. No inline styles.
+### Image Upload
+- Client-side compression: max 2048px longest edge, JPEG Q80%.
+- Use `capture="environment"` for camera. HEIC conversion via `heic2any`.
+- Show preview before upload. Display progress.
 
-## File Naming & Organization
-
-```
-src/
-  pages/           # One file per route (HomePage, HistoryPage, ErrorCollectionPage)
-  components/
-    ui/            # Shared primitives (Button, Card, LoadingSpinner)
-    upload/        # Photo upload flow components
-    result/        # Grading result display components
-    history/       # Submission history components
-```
-
-File names: PascalCase for components, camelCase for utilities.
-
-## API Calls
-
-- All requests go to `/api/*` (proxied to backend by Vite).
-- Use fetch with a thin wrapper that handles JSON parsing and error extraction.
-- Every API call must handle three states: loading, success, error.
-- Show loading indicators immediately. Show errors inline, never as alert().
-
-## Image Upload
-
-- Client-side compression before upload: resize to max 2048px, output JPEG at Q80%.
-- Use `capture="environment"` on the file input to open rear camera on mobile.
-- Show a preview before the user confirms upload.
-- Display upload progress (XHR or fetch with progress events).
+### Routing (React Router v7)
+`/`, `/children`, `/submissions/:id/processing`, `/submissions/:id/result`, `/submissions/:id`, `/history`, `/errors`, `/errors/generate`.

@@ -1,47 +1,28 @@
 ---
 paths:
   - "apps/backend/**"
+  - "infra/**"
+  - "scripts/**"
 ---
 
-# Backend Code Conventions
+# Backend Conventions
 
-## Python / FastAPI
+Rules that would cause real bugs if forgotten. Detailed architecture is in `docs/architecture.md`.
 
-- Python 3.12+ required. Use `str | None` not `Optional[str]`, `list[int]` not `List[int]`.
-- All endpoints return Pydantic response models. Never return raw dicts.
-- Use `Depends()` for dependency injection (DB sessions, config). Do not instantiate dependencies manually.
-- Endpoint functions are `async def`. Use `await` for all I/O operations.
-- Route definitions use `APIRouter`, grouped by domain (e.g., `routers/submissions.py`, `routers/error_collections.py`).
+## Non-Negotiable
 
-## Error Handling
-
-- Raise `HTTPException` with specific status codes. Never return 200 with an error body.
-- All 4xx/5xx responses must include a `detail` field.
-- Never expose stack traces or internal paths in error responses.
-
-## Import Ordering
-
-1. Standard library
-2. Third-party packages
-3. Local application imports (absolute paths from `app.*`)
-
-Never use relative imports.
-
-## Database / SQLAlchemy
-
-- Models use SQLAlchemy 2.0 declarative style with `mapped_column()`.
-- All queries use the async session pattern.
-- Alembic migrations are auto-generated but always reviewed. Migration file names must be descriptive.
-
-## Image Processing
-
-- Use Pillow for all image operations.
-- Store originals in `data/images/originals/`, annotated results in `data/images/annotated/`.
-- File naming: `{submission_id}_{timestamp}.jpg`.
-- Supported input formats: JPEG, PNG, HEIC (convert HEIC to JPEG on upload).
-
-## GLM-4V Integration
-
-- All API calls to Zhipu go through a dedicated service in `app/services/glm_client.py`.
-- Log token usage per call. Record model version used.
-- Use `GLM-4V-Flash` by default. Make model selection configurable via env var.
+- Python 3.12+ syntax: `str | None`, `list[int]`, `match` statements. No `Optional[]`, `List[]`, `Dict[]`.
+- All endpoints `async def`. Use `await` for all I/O.
+- Return Pydantic response models. Never return raw dicts.
+- Use `Depends()` for DI (DB session, config, parent resolution). Never instantiate dependencies manually in endpoint bodies.
+- Routes grouped by domain in `app/routers/` with `APIRouter(prefix=..., tags=[...])`.
+- Raise `HTTPException` for all error responses. Never return 200 with error body. Never expose stack traces.
+- Resolve `parent_id` from `phone` in a shared `Depends()`. **Never accept `parent_id` as a direct request parameter.**
+- Cross-resource ownership checks (child_id/submission_id/question_id → trace FK to Parent): return **404** (not 403) on mismatch.
+- Zero hardcoded secrets. GLM_API_KEY, DB passwords from env vars only.
+- GLM-4V calls via dedicated service `app/services/glm_client.py`. Log token usage per call. Model from `GLM_MODEL` env var.
+- Image storage paths per architecture §8: `originals/{id}.jpg`, `annotated/{id}.jpg`, `thumbnails/{id}.jpg`, `questions/{id}_{num}.jpg`. Store relative paths in DB.
+- Annotation: green `#22C55E` (✓), red `#EF4444` (?). Use bundled Noto Sans SC font.
+- Grading flow: `POST /api/submissions` → 202 Accepted → BackgroundTasks → GLM-4V → annotate → sync ErrorQuestion → status=completed|failed. Frontend polls every 2s.
+- ErrorQuestion sync MUST happen in the same transaction as GradedQuestion changes. No eventual consistency.
+- Alembic forward-only in MVP. Auto-generate (`--autogenerate`), always review manually.
