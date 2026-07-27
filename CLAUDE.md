@@ -69,7 +69,20 @@ bash scripts/dev.sh
 - `docs/brand-identity.md` — 品牌与设计系统（色板、字体、反通用清单）
 - `contracts/openapi.yaml` — API 契约（前后端实现的唯一标准）
 
-实施阶段所有 `docs/` 与 `contracts/` 文档为只读；如需变更，先在 PRD/架构提出。
+实施阶段所有 `docs/` 为只读。
+
+### 契约治理（Contract Governance）
+
+`contracts/openapi.yaml` 是所有 API 端点的**权威规范**，详见 [`contracts/README.md`](contracts/README.md)。
+
+**核心规则：**
+
+1. **契约是唯一真相源** — 前后端均以 `openapi.yaml` 为实现标准，不得偏离
+2. **禁止单方面修改** — 任何子代理**不得**修改 `contracts/` 中的文件
+3. **变更须人工审批** — 如需契约变更，子代理在 agent memory 中记录 "Contract Deviations"，由人工审核决定
+4. **契约更新后同步** — 契约变更后，所有相关子代理必须重新读取并更新实现
+
+`contracts/` 的修改**必须由人工执行或明确授权**——子代理即使拥有文件写入权限也不得自行修改。
 
 ## 项目 Harness
 
