@@ -21,9 +21,7 @@ class GradedQuestion(Base):
     )
     question_number: Mapped[str] = mapped_column(String(20), nullable=False)
     question_position: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    question_image_path: Mapped[str | None] = mapped_column(
-        String(500), nullable=True
-    )
+    question_image_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     question_type: Mapped[str] = mapped_column(
         Enum(
             "choice",

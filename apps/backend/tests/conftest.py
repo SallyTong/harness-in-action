@@ -1,3 +1,5 @@
+import os
+
 import httpx
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import (
@@ -11,13 +13,12 @@ from app.dependencies import get_db
 from app.main import app
 from app.models import Base
 
-TEST_DATABASE_URL = (
-    "mysql+aiomysql://root:homework_dev@localhost:3306/homework_grader_test"
+TEST_DATABASE_URL = os.getenv(
+    "TEST_DATABASE_URL",
+    "mysql+aiomysql://root:homework_dev@localhost:3306/homework_grader_test",
 )
 
-test_engine = create_async_engine(
-    TEST_DATABASE_URL, echo=False, poolclass=NullPool
-)
+test_engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullPool)
 TestSessionFactory = async_sessionmaker(
     test_engine, class_=AsyncSession, expire_on_commit=False
 )
@@ -50,8 +51,6 @@ async def client(db_session: AsyncSession):
 
     app.dependency_overrides[get_db] = override_get_db
     transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(
-        transport=transport, base_url="http://test"
-    ) as ac:
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
     app.dependency_overrides.clear()

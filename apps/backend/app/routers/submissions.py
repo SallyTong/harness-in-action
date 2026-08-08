@@ -132,7 +132,7 @@ async def create_submission(
     # Save original image
     os.makedirs(IMAGE_ORIGINALS, exist_ok=True)
     orig_path = f"{IMAGE_ORIGINALS}/{submission.id}.jpg"
-    with open(orig_path, "wb") as f:
+    with open(orig_path, "wb") as f:  # noqa: ASYNC230
         f.write(content)
     submission.original_image_path = orig_path
     await db.flush()
@@ -166,7 +166,9 @@ async def get_submission(
 
     # Build base response
     child_name = ""
-    child_result = await db.execute(select(Child.name).where(Child.id == submission.child_id))
+    child_result = await db.execute(
+        select(Child.name).where(Child.id == submission.child_id)
+    )
     child_name = child_result.scalar_one_or_none() or ""
 
     score = None
@@ -212,9 +214,7 @@ async def get_submission(
         created_at=submission.created_at,
         original_image_url=_build_image_url(request, submission.original_image_path)
         or "",
-        annotated_image_url=_build_image_url(
-            request, submission.annotated_image_path
-        ),
+        annotated_image_url=_build_image_url(request, submission.annotated_image_path),
         total_questions=submission.total_questions,
         correct_count=submission.correct_count,
         token_usage=submission.token_usage,

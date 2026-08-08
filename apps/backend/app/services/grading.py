@@ -5,7 +5,7 @@ independently of the request lifecycle in its own DB session.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 
@@ -32,7 +32,7 @@ async def _sync_error_questions(
     Must run in the same transaction as GradedQuestion insertion.
     For each incorrect GradedQuestion, UPSERT into ErrorQuestion.
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     for gq in graded_qs:
         if gq.is_correct:
@@ -92,7 +92,9 @@ async def process_submission(submission_id: int) -> None:
         )
         submission = result.scalar_one_or_none()
         if not submission:
-            logger.error("Submission %d not found for background processing", submission_id)
+            logger.error(
+                "Submission %d not found for background processing", submission_id
+            )
             return
 
         try:
@@ -135,16 +137,14 @@ async def process_submission(submission_id: int) -> None:
                 if qdata.get("question_position"):
                     try:
                         safe_qnum = str(qdata["question_number"]).replace("/", "_")
-                        crop_path = (
-                            f"{IMAGE_QUESTIONS}/{submission.id}_{safe_qnum}.jpg"
-                        )
+                        crop_path = f"{IMAGE_QUESTIONS}/{submission.id}_{safe_qnum}.jpg"
                         crop_question(
                             image_path,
                             crop_path,
                             qdata["question_position"],
                         )
                         gq.question_image_path = crop_path
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         logger.warning(
                             "Failed to crop question %s: %s",
                             qdata.get("question_number"),

@@ -60,7 +60,7 @@ def _load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     if font_file:
         try:
             return ImageFont.truetype(font_file, size=size)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning("Failed to load font %s: %s", font_file, e)
     return ImageFont.load_default()
 

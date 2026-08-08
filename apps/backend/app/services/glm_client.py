@@ -57,9 +57,7 @@ def _encode_image(image_path: str) -> str:
 def _build_prompt(subject: str) -> str:
     qtypes = SUBJECT_TYPES.get(subject, SUBJECT_TYPES["english"])
     subject_name = "英语" if subject == "english" else "数学"
-    return SYSTEM_PROMPT_TEMPLATE.format(
-        subject=subject_name, question_types=qtypes
-    )
+    return SYSTEM_PROMPT_TEMPLATE.format(subject=subject_name, question_types=qtypes)
 
 
 async def grade_image(
@@ -181,7 +179,7 @@ async def grade_image(
                 logger.error("GLM-4V API attempt %d failed: %s", attempt + 1, e)
         except GLMError:
             raise
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             last_error = e
             logger.error("Unexpected error calling GLM-4V: %s", e)
             if attempt == 0:

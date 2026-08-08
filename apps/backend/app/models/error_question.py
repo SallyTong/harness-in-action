@@ -25,9 +25,7 @@ class ErrorQuestion(Base):
     submission_id: Mapped[int] = mapped_column(
         ForeignKey("submissions.id"), nullable=False
     )
-    child_id: Mapped[int] = mapped_column(
-        ForeignKey("children.id"), nullable=False
-    )
+    child_id: Mapped[int] = mapped_column(ForeignKey("children.id"), nullable=False)
     subject: Mapped[str] = mapped_column(
         Enum("english", "math", name="error_subject_enum"), nullable=False
     )

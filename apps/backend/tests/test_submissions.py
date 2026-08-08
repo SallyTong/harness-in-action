@@ -1,7 +1,6 @@
 """Tests for submission upload and query endpoints."""
 
 import io
-import os
 from unittest.mock import patch
 
 import pytest
@@ -154,9 +153,7 @@ async def test_get_submission_pending(client, db_session):
     )
     submission_id = resp.json()["submission_id"]
 
-    response = await client.get(
-        f"/api/submissions/{submission_id}?phone={PHONE_A}"
-    )
+    response = await client.get(f"/api/submissions/{submission_id}?phone={PHONE_A}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == submission_id
@@ -168,9 +165,7 @@ async def test_get_submission_pending(client, db_session):
 
 @pytest.mark.asyncio
 async def test_get_submission_not_found(client):
-    response = await client.get(
-        f"/api/submissions/99999?phone={PHONE_A}"
-    )
+    response = await client.get(f"/api/submissions/99999?phone={PHONE_A}")
     assert response.status_code == 404
 
 
@@ -185,9 +180,7 @@ async def test_get_submission_not_owned(client, db_session):
     )
     submission_id = resp.json()["submission_id"]
 
-    response = await client.get(
-        f"/api/submissions/{submission_id}?phone={PHONE_B}"
-    )
+    response = await client.get(f"/api/submissions/{submission_id}?phone={PHONE_B}")
     assert response.status_code == 404
 
 
@@ -228,9 +221,7 @@ async def test_get_submission_completed(client, db_session):
 
     await db_session.commit()
 
-    response = await client.get(
-        f"/api/submissions/{submission_id}?phone={PHONE_A}"
-    )
+    response = await client.get(f"/api/submissions/{submission_id}?phone={PHONE_A}")
     assert response.status_code == 200
     data = response.json()
 

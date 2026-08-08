@@ -33,9 +33,7 @@ class Submission(Base):
         nullable=False,
     )
     original_image_path: Mapped[str] = mapped_column(String(500), nullable=False)
-    annotated_image_path: Mapped[str | None] = mapped_column(
-        String(500), nullable=True
-    )
+    annotated_image_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     thumbnail_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     total_questions: Mapped[int | None] = mapped_column(nullable=True)
     correct_count: Mapped[int | None] = mapped_column(nullable=True)

@@ -96,7 +96,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: mysql+pymysql://root:test@localhost:3306/homework_grader_test
+      TEST_DATABASE_URL: mysql+aiomysql://root:test@localhost:3306/homework_grader_test
       GLM_API_KEY: ci-dummy-key
       GLM_MODEL: glm-4v-flash
     steps:
