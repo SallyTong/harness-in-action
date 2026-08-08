@@ -217,10 +217,7 @@ if [ -n "$CREATED_CHILD_ID" ] && [ "$CREATED_CHILD_ID" != "" ]; then
     check_contains "Rename persisted in list" "$RENAMED_RESPONSE" "smoke-renamed-$TIMESTAMP"
 
     # 3d. DATA ISOLATION — second phone cannot access first phone's child
-    ISOLATION_READ_STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
-        "$BACKEND_URL/api/children/$CREATED_CHILD_ID?phone=$SMOKE_PHONE_B" 2>/dev/null || echo "000")
-    check "Isolation: phone B cannot read phone A's child (404)" "$ISOLATION_READ_STATUS" "404"
-
+    # (No GET /api/children/{id} endpoint — verify isolation via PUT/DELETE)
     ISOLATION_UPDATE_STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
         -X PUT "$BACKEND_URL/api/children/$CREATED_CHILD_ID?phone=$SMOKE_PHONE_B" \
         -H "Content-Type: application/json" \
