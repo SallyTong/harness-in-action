@@ -1,14 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { User } from "lucide-react";
+import { User, X } from "lucide-react";
 import { usePhone } from "../hooks/usePhone";
-import { apiGet } from "../lib/api";
-
-interface Child {
-  id: number;
-  name: string;
-  submission_count: number;
-}
+import { apiGet, apiUpload } from "../lib/api";
+import { compressImage, isHeic } from "../lib/image";
+import ActionSheet from "../components/ui/ActionSheet";
+import Toast, { type ToastType } from "../components/ui/Toast";
+import type { Child, SubmissionAccepted } from "../types";
 
 export default function HomePage() {
   const { phone, setPhone, isReady } = usePhone();
@@ -16,6 +14,19 @@ export default function HomePage() {
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
   const [subject, setSubject] = useState<"english" | "math">("english");
+  const [selectedImage, setSelectedImage] = useState<{
+    blob: Blob;
+    previewUrl: string;
+  } | null>(null);
+  const [showActionSheet, setShowActionSheet] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: ToastType;
+  } | null>(null);
+
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isReady) return;
@@ -24,7 +35,71 @@ export default function HomePage() {
       .catch(() => {});
   }, [isReady]);
 
-  const handleChildChange = (id: number) => setSelectedChildId(id);
+  const handleFileSelect = async (file: File) => {
+    if (isHeic(file)) {
+      setToast({
+        message: "不支持 HEIC 格式。请在手机设置中将相机格式改为 JPEG。",
+        type: "error",
+      });
+      return;
+    }
+
+    try {
+      const compressed = await compressImage(file);
+      const previewUrl = URL.createObjectURL(compressed);
+      setSelectedImage({ blob: compressed, previewUrl });
+    } catch {
+      setToast({
+        message: "图片处理失败，请重试。",
+        type: "error",
+      });
+    }
+  };
+
+  const handleRemoveImage = () => {
+    if (selectedImage) {
+      URL.revokeObjectURL(selectedImage.previewUrl);
+      setSelectedImage(null);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedImage || !selectedChildId) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append(
+        "image",
+        selectedImage.blob,
+        `exam_${Date.now()}.jpg`,
+      );
+      formData.append("subject", subject);
+      formData.append("child_id", String(selectedChildId));
+
+      const result = await apiUpload<SubmissionAccepted>(
+        "/api/submissions",
+        formData,
+      );
+
+      // Clean up preview URL
+      URL.revokeObjectURL(selectedImage.previewUrl);
+      setSelectedImage(null);
+      setUploading(false);
+
+      // Navigate to processing page
+      navigate(`/submissions/${result.submission_id}/processing`);
+    } catch (err) {
+      setUploading(false);
+      setToast({
+        message: err instanceof Error ? err.message : "上传失败，请重试。",
+        type: "error",
+      });
+    }
+  };
+
+  const canSubmit =
+    isReady && selectedImage && selectedChildId !== null && !uploading;
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4 pb-16">
@@ -67,12 +142,18 @@ export default function HomePage() {
         <div className="mb-6 flex items-center gap-3">
           <select
             value={selectedChildId ?? ""}
-            onChange={(e) => handleChildChange(Number(e.target.value))}
+            onChange={(e) =>
+              setSelectedChildId(
+                e.target.value ? Number(e.target.value) : null,
+              )
+            }
             className="flex-1 rounded-[10px] border border-[#E5E0DA] bg-white px-3 py-3 text-[15px] text-[#1E1B18] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
           >
-            {children.length === 0 && (
-              <option value="">请先添加小朋友</option>
-            )}
+            <option value="">
+              {children.length === 0
+                ? "请先添加小朋友"
+                : "选择小朋友"}
+            </option>
             {children.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -104,27 +185,116 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Upload area placeholder */}
-      <div className="mb-6 flex flex-1 flex-col items-center justify-center rounded-[16px] border-2 border-dashed border-[#E5E0DA] bg-white p-8 transition-colors hover:border-[#6366F1]">
-        <span className="mb-3 text-5xl">📸</span>
-        <span className="text-[15px] font-medium text-[#6B6560]">
-          拍照上传试卷
-        </span>
-        <span className="mt-1 text-[13px] text-[#A39D97]">
-          支持英语 · 数学 · 打印体 + 手写
-        </span>
-      </div>
+      {/* Upload area */}
+      {isReady && (
+        <>
+          {selectedImage ? (
+            /* Image preview */
+            <div className="mb-6 flex flex-col items-center">
+              <div className="relative inline-block">
+                <img
+                  src={selectedImage.previewUrl}
+                  alt="待上传试卷"
+                  className="max-h-[300px] rounded-[16px] object-contain shadow-sm"
+                />
+                <button
+                  onClick={handleRemoveImage}
+                  className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#EF4444] text-white shadow-md transition-colors hover:bg-red-600"
+                  aria-label="移除图片"
+                >
+                  <X size={14} strokeWidth={2} />
+                </button>
+              </div>
+              <span className="mt-2 text-[13px] text-[#A39D97]">
+                已压缩，点击上方 X 可移除
+              </span>
+            </div>
+          ) : (
+            /* Upload zone */
+            <button
+              onClick={() => setShowActionSheet(true)}
+              className="mb-6 flex flex-1 flex-col items-center justify-center rounded-[16px] border-2 border-dashed border-[#E5E0DA] bg-white p-8 transition-colors hover:border-[#6366F1]"
+            >
+              <span className="mb-3 text-5xl">📸</span>
+              <span className="text-[15px] font-medium text-[#6B6560]">
+                拍照上传试卷
+              </span>
+              <span className="mt-1 text-[13px] text-[#A39D97]">
+                支持英语 · 数学 · 打印体 + 手写
+              </span>
+            </button>
+          )}
+        </>
+      )}
 
       {/* Submit button */}
-      <button
-        disabled
-        className="w-full rounded-xl bg-[#6366F1] py-3 text-[15px] font-medium text-white opacity-50 shadow-sm"
-      >
-        开始批改
-      </button>
-      <p className="mt-2 text-center text-[11px] text-[#A39D97]">
-        拍照上传功能即将推出
-      </p>
+      {isReady && (
+        <>
+          <button
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            className={`w-full rounded-xl py-3 text-[15px] font-medium text-white shadow-sm transition-all ${
+              canSubmit
+                ? "bg-[#6366F1] hover:bg-[#4F46E5]"
+                : "cursor-not-allowed bg-[#6366F1] opacity-50"
+            }`}
+          >
+            {uploading ? "上传中…" : "开始批改"}
+          </button>
+        </>
+      )}
+
+      {/* Hidden file inputs */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileSelect(file);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileSelect(file);
+          e.target.value = "";
+        }}
+      />
+
+      {/* ActionSheet */}
+      <ActionSheet
+        open={showActionSheet}
+        options={[
+          {
+            label: "拍照",
+            icon: "📷",
+            onClick: () => cameraInputRef.current?.click(),
+          },
+          {
+            label: "从相册选择",
+            icon: "🖼️",
+            onClick: () => galleryInputRef.current?.click(),
+          },
+        ]}
+        onClose={() => setShowActionSheet(false)}
+      />
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

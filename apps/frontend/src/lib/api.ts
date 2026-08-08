@@ -60,3 +60,20 @@ export async function apiDelete(path: string): Promise<void> {
     throw new Error(err.detail || `HTTP ${res.status}`);
   }
 }
+
+export async function apiUpload<T = unknown>(
+  path: string,
+  formData: FormData,
+): Promise<T> {
+  const phone = getPhone();
+  const url = `${path}?phone=${encodeURIComponent(phone)}`;
+  const res = await fetch(url, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Network error" }));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}

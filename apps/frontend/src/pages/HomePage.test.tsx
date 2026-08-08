@@ -4,7 +4,8 @@ import { MemoryRouter } from "react-router-dom";
 import HomePage from "./HomePage";
 
 describe("HomePage", () => {
-  it("renders title and upload area", () => {
+  it("renders title when phone is set", () => {
+    localStorage.setItem("parent_phone", "13800138000");
     render(
       <MemoryRouter>
         <HomePage />
@@ -13,6 +14,7 @@ describe("HomePage", () => {
     expect(screen.getByText("作业批改")).toBeInTheDocument();
     expect(screen.getByText("拍照上传试卷")).toBeInTheDocument();
     expect(screen.getByText("开始批改")).toBeInTheDocument();
+    localStorage.removeItem("parent_phone");
   });
 
   it("shows phone input when phone not set", () => {

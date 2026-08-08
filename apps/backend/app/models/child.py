@@ -10,6 +10,7 @@ from app.models import Base
 
 if TYPE_CHECKING:
     from app.models.parent import Parent
+    from app.models.submission import Submission
 
 
 class Child(Base):
@@ -25,3 +26,6 @@ class Child(Base):
     )
 
     parent: Mapped[Parent] = relationship(back_populates="children", lazy="raise")
+    submissions: Mapped[list[Submission]] = relationship(
+        back_populates="child", lazy="raise"
+    )

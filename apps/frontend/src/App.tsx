@@ -1,6 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import ChildrenPage from "./pages/ChildrenPage";
+import ProcessingPage from "./pages/ProcessingPage";
+import ResultPage from "./pages/ResultPage";
 import BottomNav from "./components/layout/BottomNav";
 
 function PlaceholderPage({ title }: { title: string }) {
@@ -28,6 +30,14 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/children" element={<ChildrenPage />} />
+        <Route
+          path="/submissions/:id/processing"
+          element={<ProcessingPage />}
+        />
+        <Route
+          path="/submissions/:id/result"
+          element={<ResultPage />}
+        />
         <Route
           path="/history"
           element={<PlaceholderPage title="批改历史（即将推出）" />}
