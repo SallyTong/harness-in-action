@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import health
+from app.routers import children, health
 
 app = FastAPI(title="AI Homework Grader", version="0.1.0")
 
@@ -14,6 +14,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+app.include_router(children.router)
 
 if __name__ == "__main__":
     import uvicorn

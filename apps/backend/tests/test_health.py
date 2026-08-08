@@ -1,13 +1,13 @@
-from fastapi.testclient import TestClient
+import pytest
 
-from app.main import app
-
-client = TestClient(app)
+PHONE = "13800138000"
 
 
-def test_health_check():
-    response = client.get("/api/health")
+@pytest.mark.asyncio
+async def test_health_ok(client):
+    response = await client.get("/api/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
     assert data["service"] == "ai-homework-grader"
+    assert data["version"] == "0.1.0"
