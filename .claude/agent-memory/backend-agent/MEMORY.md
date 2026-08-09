@@ -1,8 +1,9 @@
 # Backend Agent Memory
 
 - [Phase 1: Foundation](phase-1-foundation.md) — ✅ Complete. Project scaffold, health endpoint, DB models
-- [Phase 2: Core Grading](phase-2-core-grading.md) — ✅ Complete. Image upload, GLM-4V grading, annotation pipeline
-- [Phase 3: History Records](phase-3-history-records.md) — ✅ Complete. History list, manual correction, error collections, practice sheet generation
-- [Phase 5: Polish](phase-4-polish.md) — ✅ Complete. Rate limiting, cost logging, error hardening, input validation
+- [Phase 2: Image Upload](phase-2-image-upload.md) — ✅ Complete. Children CRUD, image serving, submission upload
+- [Phase 3: Grading Engine](phase-3-grading-engine.md) — ✅ Complete. GLM-4V prompts, annotation overlay, grading pipeline
+- [Phase 4: History Records](phase-4-history-records.md) — ✅ Complete. History list, manual correction, error collections, practice sheets
+- [Phase 5: Polish](phase-5-polish.md) — ✅ Complete. Rate limiting, cost logging, error hardening, input validation
 
 > Cross-cutting rules: [shared/cross-cutting.md](../shared/cross-cutting.md)

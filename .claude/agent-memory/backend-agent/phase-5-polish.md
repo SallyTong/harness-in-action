@@ -1,5 +1,5 @@
 ---
-name: phase-4-polish
+name: phase-5-polish
 description: Backend Phase 5 status — error handling, rate limiting, cost logging, input validation hardening
 metadata:
   type: project

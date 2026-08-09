@@ -1,14 +1,14 @@
 ---
-name: phase-3-history-records
-description: Backend Phase 3 status — history list, manual correction, error collections, practice sheet generation
+name: phase-4-history-records
+description: Backend Phase 4 status — history list, manual correction, error collections, practice sheet generation
 metadata:
   type: project
-  phase: 3 — History + Manual Correction
+  phase: 4 — History + Manual Correction
   status: complete
   last_updated: 2026-08-09
 ---
 
-## Phase 3: History Records + Manual Correction — ✅ Complete
+## Phase 4: History Records + Manual Correction — ✅ Complete
 
 ### New Endpoints
 
@@ -45,7 +45,7 @@ metadata:
 - `schemas/submissions.py`: `SubmissionListResponse`, `FixQuestionRequest`, `FixQuestionResponse`
 - `schemas/error_collections.py`: `ErrorQuestionResponse`, `ErrorCollectionListResponse`, `GenerateSheetRequest`, `GenerateSheetResponse`
 
-### Key Design Decisions (carried from Phase 2)
+### Key Design Decisions (carried from Phase 3 — Grading Engine)
 - `_sanitize_question_number()` in `grading.py` — truncates to 50 chars, takes first line
 - `_sanitize_question_type()` — fuzzy-match model output to valid DB enum via substring
 - `_sanitize_error_category()` — same pattern for error categories
@@ -59,7 +59,7 @@ metadata:
 - `_build_image_url` in `submissions.py` still missing path normalization — known gap
 
 ### Known Limitations
-- `submission_count` hardcoded to 0 in `GET /api/children` response
+- ~~`submission_count` hardcoded to 0~~ — fixed in [[phase-5-polish]]
 - `error_collections.py` router has 0 backend tests (smoke test covers integration)
 - `PATCH` and `GET /api/submissions` list endpoints also lack dedicated tests
 
