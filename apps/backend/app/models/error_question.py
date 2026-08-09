@@ -29,7 +29,7 @@ class ErrorQuestion(Base):
     subject: Mapped[str] = mapped_column(
         Enum("english", "math", name="error_subject_enum"), nullable=False
     )
-    question_number: Mapped[str] = mapped_column(String(20), nullable=False)
+    question_number: Mapped[str] = mapped_column(String(50), nullable=False)
     question_type: Mapped[str] = mapped_column(
         Enum(
             "choice",

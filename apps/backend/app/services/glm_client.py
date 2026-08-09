@@ -4,8 +4,14 @@ import base64
 import json
 import logging
 import os
+from pathlib import Path
 
 import httpx
+from dotenv import load_dotenv
+
+# Load .env from backend root regardless of CWD (background tasks have no CWD)
+_env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(_env_path)
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +81,7 @@ async def grade_image(
 
     Raises GLMError on any failure.
     """
-    key = api_key or GLM_API_KEY
+    key = api_key or os.getenv("GLM_API_KEY", "") or GLM_API_KEY
     mdl = model or GLM_MODEL
 
     if not key:
@@ -103,7 +109,7 @@ async def grade_image(
             },
         ],
         "temperature": 0.1,
-        "max_tokens": 4096,
+        "max_tokens": 1024,
     }
 
     url = f"{GLM_API_BASE}/chat/completions"
@@ -147,7 +153,16 @@ async def grade_image(
                     f"Failed to parse GLM-4V response as JSON: {e}\nContent: {content[:500]}"
                 ) from e
 
-            questions = grading_result.get("questions", [])
+            # Handle both formats: {"questions": [...]} and bare [...]
+            if isinstance(grading_result, list):
+                questions = grading_result
+            elif isinstance(grading_result, dict):
+                questions = grading_result.get("questions", [])
+            else:
+                raise GLMError(
+                    f"Unexpected response type: {type(grading_result).__name__}"
+                )
+
             if not isinstance(questions, list):
                 raise GLMError(
                     f"Expected 'questions' to be a list, got {type(questions).__name__}"

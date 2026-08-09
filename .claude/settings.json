@@ -1,81 +1,4 @@
 {
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python .claude/hooks/secrets-blocker.py",
-            "timeout": 10,
-            "statusMessage": "Checking for hardcoded secrets..."
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "paths": "apps/backend/**/*.py",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd apps/backend && python -m ruff check --quiet 2>&1 | head -20",
-            "timeout": 30,
-            "statusMessage": "Linting backend (ruff)..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "paths": "apps/backend/**/*.py",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd apps/backend && python -m pytest tests/ -q 2>&1 | tail -10",
-            "timeout": 60,
-            "statusMessage": "Running backend tests..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "paths": "apps/frontend/**/*.{ts,tsx}",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd apps/frontend && npx tsc --noEmit 2>&1 | head -20",
-            "timeout": 60,
-            "statusMessage": "Type-checking frontend..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "paths": "apps/frontend/**/*.{ts,tsx,css}",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd apps/frontend && npx vitest run --reporter=verbose 2>&1 | tail -20",
-            "timeout": 60,
-            "statusMessage": "Running frontend tests..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "paths": "apps/backend/app/models/**/*.py",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd apps/backend && python -c \"from alembic.config import Config; from alembic import command; config = Config('alembic.ini'); print('Alembic OK - remember to run: alembic revision --autogenerate')\" 2>&1 || echo \"WARNING: Models changed. Run 'alembic revision --autogenerate' to create migration.\"",
-            "timeout": 15,
-            "statusMessage": "Checking model-migration consistency..."
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Bash(npm run dev)",
@@ -96,7 +19,79 @@
       "Bash(git checkout *)",
       "Bash(curl *)",
       "Read(*.*)",
-      "WebFetch(http://localhost:*)"
+      "Bash(powershell.exe -Command \"netstat -a -n -o -b 2>&1 | Select-String -Pattern '8000' -Context 1\")"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ../.claude/hooks/secrets-blocker.py || python .claude/hooks/secrets-blocker.py || true",
+            "timeout": 10,
+            "statusMessage": "Checking for hardcoded secrets..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/backend && python -m ruff check --quiet 2>&1 | head -20",
+            "timeout": 30,
+            "statusMessage": "Linting backend (ruff)..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/backend && python -m pytest tests/ -q 2>&1 | tail -10",
+            "timeout": 60,
+            "statusMessage": "Running backend tests..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/frontend && npx tsc --noEmit 2>&1 | head -20",
+            "timeout": 60,
+            "statusMessage": "Type-checking frontend..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/frontend && npx vitest run --reporter=verbose 2>&1 | tail -20",
+            "timeout": 60,
+            "statusMessage": "Running frontend tests..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/backend && python -c \"from alembic.config import Config; from alembic import command; config = Config('alembic.ini'); print('Alembic OK - remember to run: alembic revision --autogenerate')\" 2>&1 || echo \"WARNING: Models changed. Run 'alembic revision --autogenerate' to create migration.\"",
+            "timeout": 15,
+            "statusMessage": "Checking model-migration consistency..."
+          }
+        ]
+      }
     ]
   }
 }

@@ -23,6 +23,63 @@ IMAGE_ANNOTATED = "data/images/annotated"
 IMAGE_THUMBNAILS = "data/images/thumbnails"
 IMAGE_QUESTIONS = "data/images/questions"
 
+# Valid ENUM values for question_type (must match DB enum: question_type_enum)
+VALID_QUESTION_TYPES = frozenset({
+    "choice",
+    "fill_blank",
+    "reading",
+    "composition",
+    "calculation",
+    "word_problem",
+})
+
+# Valid error_category values
+VALID_ERROR_CATEGORIES = frozenset({
+    "grammar",
+    "vocabulary",
+    "spelling",
+    "logic",
+    "calculation",
+    "careless",
+    "comprehension",
+})
+
+QUESTION_NUMBER_MAX_LEN = 50
+
+
+def _sanitize_question_number(raw: str) -> str:
+    """Truncate and clean the question_number from the model response."""
+    if not raw:
+        return ""
+    # Take only the first line or up to max length
+    cleaned = raw.strip().split("\n")[0].strip()
+    if len(cleaned) > QUESTION_NUMBER_MAX_LEN:
+        cleaned = cleaned[:QUESTION_NUMBER_MAX_LEN - 3] + "..."
+    return cleaned
+
+
+def _sanitize_question_type(raw: str) -> str:
+    """Map model output to a valid DB enum value for question_type."""
+    if not raw:
+        return "fill_blank"  # safe default
+    raw_lower = raw.strip().lower()
+    # Check if any valid type is a substring of the model's output
+    for vtype in VALID_QUESTION_TYPES:
+        if vtype in raw_lower:
+            return vtype
+    return "fill_blank"  # fallback
+
+
+def _sanitize_error_category(raw: str | None) -> str | None:
+    """Map model output to a valid error_category value."""
+    if not raw:
+        return None
+    raw_lower = raw.strip().lower()
+    for cat in VALID_ERROR_CATEGORIES:
+        if cat in raw_lower:
+            return cat
+    return None  # unrecognized → None
+
 
 async def _sync_error_questions(
     db, submission: Submission, graded_qs: list[GradedQuestion]
@@ -123,12 +180,18 @@ async def process_submission(submission_id: int) -> None:
 
                 gq = GradedQuestion(
                     submission_id=submission.id,
-                    question_number=str(qdata.get("question_number", "")),
+                    question_number=_sanitize_question_number(
+                        str(qdata.get("question_number", ""))
+                    ),
                     question_position=qdata.get("question_position"),
-                    question_type=str(qdata.get("question_type", "")),
+                    question_type=_sanitize_question_type(
+                        str(qdata.get("question_type", ""))
+                    ),
                     is_correct=is_correct,
                     solution_note=qdata.get("solution_note"),
-                    error_category=qdata.get("error_category"),
+                    error_category=_sanitize_error_category(
+                        qdata.get("error_category")
+                    ),
                 )
                 db.add(gq)
                 await db.flush()  # Get gq.id

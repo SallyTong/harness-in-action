@@ -43,12 +43,18 @@ JPEG_MAGIC = b"\xff\xd8\xff"
 PNG_MAGIC = b"\x89PNG"
 
 
-def _build_image_url(request: Request, rel_path: str | None) -> str | None:
-    """Convert a relative image path to a full URL."""
+def _build_image_url(request: Request, rel_path: str | None, phone: str = "") -> str | None:
+    """Convert a relative image path to the serve-image API URL."""
     if not rel_path:
         return None
     base = str(request.base_url).rstrip("/")
-    return f"{base}/{rel_path}"
+    # Convert "data/images/originals/1.jpg" → "/api/images/originals/1.jpg"
+    # The serve_image route is at GET /api/images/{kind}/{filename}
+    kind_and_file = rel_path.replace("data/images/", "", 1)
+    url = f"{base}/api/images/{kind_and_file}"
+    if phone:
+        url += f"?phone={phone}"
+    return url
 
 
 async def _get_owned_submission(
@@ -164,6 +170,8 @@ async def get_submission(
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
 
+    phone = parent.phone  # for image URLs
+
     # Build base response
     child_name = ""
     child_result = await db.execute(
@@ -193,7 +201,7 @@ async def get_submission(
                 id=gq.id,
                 question_number=gq.question_number,
                 question_position=gq.question_position,
-                question_image_path=_build_image_url(request, gq.question_image_path),
+                question_image_path=_build_image_url(request, gq.question_image_path, phone),
                 question_type=gq.question_type,
                 is_correct=gq.is_correct,
                 solution_note=gq.solution_note,
@@ -210,11 +218,11 @@ async def get_submission(
         subject=submission.subject,
         status=submission.status,
         score=score,
-        thumbnail_url=_build_image_url(request, submission.thumbnail_path),
+        thumbnail_url=_build_image_url(request, submission.thumbnail_path, phone),
         created_at=submission.created_at,
-        original_image_url=_build_image_url(request, submission.original_image_path)
+        original_image_url=_build_image_url(request, submission.original_image_path, phone)
         or "",
-        annotated_image_url=_build_image_url(request, submission.annotated_image_path),
+        annotated_image_url=_build_image_url(request, submission.annotated_image_path, phone),
         total_questions=submission.total_questions,
         correct_count=submission.correct_count,
         token_usage=submission.token_usage,
