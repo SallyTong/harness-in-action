@@ -3,15 +3,15 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Load .env from the backend root (apps/backend/.env), not from CWD
-_env_path = Path(__file__).resolve().parent.parent / '.env'
+_env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(_env_path)
 
 import logging
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-    datefmt='%H:%M:%S',
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%H:%M:%S",
 )
 
 from fastapi import FastAPI, Request

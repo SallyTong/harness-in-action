@@ -43,7 +43,9 @@ JPEG_MAGIC = b"\xff\xd8\xff"
 PNG_MAGIC = b"\x89PNG"
 
 
-def _build_image_url(request: Request, rel_path: str | None, phone: str = "") -> str | None:
+def _build_image_url(
+    request: Request, rel_path: str | None, phone: str = ""
+) -> str | None:
     """Convert a relative image path to the serve-image API URL."""
     if not rel_path:
         return None
@@ -201,7 +203,9 @@ async def get_submission(
                 id=gq.id,
                 question_number=gq.question_number,
                 question_position=gq.question_position,
-                question_image_path=_build_image_url(request, gq.question_image_path, phone),
+                question_image_path=_build_image_url(
+                    request, gq.question_image_path, phone
+                ),
                 question_type=gq.question_type,
                 is_correct=gq.is_correct,
                 solution_note=gq.solution_note,
@@ -220,9 +224,13 @@ async def get_submission(
         score=score,
         thumbnail_url=_build_image_url(request, submission.thumbnail_path, phone),
         created_at=submission.created_at,
-        original_image_url=_build_image_url(request, submission.original_image_path, phone)
+        original_image_url=_build_image_url(
+            request, submission.original_image_path, phone
+        )
         or "",
-        annotated_image_url=_build_image_url(request, submission.annotated_image_path, phone),
+        annotated_image_url=_build_image_url(
+            request, submission.annotated_image_path, phone
+        ),
         total_questions=submission.total_questions,
         correct_count=submission.correct_count,
         token_usage=submission.token_usage,

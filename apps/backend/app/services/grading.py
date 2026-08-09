@@ -24,25 +24,29 @@ IMAGE_THUMBNAILS = "data/images/thumbnails"
 IMAGE_QUESTIONS = "data/images/questions"
 
 # Valid ENUM values for question_type (must match DB enum: question_type_enum)
-VALID_QUESTION_TYPES = frozenset({
-    "choice",
-    "fill_blank",
-    "reading",
-    "composition",
-    "calculation",
-    "word_problem",
-})
+VALID_QUESTION_TYPES = frozenset(
+    {
+        "choice",
+        "fill_blank",
+        "reading",
+        "composition",
+        "calculation",
+        "word_problem",
+    }
+)
 
 # Valid error_category values
-VALID_ERROR_CATEGORIES = frozenset({
-    "grammar",
-    "vocabulary",
-    "spelling",
-    "logic",
-    "calculation",
-    "careless",
-    "comprehension",
-})
+VALID_ERROR_CATEGORIES = frozenset(
+    {
+        "grammar",
+        "vocabulary",
+        "spelling",
+        "logic",
+        "calculation",
+        "careless",
+        "comprehension",
+    }
+)
 
 QUESTION_NUMBER_MAX_LEN = 50
 
@@ -54,7 +58,7 @@ def _sanitize_question_number(raw: str) -> str:
     # Take only the first line or up to max length
     cleaned = raw.strip().split("\n")[0].strip()
     if len(cleaned) > QUESTION_NUMBER_MAX_LEN:
-        cleaned = cleaned[:QUESTION_NUMBER_MAX_LEN - 3] + "..."
+        cleaned = cleaned[: QUESTION_NUMBER_MAX_LEN - 3] + "..."
     return cleaned
 
 
