@@ -67,6 +67,7 @@ bash scripts/dev.sh
 - `docs/architecture.md` — 架构与技术决策（数据模型、API 设计、ADR）
 - `docs/ux-spec.md` — UX 规范（8 屏幕清单与交互）
 - `docs/brand-identity.md` — 品牌与设计系统（色板、字体、反通用清单）
+- `docs/phase-plan.md` — 实施阶段计划（Phase 定义、范围、验收标准）
 - `contracts/openapi.yaml` — API 契约（前后端实现的唯一标准）
 
 实施阶段所有 `docs/` 为只读。

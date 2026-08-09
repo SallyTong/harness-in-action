@@ -1,5 +1,5 @@
 ---
-name: "design-check"
+name: "design-enforcement"
 description: "Anti-generic design enforcement for AI Homework Grader — catches AI-generated visual antipatterns and verifies brand compliance against docs/brand-identity.md. Run before committing any UI component or page."
 ---
 

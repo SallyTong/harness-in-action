@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd apps/backend && python -m ruff check --quiet 2>&1 | head -20",
+            "command": "cd ${CLAUDE_PROJECT_DIR}/apps/backend && python -m ruff check app/ --quiet 2>&1",
             "timeout": 30,
             "statusMessage": "Linting backend (ruff)..."
           }
@@ -56,7 +56,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd apps/backend && python -m pytest tests/ -q 2>&1 | tail -10",
+            "command": "cd ${CLAUDE_PROJECT_DIR}/apps/backend && python -m pytest tests/ -q 2>&1 | tail -10",
             "timeout": 60,
             "statusMessage": "Running backend tests..."
           }
@@ -67,7 +67,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd apps/frontend && npx tsc --noEmit 2>&1 | head -20",
+            "command": "cd ${CLAUDE_PROJECT_DIR}/apps/frontend && npx tsc --noEmit 2>&1",
             "timeout": 60,
             "statusMessage": "Type-checking frontend..."
           }
@@ -78,7 +78,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd apps/frontend && npx vitest run --reporter=verbose 2>&1 | tail -20",
+            "command": "cd ${CLAUDE_PROJECT_DIR}/apps/frontend && npx vitest run --reporter=verbose 2>&1 | tail -20",
             "timeout": 60,
             "statusMessage": "Running frontend tests..."
           }
@@ -89,7 +89,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd apps/backend && python -c \"from alembic.config import Config; from alembic.script import ScriptDirectory; config = Config('alembic.ini'); script = ScriptDirectory.from_config(config); head = script.get_current_head(); print(f'Migrations OK — current head: {head}')\" 2>&1 || echo \"WARNING: Cannot read Alembic migrations. Run 'alembic revision --autogenerate' to create migration.\"",
+            "command": "cd ${CLAUDE_PROJECT_DIR}/apps/backend && python -c \"from alembic.config import Config; from alembic.script import ScriptDirectory; config = Config('alembic.ini'); script = ScriptDirectory.from_config(config); head = script.get_current_head(); print(f'Migrations OK — current head: {head}')\" 2>&1 || echo \"WARNING: Cannot read Alembic migrations\"",
             "timeout": 15,
             "statusMessage": "Checking model-migration consistency..."
           }

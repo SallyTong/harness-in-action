@@ -1,29 +1,28 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Check that agent memory files are consistent with phase definitions.
 
-Reads .claude/agents/backend-agent.md to count defined phases,
-then checks .claude/agent-memory/backend-agent/ for matching memory files.
+Reads .claude/agents/*.md to count defined phases, then checks
+.claude/agent-memory/<agent>/ for matching memory files.
 Exits 0 if consistent, 1 if mismatched.
 """
 
-import os
 import re
 import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-AGENT_FILE = PROJECT_ROOT / ".claude" / "agents" / "backend-agent.md"
-MEMORY_DIR = PROJECT_ROOT / ".claude" / "agent-memory" / "backend-agent"
+AGENTS_DIR = PROJECT_ROOT / ".claude" / "agents"
+MEMORY_BASE = PROJECT_ROOT / ".claude" / "agent-memory"
 
-# Phase pattern: "### Phase N: Name" or "### Phase N: Name ✅"
+# Phase pattern: "### Phase N: Name" or "### Phase N: Name <status>"
 PHASE_RE = re.compile(r"^### Phase (\d+):", re.MULTILINE)
-# Memory file pattern: "phase-N-slug.md" or "phase-N-slug.md"
+# Memory file pattern: "phase-N-slug.md"
 MEMORY_RE = re.compile(r"^phase-(\d+)-.+")
 
 
 def count_phases(filepath: Path) -> set[int]:
-    """Extract phase numbers from backend-agent.md."""
+    """Extract phase numbers from an agent definition file."""
     content = filepath.read_text(encoding="utf-8")
     return {int(m) for m in PHASE_RE.findall(content)}
 
@@ -40,17 +39,20 @@ def count_memory_files(directory: Path) -> set[int]:
     }
 
 
-def main() -> int:
-    if not AGENT_FILE.exists():
-        print(f"WARNING: {AGENT_FILE} not found — skipping memory check")
+def check_agent(agent_file: Path, memory_dir: Path) -> int:
+    """Check one agent for phase-memory consistency. Returns 0 if ok, 1 if not."""
+    agent_name = agent_file.stem.replace("-agent", "")
+
+    if not agent_file.exists():
+        print(f"WARNING: {agent_file} not found -- skipping")
         return 0
 
-    if not MEMORY_DIR.exists():
-        print(f"WARNING: {MEMORY_DIR} not found — skipping memory check")
+    if not memory_dir.exists():
+        print(f"WARNING: {memory_dir} not found -- skipping")
         return 0
 
-    phases = count_phases(AGENT_FILE)
-    memories = count_memory_files(MEMORY_DIR)
+    phases = count_phases(agent_file)
+    memories = count_memory_files(memory_dir)
 
     if not phases:
         return 0  # No phases defined yet
@@ -60,23 +62,40 @@ def main() -> int:
 
     if missing:
         print(
-            f"MEMORY GAP: Phase(s) {sorted(missing)} defined in "
-            f"backend-agent.md but no matching memory file in "
-            f".claude/agent-memory/backend-agent/"
+            f"MEMORY GAP [{agent_name}]: Phase(s) {sorted(missing)} defined in "
+            f"{agent_file.relative_to(PROJECT_ROOT)} but no matching memory file"
         )
-        print(f"   Create: phase-{sorted(missing)[0]}-<slug>.md")
 
     if extra:
         print(
-            f"STALE MEMORY: Memory file(s) for phase {sorted(extra)} "
-            f"exist but no matching phase in backend-agent.md"
+            f"STALE MEMORY [{agent_name}]: Memory file(s) for phase {sorted(extra)} "
+            f"exist but no matching phase in {agent_file.relative_to(PROJECT_ROOT)}"
         )
 
     if missing or extra:
         return 1
 
-    print(f"OK Agent memory consistent: {len(phases)} phases, {len(memories)} memory files")
+    print(f"OK [{agent_name}]: {len(phases)} phases, {len(memories)} memory files")
     return 0
+
+
+def main() -> int:
+    exit_code = 0
+
+    # Find all agent definition files
+    agent_files = sorted(AGENTS_DIR.glob("*-agent.md"))
+    if not agent_files:
+        print("No agent files found -- nothing to check")
+        return 0
+
+    for agent_file in agent_files:
+        agent_name = agent_file.stem  # e.g., "backend-agent"
+        memory_dir = MEMORY_BASE / agent_name
+
+        if check_agent(agent_file, memory_dir) != 0:
+            exit_code = 1
+
+    return exit_code
 
 
 if __name__ == "__main__":

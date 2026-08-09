@@ -18,4 +18,4 @@ metadata:
 - Tailwind v4 with brand palette (indigo #6366F1, green #22C55E, red #EF4444)
 - No gray/zinc/slate/neutral classes anywhere
 
-See [[phase-2-upload-result]] and [[phase-3-history-errors]] for subsequent work.
+See [[phase-2-photo-upload]] and [[phase-3-result-display]] for subsequent work.

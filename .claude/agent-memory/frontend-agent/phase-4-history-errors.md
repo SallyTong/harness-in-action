@@ -1,14 +1,14 @@
 ---
-name: phase-3-history-errors
-description: Frontend Phase 3 status — history list, history detail, error book, practice sheet generation, manual correction
+name: phase-4-history-errors
+description: Frontend Phase 4 status — history list, history detail, error book, practice sheet generation, manual correction
 metadata:
   type: project
-  phase: 3 — History + Error Collections
+  phase: 4 — History + Error Collections
   status: complete
   last_updated: 2026-08-09
 ---
 
-## Phase 3: History + Error Collections — ✅ Complete
+## Phase 4: History + Error Collections — ✅ Complete
 
 ### New Pages
 
@@ -59,4 +59,4 @@ metadata:
 ### Tests
 - `HistoryPage.test.tsx` — 10 tests: phone input, loading, error, empty, data display, filters, load more
 
-See [[phase-2-upload-result]] for previous work.
+See [[phase-2-photo-upload]] and [[phase-3-result-display]] for previous work.
