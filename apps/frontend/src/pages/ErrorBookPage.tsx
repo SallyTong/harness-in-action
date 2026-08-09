@@ -173,15 +173,15 @@ export default function ErrorBookPage() {
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4 pb-24">
       {/* Top bar */}
       <header className="flex items-center justify-between py-4">
-        <h1 className="text-[22px] font-semibold leading-[30px] text-[#1E1B18]">
+        <h1 className="text-[22px] font-semibold leading-[30px] text-text-primary">
           错题集
         </h1>
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`flex min-h-11 min-w-11 items-center justify-center rounded-xl transition-colors ${
             showFilters || hasFilters
-              ? "bg-[#EEF2FF] text-[#6366F1]"
-              : "text-[#A39D97] hover:bg-[#F3F0ED]"
+              ? "bg-accent-subtle text-accent"
+              : "text-text-tertiary hover:bg-brand-hover"
           }`}
           aria-label="筛选"
         >
@@ -191,12 +191,12 @@ export default function ErrorBookPage() {
 
       {/* Filter bar */}
       {showFilters && (
-        <div className="mb-4 space-y-3 rounded-[14px] border border-[#F0EDE8] bg-white p-4 shadow-sm">
+        <div className="mb-4 space-y-3 rounded-[14px] border border-border-light bg-white p-4 shadow-sm">
           <div className="flex gap-2">
             <select
               value={childId}
               onChange={(e) => setChildId(e.target.value)}
-              className="flex-1 rounded-[10px] border border-[#E5E0DA] bg-white px-3 py-2.5 text-[14px] text-[#1E1B18] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
+              className="flex-1 rounded-[10px] border border-border bg-white px-3 py-2.5 text-[14px] text-text-primary focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
             >
               <option value="">全部小朋友</option>
               {children.map((c) => (
@@ -208,7 +208,7 @@ export default function ErrorBookPage() {
             <select
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="flex-1 rounded-[10px] border border-[#E5E0DA] bg-white px-3 py-2.5 text-[14px] text-[#1E1B18] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
+              className="flex-1 rounded-[10px] border border-border bg-white px-3 py-2.5 text-[14px] text-text-primary focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
             >
               <option value="">全部学科</option>
               <option value="english">英语</option>
@@ -219,7 +219,7 @@ export default function ErrorBookPage() {
             <select
               value={questionType}
               onChange={(e) => setQuestionType(e.target.value)}
-              className="flex-1 rounded-[10px] border border-[#E5E0DA] bg-white px-3 py-2.5 text-[14px] text-[#1E1B18] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
+              className="flex-1 rounded-[10px] border border-border bg-white px-3 py-2.5 text-[14px] text-text-primary focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
             >
               <option value="">全部题型</option>
               {Object.entries(TYPE_LABELS).map(([val, label]) => (
@@ -231,7 +231,7 @@ export default function ErrorBookPage() {
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="flex-1 rounded-[10px] border border-[#E5E0DA] bg-white px-3 py-2.5 text-[14px] text-[#1E1B18] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
+              className="flex-1 rounded-[10px] border border-border bg-white px-3 py-2.5 text-[14px] text-text-primary focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
             >
               {TIME_RANGES.map((tr) => (
                 <option key={tr.value} value={tr.value}>
@@ -243,7 +243,7 @@ export default function ErrorBookPage() {
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1 text-[13px] text-[#6366F1] transition-colors hover:text-[#4F46E5]"
+              className="flex items-center gap-1 text-[13px] text-accent transition-colors hover:text-accent-hover"
             >
               <RotateCcw size={14} strokeWidth={1.5} />
               清除筛选
@@ -254,7 +254,7 @@ export default function ErrorBookPage() {
 
       {/* Stats summary */}
       {!loading && (
-        <p className="mb-4 text-[13px] font-medium text-[#6B6560]">
+        <p className="mb-4 text-[13px] font-medium text-text-secondary">
           共 {total} 道错题
         </p>
       )}
@@ -269,10 +269,10 @@ export default function ErrorBookPage() {
       ) : fetchError ? (
         <div className="flex flex-1 flex-col items-center justify-center py-16">
           <span className="text-4xl">⚠️</span>
-          <p className="mt-3 text-[15px] text-[#EF4444]">{fetchError}</p>
+          <p className="mt-3 text-[15px] text-error">{fetchError}</p>
           <button
             onClick={() => fetchErrors(true)}
-            className="mt-4 min-h-11 rounded-xl bg-[#6366F1] px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-[#4F46E5]"
+            className="mt-4 min-h-11 rounded-xl bg-accent px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-accent-hover"
           >
             重试
           </button>
@@ -282,12 +282,12 @@ export default function ErrorBookPage() {
           <span className="text-5xl">
             {hasFilters ? "🔍" : "🎉"}
           </span>
-          <p className="mt-4 text-[15px] font-medium text-[#6B6560]">
+          <p className="mt-4 text-[15px] font-medium text-text-secondary">
             {hasFilters
               ? "没有符合条件的错题"
               : "还没有错题。继续保持！"}
           </p>
-          <p className="mt-1 text-[13px] text-[#A39D97]">
+          <p className="mt-1 text-[13px] text-text-tertiary">
             {hasFilters
               ? "试试调整筛选条件"
               : "去批改试卷，错题会自动收集到这里"}
@@ -295,14 +295,14 @@ export default function ErrorBookPage() {
           {hasFilters ? (
             <button
               onClick={clearFilters}
-              className="mt-6 min-h-11 rounded-xl border border-[#E5E0DA] bg-white px-6 py-2 text-[15px] font-medium text-[#6B6560] transition-colors hover:bg-[#F3F0ED]"
+              className="mt-6 min-h-11 rounded-xl border border-border bg-white px-6 py-2 text-[15px] font-medium text-text-secondary transition-colors hover:bg-brand-hover"
             >
               清除筛选
             </button>
           ) : (
             <button
               onClick={() => navigate("/")}
-              className="mt-6 min-h-11 rounded-xl bg-[#6366F1] px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-[#4F46E5]"
+              className="mt-6 min-h-11 rounded-xl bg-accent px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-accent-hover"
             >
               去批改
             </button>
@@ -313,7 +313,7 @@ export default function ErrorBookPage() {
           {errors.map((eq) => (
             <div
               key={eq.id}
-              className="overflow-hidden rounded-[14px] border border-[#F0EDE8] bg-white shadow-sm"
+              className="overflow-hidden rounded-[14px] border border-border-light bg-white shadow-sm"
             >
               {/* Question image */}
               {eq.question_image_path && (
@@ -327,52 +327,52 @@ export default function ErrorBookPage() {
               {/* Info bar */}
               <div className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-medium text-[#1E1B18]">
+                  <span className="text-[13px] font-medium text-text-primary">
                     第 {eq.question_number} 题
                   </span>
-                  <span className="rounded-full bg-[#F3F0ED] px-2 py-0.5 text-[11px] font-medium text-[#6B6560]">
+                  <span className="rounded-full bg-brand-hover px-2 py-0.5 text-[11px] font-medium text-text-secondary">
                     {TYPE_LABELS[eq.question_type] || eq.question_type}
                   </span>
-                  <span className="text-[12px] text-[#A39D97]">
+                  <span className="text-[12px] text-text-tertiary">
                     {eq.child_name} ·{" "}
                     {SUBJECT_LABELS[eq.subject] || eq.subject}
                   </span>
                 </div>
-                <span className="text-[11px] text-[#A39D97]">
+                <span className="text-[11px] text-text-tertiary">
                   {formatDate(eq.last_error_at)}
                 </span>
               </div>
               {/* Solution note */}
               {eq.solution_note && (
-                <div className="border-t border-[#F0EDE8] px-4 py-2">
+                <div className="border-t border-border-light px-4 py-2">
                   <button
                     onClick={() => toggleNote(eq.id)}
                     className="flex w-full items-center justify-between text-left"
                   >
-                    <span className="text-[12px] font-medium text-[#6B6560]">
+                    <span className="text-[12px] font-medium text-text-secondary">
                       💡 解题思路
                     </span>
                     {expandedNotes.has(eq.id) ? (
                       <ChevronUp
                         size={14}
                         strokeWidth={1.5}
-                        className="text-[#A39D97]"
+                        className="text-text-tertiary"
                       />
                     ) : (
                       <ChevronDown
                         size={14}
                         strokeWidth={1.5}
-                        className="text-[#A39D97]"
+                        className="text-text-tertiary"
                       />
                     )}
                   </button>
                   {expandedNotes.has(eq.id) && (
-                    <div className="mt-2 rounded-[8px] bg-[#FEF2F2] px-3 py-2">
-                      <p className="text-[13px] leading-relaxed text-[#1E1B18]">
+                    <div className="mt-2 rounded-[8px] bg-error-bg px-3 py-2">
+                      <p className="text-[13px] leading-relaxed text-text-primary">
                         {eq.solution_note}
                       </p>
                       {eq.error_category && (
-                        <span className="mt-1 inline-block rounded-full bg-[#FEF2F2] px-2 py-0.5 text-[11px] font-medium text-[#EF4444]">
+                        <span className="mt-1 inline-block rounded-full bg-error-bg px-2 py-0.5 text-[11px] font-medium text-error">
                           {ERROR_LABELS[eq.error_category] ||
                             eq.error_category}
                         </span>
@@ -389,14 +389,14 @@ export default function ErrorBookPage() {
             <button
               onClick={handleLoadMore}
               disabled={loading}
-              className="w-full rounded-xl border border-[#E5E0DA] bg-white py-3 text-[14px] font-medium text-[#6B6560] transition-colors hover:bg-[#F3F0ED] disabled:opacity-50"
+              className="w-full rounded-xl border border-border bg-white py-3 text-[14px] font-medium text-text-secondary transition-colors hover:bg-brand-hover disabled:opacity-50"
             >
               {loading ? "加载中…" : "加载更多"}
             </button>
           )}
 
           {!hasMore && errors.length > 0 && (
-            <p className="py-4 text-center text-[12px] text-[#A39D97]">
+            <p className="py-4 text-center text-[12px] text-text-tertiary">
               —— 已显示全部错题 ——
             </p>
           )}
@@ -416,7 +416,7 @@ export default function ErrorBookPage() {
                   params.set("question_type", questionType);
                 navigate(`/errors/generate?${params.toString()}`);
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6366F1] py-3 text-[15px] font-medium text-white shadow-sm transition-colors hover:bg-[#4F46E5]"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 text-[15px] font-medium text-white shadow-sm transition-colors hover:bg-accent-hover"
             >
               <Wand2 size={18} strokeWidth={1.5} />
               生成错题试卷

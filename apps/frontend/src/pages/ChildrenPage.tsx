@@ -102,16 +102,16 @@ export default function ChildrenPage() {
       <header className="flex items-center gap-3 py-4">
         <button
           onClick={() => navigate("/")}
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-[#6B6560] transition-colors hover:bg-[#F3F0ED]"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-brand-hover"
           aria-label="返回"
         >
           <ArrowLeft size={22} strokeWidth={1.5} />
         </button>
-        <h1 className="text-[22px] font-semibold leading-[30px] text-[#1E1B18]">
+        <h1 className="text-[22px] font-semibold leading-[30px] text-text-primary">
           小朋友管理
         </h1>
       </header>
-      <p className="mb-4 text-[13px] text-[#A39D97]">手机号：{phone}</p>
+      <p className="mb-4 text-[13px] text-text-tertiary">手机号：{phone}</p>
       {loading && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -119,18 +119,18 @@ export default function ChildrenPage() {
               key={i}
               className="animate-pulse rounded-[14px] bg-white p-4 shadow-sm"
             >
-              <div className="mb-2 h-5 w-24 rounded bg-[#F3F0ED]" />
-              <div className="h-3 w-16 rounded bg-[#F3F0ED]" />
+              <div className="mb-2 h-5 w-24 rounded bg-brand-hover" />
+              <div className="h-3 w-16 rounded bg-brand-hover" />
             </div>
           ))}
         </div>
       )}
       {!loading && error && (
         <div className="flex flex-col items-center gap-3 py-12">
-          <p className="text-[15px] text-[#EF4444]">{error}</p>
+          <p className="text-[15px] text-error">{error}</p>
           <button
             onClick={fetchChildren}
-            className="rounded-xl bg-[#6366F1] px-4 py-2 text-[13px] font-medium text-white"
+            className="rounded-xl bg-accent px-4 py-2 text-[13px] font-medium text-white"
           >
             重试
           </button>
@@ -138,10 +138,10 @@ export default function ChildrenPage() {
       )}
       {!loading && !error && children.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-12">
-          <p className="text-[15px] text-[#6B6560]">请先添加小朋友</p>
+          <p className="text-[15px] text-text-secondary">请先添加小朋友</p>
           <button
             onClick={() => setAdding(true)}
-            className="rounded-xl bg-[#6366F1] px-4 py-2 text-[13px] font-medium text-white"
+            className="rounded-xl bg-accent px-4 py-2 text-[13px] font-medium text-white"
           >
             添加
           </button>
@@ -161,7 +161,7 @@ export default function ChildrenPage() {
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     maxLength={50}
-                    className="w-full rounded-[10px] border border-[#6366F1] px-3 py-2 text-[18px] font-medium text-[#1E1B18] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
+                    className="w-full rounded-[10px] border border-accent px-3 py-2 text-[18px] font-medium text-text-primary focus:ring-2 focus:ring-accent focus:outline-none"
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleEdit(child);
@@ -171,12 +171,12 @@ export default function ChildrenPage() {
                 ) : (
                   <button
                     onClick={() => handleEdit(child)}
-                    className="text-left text-[18px] font-medium leading-[26px] text-[#1E1B18] transition-colors hover:text-[#6366F1]"
+                    className="text-left text-[18px] font-medium leading-[26px] text-text-primary transition-colors hover:text-accent"
                   >
                     {child.name}
                   </button>
                 )}
-                <p className="mt-1 text-[13px] leading-[18px] text-[#A39D97]">
+                <p className="mt-1 text-[13px] leading-[18px] text-text-tertiary">
                   已批改 {child.submission_count} 次
                 </p>
               </div>
@@ -184,13 +184,13 @@ export default function ChildrenPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setEditingId(null)}
-                    className="min-h-11 rounded-xl px-3 py-2 text-[13px] text-[#6B6560] transition-colors hover:bg-[#F3F0ED]"
+                    className="min-h-11 rounded-xl px-3 py-2 text-[13px] text-text-secondary transition-colors hover:bg-brand-hover"
                   >
                     取消
                   </button>
                   <button
                     onClick={() => handleEdit(child)}
-                    className="min-h-11 rounded-xl bg-[#6366F1] px-3 py-2 text-[13px] font-medium text-white"
+                    className="min-h-11 rounded-xl bg-accent px-3 py-2 text-[13px] font-medium text-white"
                   >
                     保存
                   </button>
@@ -198,7 +198,7 @@ export default function ChildrenPage() {
               ) : (
                 <button
                   onClick={() => setDeleteTarget(child)}
-                  className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-[#A39D97] transition-colors hover:bg-[#FEF2F2] hover:text-[#EF4444]"
+                  className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-text-tertiary transition-colors hover:bg-error-bg hover:text-error"
                   aria-label={"删除 " + child.name}
                 >
                   <Trash2 size={16} strokeWidth={1.5} />
@@ -209,7 +209,7 @@ export default function ChildrenPage() {
           {!adding && (
             <button
               onClick={() => setAdding(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#E5E0DA] py-3 text-[15px] text-[#6B6560] transition-colors hover:border-[#6366F1] hover:text-[#6366F1]"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-[15px] text-text-secondary transition-colors hover:border-accent hover:text-accent"
             >
               <Plus size={18} strokeWidth={1.5} />
               添加小朋友
@@ -223,7 +223,7 @@ export default function ChildrenPage() {
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="小朋友名字"
                 maxLength={50}
-                className="flex-1 rounded-[10px] border border-[#E5E0DA] px-3 py-3 text-[15px] text-[#1E1B18] placeholder-[#A39D97] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
+                className="flex-1 rounded-[10px] border border-border px-3 py-3 text-[15px] text-text-primary placeholder-[#A39D97] focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleAdd();
@@ -236,7 +236,7 @@ export default function ChildrenPage() {
               <button
                 onClick={handleAdd}
                 disabled={!newName.trim()}
-                className="min-h-11 rounded-xl bg-[#6366F1] px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[#4F46E5] disabled:opacity-50"
+                className="min-h-11 rounded-xl bg-accent px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
               >
                 确认
               </button>
@@ -245,7 +245,7 @@ export default function ChildrenPage() {
                   setAdding(false);
                   setNewName("");
                 }}
-                className="min-h-11 rounded-xl px-3 py-2 text-[13px] text-[#6B6560] transition-colors hover:bg-[#F3F0ED]"
+                className="min-h-11 rounded-xl px-3 py-2 text-[13px] text-text-secondary transition-colors hover:bg-brand-hover"
               >
                 取消
               </button>

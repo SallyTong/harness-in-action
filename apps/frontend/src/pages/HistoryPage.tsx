@@ -121,15 +121,15 @@ export default function HistoryPage() {
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4 pb-16">
       {/* Top bar */}
       <header className="flex items-center py-4">
-        <h1 className="text-[22px] font-semibold leading-[30px] text-[#1E1B18]">
+        <h1 className="text-[22px] font-semibold leading-[30px] text-text-primary">
           批改历史
         </h1>
       </header>
 
       {/* Phone setup */}
       {!isReady && (
-        <div className="mb-6 rounded-[14px] border border-[#F0EDE8] bg-white p-4 shadow-sm">
-          <label className="mb-2 block text-[13px] font-medium text-[#6B6560]">
+        <div className="mb-6 rounded-[14px] border border-border-light bg-white p-4 shadow-sm">
+          <label className="mb-2 block text-[13px] font-medium text-text-secondary">
             请输入家长手机号
           </label>
           <input
@@ -138,9 +138,9 @@ export default function HistoryPage() {
             onChange={(e) => setPhone(e.target.value)}
             placeholder="13800138000"
             maxLength={11}
-            className="w-full rounded-[10px] border border-[#E5E0DA] px-4 py-3 text-[15px] text-[#1E1B18] placeholder-[#A39D97] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
+            className="w-full rounded-[10px] border border-border px-4 py-3 text-[15px] text-text-primary placeholder-[#A39D97] focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
           />
-          <p className="mt-1 text-[11px] text-[#A39D97]">
+          <p className="mt-1 text-[11px] text-text-tertiary">
             手机号仅用于区分数据，不验证真伪
           </p>
         </div>
@@ -152,7 +152,7 @@ export default function HistoryPage() {
           <select
             value={childFilter ?? ""}
             onChange={(e) => handleChildFilterChange(e.target.value)}
-            className="flex-1 rounded-[10px] border border-[#E5E0DA] bg-white px-3 py-3 text-[15px] text-[#1E1B18] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
+            className="flex-1 rounded-[10px] border border-border bg-white px-3 py-3 text-[15px] text-text-primary focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
           >
             <option value="">全部</option>
             {safeChildren.map((c) => (
@@ -164,7 +164,7 @@ export default function HistoryPage() {
           <select
             value={subjectFilter}
             onChange={(e) => handleSubjectFilterChange(e.target.value)}
-            className="flex-1 rounded-[10px] border border-[#E5E0DA] bg-white px-3 py-3 text-[15px] text-[#1E1B18] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
+            className="flex-1 rounded-[10px] border border-border bg-white px-3 py-3 text-[15px] text-text-primary focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
           >
             <option value="">全部</option>
             <option value="english">英语</option>
@@ -182,7 +182,7 @@ export default function HistoryPage() {
               {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 rounded-[14px] border border-[#F0EDE8] bg-white p-3 shadow-sm"
+                  className="flex items-center gap-3 rounded-[14px] border border-border-light bg-white p-3 shadow-sm"
                 >
                   <Skeleton className="h-16 w-16 flex-shrink-0 rounded-[10px]" />
                   <div className="flex flex-1 flex-col gap-2">
@@ -198,10 +198,10 @@ export default function HistoryPage() {
           {error && !loading && (
             <div className="flex flex-1 flex-col items-center justify-center py-12">
               <span className="text-5xl">😞</span>
-              <p className="mt-4 text-[15px] text-[#EF4444]">{error}</p>
+              <p className="mt-4 text-[15px] text-error">{error}</p>
               <button
                 onClick={handleRetry}
-                className="mt-6 min-h-11 rounded-xl bg-[#6366F1] px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-[#4F46E5]"
+                className="mt-6 min-h-11 rounded-xl bg-accent px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-accent-hover"
               >
                 重试
               </button>
@@ -212,14 +212,14 @@ export default function HistoryPage() {
           {!loading && !error && submissions.length === 0 && (
             <div className="flex flex-1 flex-col items-center justify-center py-12">
               <span className="text-5xl">📋</span>
-              <p className="mt-4 text-center text-[15px] leading-relaxed text-[#6B6560]">
+              <p className="mt-4 text-center text-[15px] leading-relaxed text-text-secondary">
                 还没有批改记录。
                 <br />
                 去批改一张试卷吧！
               </p>
               <button
                 onClick={() => navigate("/")}
-                className="mt-6 min-h-11 rounded-xl bg-[#6366F1] px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-[#4F46E5]"
+                className="mt-6 min-h-11 rounded-xl bg-accent px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-accent-hover"
               >
                 去批改
               </button>
@@ -234,10 +234,10 @@ export default function HistoryPage() {
                   <button
                     key={item.id}
                     onClick={() => navigate(`/submissions/${item.id}`)}
-                    className="flex w-full items-center gap-3 rounded-[14px] border border-[#F0EDE8] bg-white p-3 text-left shadow-sm transition-colors hover:bg-[#F9F8F6]"
+                    className="flex w-full items-center gap-3 rounded-[14px] border border-border-light bg-white p-3 text-left shadow-sm transition-colors hover:bg-[#F9F8F6]"
                   >
                     {/* Thumbnail */}
-                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-[10px] bg-[#F3F0ED]">
+                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-[10px] bg-brand-hover">
                       {item.thumbnail_url ? (
                         <img
                           src={item.thumbnail_url}
@@ -245,7 +245,7 @@ export default function HistoryPage() {
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[#A39D97]">
+                        <div className="flex h-full w-full items-center justify-center text-text-tertiary">
                           <FileText size={24} strokeWidth={1.5} />
                         </div>
                       )}
@@ -254,24 +254,24 @@ export default function HistoryPage() {
                     {/* Details */}
                     <div className="flex flex-1 flex-col min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="truncate text-[15px] font-medium text-[#1E1B18]">
+                        <span className="truncate text-[15px] font-medium text-text-primary">
                           {item.child_name}
                         </span>
-                        <span className="ml-2 flex-shrink-0 rounded-full bg-[#EEF2FF] px-2.5 py-0.5 text-[11px] font-medium text-[#6366F1]">
+                        <span className="ml-2 flex-shrink-0 rounded-full bg-accent-subtle px-2.5 py-0.5 text-[11px] font-medium text-accent">
                           {item.subject === "english" ? "英语" : "数学"}
                         </span>
                       </div>
                       <div className="mt-1 flex items-center justify-between">
                         {item.score ? (
-                          <span className="font-mono text-[13px] font-medium text-[#22C55E]">
+                          <span className="font-mono text-[13px] font-medium text-success">
                             ✅ {item.score.correct}/{item.score.total}
                           </span>
                         ) : (
-                          <span className="text-[13px] text-[#A39D97]">
+                          <span className="text-[13px] text-text-tertiary">
                             批改中…
                           </span>
                         )}
-                        <span className="text-[11px] text-[#A39D97]">
+                        <span className="text-[11px] text-text-tertiary">
                           {formatRelativeTime(item.created_at)}
                         </span>
                       </div>
@@ -286,12 +286,12 @@ export default function HistoryPage() {
                   <button
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="w-full min-h-11 rounded-xl border border-[#E5E0DA] bg-white py-3 text-[15px] font-medium text-[#6366F1] transition-colors hover:bg-[#F3F0ED] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full min-h-11 rounded-xl border border-border bg-white py-3 text-[15px] font-medium text-accent transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {loadingMore ? "加载中…" : "加载更多"}
                   </button>
                   {loadMoreError && (
-                    <p className="mt-2 text-center text-[13px] text-[#EF4444]">
+                    <p className="mt-2 text-center text-[13px] text-error">
                       {loadMoreError}
                     </p>
                   )}

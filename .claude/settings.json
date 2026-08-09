@@ -45,64 +45,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd ${CLAUDE_PROJECT_DIR}/apps/backend && python -m ruff check app/ --quiet 2>&1",
-            "timeout": 30,
-            "statusMessage": "Linting backend (ruff)..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd ${CLAUDE_PROJECT_DIR}/apps/backend && python -m pytest tests/ -q 2>&1 | tail -10",
-            "timeout": 60,
-            "statusMessage": "Running backend tests..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd ${CLAUDE_PROJECT_DIR}/apps/frontend && npx tsc --noEmit 2>&1",
-            "timeout": 60,
-            "statusMessage": "Type-checking frontend..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd ${CLAUDE_PROJECT_DIR}/apps/frontend && npx vitest run --reporter=verbose 2>&1 | tail -20",
-            "timeout": 60,
-            "statusMessage": "Running frontend tests..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd ${CLAUDE_PROJECT_DIR}/apps/backend && python -c \"from alembic.config import Config; from alembic.script import ScriptDirectory; config = Config('alembic.ini'); script = ScriptDirectory.from_config(config); head = script.get_current_head(); print(f'Migrations OK — current head: {head}')\" 2>&1 || echo \"WARNING: Cannot read Alembic migrations\"",
-            "timeout": 15,
-            "statusMessage": "Checking model-migration consistency..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python ${CLAUDE_PROJECT_DIR}/scripts/validate-harness.py 2>&1 || echo \"HARNESS ISSUES FOUND — run 'python scripts/validate-harness.py' to see details\"",
-            "timeout": 15,
-            "statusMessage": "Validating harness configuration..."
+            "command": "python ${CLAUDE_PROJECT_DIR}/scripts/hook-router.py",
+            "timeout": 120,
+            "statusMessage": "Running relevant checks for changed file..."
           }
         ]
       }

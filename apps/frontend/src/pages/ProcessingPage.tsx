@@ -89,11 +89,11 @@ export default function ProcessingPage() {
       <div className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center px-4 pb-16">
         <div className="text-center">
           <span className="text-5xl">😞</span>
-          <p className="mt-4 text-[15px] text-[#EF4444]">{error}</p>
+          <p className="mt-4 text-[15px] text-error">{error}</p>
           <div className="mt-6 flex gap-3">
             <button
               onClick={() => navigate("/")}
-              className="min-h-11 rounded-xl border border-[#E5E0DA] px-6 py-2 text-[15px] font-medium text-[#6B6560] transition-colors hover:bg-[#F3F0ED]"
+              className="min-h-11 rounded-xl border border-border px-6 py-2 text-[15px] font-medium text-text-secondary transition-colors hover:bg-brand-hover"
             >
               返回首页
             </button>
@@ -103,7 +103,7 @@ export default function ProcessingPage() {
                 setTimedOut(false);
                 startTimeRef.current = Date.now();
               }}
-              className="min-h-11 rounded-xl bg-[#6366F1] px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-[#4F46E5]"
+              className="min-h-11 rounded-xl bg-accent px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-accent-hover"
             >
               重新批改
             </button>
@@ -119,13 +119,13 @@ export default function ProcessingPage() {
       <div className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center px-4 pb-16">
         <div className="text-center">
           <span className="text-5xl">⏳</span>
-          <p className="mt-4 text-[15px] font-medium text-[#F59E0B]">
+          <p className="mt-4 text-[15px] font-medium text-warning">
             批改时间较长，请稍候或重试
           </p>
           <div className="mt-6 flex gap-3">
             <button
               onClick={() => navigate("/")}
-              className="min-h-11 rounded-xl border border-[#E5E0DA] px-6 py-2 text-[15px] font-medium text-[#6B6560] transition-colors hover:bg-[#F3F0ED]"
+              className="min-h-11 rounded-xl border border-border px-6 py-2 text-[15px] font-medium text-text-secondary transition-colors hover:bg-brand-hover"
             >
               返回首页
             </button>
@@ -135,7 +135,7 @@ export default function ProcessingPage() {
                 setTimedOut(false);
                 startTimeRef.current = Date.now();
               }}
-              className="min-h-11 rounded-xl bg-[#6366F1] px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-[#4F46E5]"
+              className="min-h-11 rounded-xl bg-accent px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-accent-hover"
             >
               继续等待
             </button>
@@ -152,24 +152,24 @@ export default function ProcessingPage() {
       <div className="mb-8 animate-bounce text-6xl">✏️</div>
 
       {/* Carousel text */}
-      <span className="text-[22px] font-semibold text-[#1E1B18]">
+      <span className="text-[22px] font-semibold text-text-primary">
         {icon} {text}
       </span>
 
       {/* Indeterminate progress bar */}
-      <div className="mt-6 h-1 w-48 overflow-hidden rounded-full bg-[#F0EDE8]">
-        <div className="h-full w-1/2 animate-[indeterminate_1.2s_ease-in-out_infinite] rounded-full bg-[#6366F1]" />
+      <div className="mt-6 h-1 w-48 overflow-hidden rounded-full bg-border-light">
+        <div className="h-full w-1/2 animate-[indeterminate_1.2s_ease-in-out_infinite] rounded-full bg-accent" />
       </div>
 
       {/* Estimate */}
-      <p className="mt-4 text-[13px] text-[#A39D97]">
+      <p className="mt-4 text-[13px] text-text-tertiary">
         通常需要 5-15 秒
       </p>
 
       {/* Cancel button */}
       <button
         onClick={() => navigate("/")}
-        className="mt-8 min-h-11 rounded-xl border border-[#E5E0DA] px-6 py-2 text-[15px] font-medium text-[#6B6560] transition-colors hover:bg-[#F3F0ED]"
+        className="mt-8 min-h-11 rounded-xl border border-border px-6 py-2 text-[15px] font-medium text-text-secondary transition-colors hover:bg-brand-hover"
       >
         取消
       </button>

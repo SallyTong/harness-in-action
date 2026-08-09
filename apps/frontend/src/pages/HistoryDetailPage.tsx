@@ -168,12 +168,12 @@ export default function HistoryDetailPage() {
     return (
       <div className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center px-4 pb-16">
         <span className="text-5xl">😞</span>
-        <p className="mt-4 text-[15px] text-[#EF4444]">
+        <p className="mt-4 text-[15px] text-error">
           {error || "加载失败"}
         </p>
         <button
           onClick={() => navigate(-1)}
-          className="mt-6 min-h-11 rounded-xl bg-[#6366F1] px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-[#4F46E5]"
+          className="mt-6 min-h-11 rounded-xl bg-accent px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-accent-hover"
         >
           返回
         </button>
@@ -195,16 +195,16 @@ export default function HistoryDetailPage() {
       <header className="flex items-center gap-3 py-4">
         <button
           onClick={() => navigate(-1)}
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-[#A39D97] transition-colors hover:bg-[#F3F0ED]"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-text-tertiary transition-colors hover:bg-brand-hover"
           aria-label="返回"
         >
           <ArrowLeft size={22} strokeWidth={1.5} />
         </button>
-        <h1 className="text-[18px] font-semibold text-[#1E1B18]">
+        <h1 className="text-[18px] font-semibold text-text-primary">
           批改详情
         </h1>
         {submission.subject && (
-          <span className="ml-auto rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-medium text-[#6366F1]">
+          <span className="ml-auto rounded-full bg-accent-subtle px-3 py-1 text-[11px] font-medium text-accent">
             {submission.subject === "english" ? "英语" : "数学"}
           </span>
         )}
@@ -212,23 +212,23 @@ export default function HistoryDetailPage() {
 
       {/* Score overview card */}
       {score && (
-        <div className="mb-4 rounded-[14px] border border-[#F0EDE8] bg-white p-5 shadow-sm">
+        <div className="mb-4 rounded-[14px] border border-border-light bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[13px] text-[#A39D97]">得分</p>
+              <p className="text-[13px] text-text-tertiary">得分</p>
               <p
                 className={`mt-1 font-mono text-[28px] font-semibold leading-[36px] ${
-                  isGoodScore ? "text-[#22C55E]" : "text-[#EF4444]"
+                  isGoodScore ? "text-success" : "text-error"
                 }`}
               >
                 {isGoodScore ? "✅" : "❌"} {score.correct}/{score.total}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[13px] text-[#A39D97]">
+              <p className="text-[13px] text-text-tertiary">
                 {submission.child_name}
               </p>
-              <p className="mt-1 text-[13px] text-[#6B6560]">
+              <p className="mt-1 text-[13px] text-text-secondary">
                 {formatRelativeTime(submission.created_at)}
               </p>
             </div>
@@ -238,13 +238,13 @@ export default function HistoryDetailPage() {
 
       {/* Tab bar + Image */}
       <div className="mb-6">
-        <div className="mb-2 flex rounded-[10px] border border-[#E5E0DA] bg-white p-0.5">
+        <div className="mb-2 flex rounded-[10px] border border-border bg-white p-0.5">
           <button
             onClick={() => setActiveTab("annotated")}
             className={`flex-1 rounded-[8px] py-2 text-[13px] font-medium transition-colors ${
               activeTab === "annotated"
-                ? "bg-[#6366F1] text-white"
-                : "text-[#6B6560]"
+                ? "bg-accent text-white"
+                : "text-text-secondary"
             }`}
           >
             批改后
@@ -253,8 +253,8 @@ export default function HistoryDetailPage() {
             onClick={() => setActiveTab("original")}
             className={`flex-1 rounded-[8px] py-2 text-[13px] font-medium transition-colors ${
               activeTab === "original"
-                ? "bg-[#6366F1] text-white"
-                : "text-[#6B6560]"
+                ? "bg-accent text-white"
+                : "text-text-secondary"
             }`}
           >
             原图
@@ -275,14 +275,14 @@ export default function HistoryDetailPage() {
             />
           </button>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-[14px] border border-[#F0EDE8] bg-white py-12">
-            <Image size={32} className="text-[#A39D97]" strokeWidth={1.5} />
-            <p className="mt-2 text-[13px] text-[#A39D97]">
+          <div className="flex flex-col items-center justify-center rounded-[14px] border border-border-light bg-white py-12">
+            <Image size={32} className="text-text-tertiary" strokeWidth={1.5} />
+            <p className="mt-2 text-[13px] text-text-tertiary">
               图片加载失败
             </p>
           </div>
         )}
-        <p className="mt-1 text-center text-[11px] text-[#A39D97]">
+        <p className="mt-1 text-center text-[11px] text-text-tertiary">
           点击图片可放大查看
         </p>
       </div>
@@ -290,7 +290,7 @@ export default function HistoryDetailPage() {
       {/* Question detail list */}
       {questions.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-[15px] font-medium text-[#6B6560]">
+          <h3 className="text-[15px] font-medium text-text-secondary">
             逐题明细
           </h3>
           {questions.map((q) => (
@@ -298,16 +298,16 @@ export default function HistoryDetailPage() {
               key={q.id}
               className={`rounded-[10px] border bg-white p-3 shadow-sm ${
                 q.is_correct
-                  ? "border-l-2 border-l-[#22C55E] border-[#F0EDE8]"
-                  : "border-l-2 border-l-[#EF4444] border-[#F0EDE8]"
+                  ? "border-l-2 border-l-[#22C55E] border-border-light"
+                  : "border-l-2 border-l-[#EF4444] border-border-light"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-medium text-[#1E1B18]">
+                  <span className="text-[13px] font-medium text-text-primary">
                     第 {q.question_number} 题
                   </span>
-                  <span className="rounded-full bg-[#F3F0ED] px-2 py-0.5 text-[11px] font-medium text-[#6B6560]">
+                  <span className="rounded-full bg-brand-hover px-2 py-0.5 text-[11px] font-medium text-text-secondary">
                     {TYPE_LABELS[q.question_type] || q.question_type}
                   </span>
                   {q.is_manually_fixed && (
@@ -324,7 +324,7 @@ export default function HistoryDetailPage() {
                     className={`flex min-h-8 min-w-8 items-center justify-center rounded-xl text-[11px] font-medium transition-colors ${
                       q.is_correct
                         ? "bg-[#DCFCE7] text-[#16A34A] hover:bg-[#BBF7D0]"
-                        : "bg-[#FEF2F2] text-[#EF4444] hover:bg-[#FEE2E2]"
+                        : "bg-error-bg text-error hover:bg-[#FEE2E2]"
                     } ${savingQid === q.id ? "opacity-50" : ""}`}
                     aria-label={q.is_correct ? "标记为错" : "标记为对"}
                   >
@@ -341,7 +341,7 @@ export default function HistoryDetailPage() {
                   {q.solution_note && (
                     <button
                       onClick={() => toggleNote(q.id)}
-                      className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-[#A39D97] transition-colors hover:bg-[#F3F0ED]"
+                      className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-text-tertiary transition-colors hover:bg-brand-hover"
                       aria-label={
                         expandedNotes.has(q.id) ? "收起" : "展开"
                       }
@@ -357,12 +357,12 @@ export default function HistoryDetailPage() {
               </div>
               {/* Solution note (expandable) */}
               {q.solution_note && expandedNotes.has(q.id) && (
-                <div className="mt-2 rounded-[8px] bg-[#FEF2F2] px-3 py-2">
-                  <p className="text-[13px] leading-relaxed text-[#1E1B18]">
+                <div className="mt-2 rounded-[8px] bg-error-bg px-3 py-2">
+                  <p className="text-[13px] leading-relaxed text-text-primary">
                     {q.solution_note}
                   </p>
                   {q.error_category && (
-                    <span className="mt-1 inline-block rounded-full bg-[#FEF2F2] px-2 py-0.5 text-[11px] font-medium text-[#EF4444]">
+                    <span className="mt-1 inline-block rounded-full bg-error-bg px-2 py-0.5 text-[11px] font-medium text-error">
                       {ERROR_LABELS[q.error_category] || q.error_category}
                     </span>
                   )}
@@ -377,7 +377,7 @@ export default function HistoryDetailPage() {
       <div className="mt-8">
         <button
           onClick={() => navigate("/")}
-          className="w-full rounded-xl bg-[#6366F1] py-3 text-[15px] font-medium text-white shadow-sm transition-colors hover:bg-[#4F46E5]"
+          className="w-full rounded-xl bg-accent py-3 text-[15px] font-medium text-white shadow-sm transition-colors hover:bg-accent-hover"
         >
           返回首页
         </button>

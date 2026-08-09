@@ -111,27 +111,27 @@ export default function ErrorGeneratePage() {
       <header className="flex items-center gap-3 py-4">
         <button
           onClick={() => navigate(-1)}
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-[#A39D97] transition-colors hover:bg-[#F3F0ED]"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-text-tertiary transition-colors hover:bg-brand-hover"
           aria-label="返回"
         >
           <ArrowLeft size={22} strokeWidth={1.5} />
         </button>
-        <h1 className="text-[18px] font-semibold text-[#1E1B18]">
+        <h1 className="text-[18px] font-semibold text-text-primary">
           生成错题试卷
         </h1>
       </header>
 
       {/* Parameter form */}
-      <div className="space-y-5 rounded-[14px] border border-[#F0EDE8] bg-white p-5 shadow-sm">
+      <div className="space-y-5 rounded-[14px] border border-border-light bg-white p-5 shadow-sm">
         {/* Child */}
         <div>
-          <label className="mb-1.5 block text-[13px] font-medium text-[#6B6560]">
+          <label className="mb-1.5 block text-[13px] font-medium text-text-secondary">
             小朋友
           </label>
           <select
             value={childId}
             onChange={(e) => setChildId(e.target.value)}
-            className="w-full rounded-[10px] border border-[#E5E0DA] bg-white px-3 py-2.5 text-[15px] text-[#1E1B18] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
+            className="w-full rounded-[10px] border border-border bg-white px-3 py-2.5 text-[15px] text-text-primary focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
           >
             <option value="">请选择小朋友</option>
             {children.map((c) => (
@@ -144,10 +144,10 @@ export default function ErrorGeneratePage() {
 
         {/* Subject */}
         <div>
-          <label className="mb-1.5 block text-[13px] font-medium text-[#6B6560]">
+          <label className="mb-1.5 block text-[13px] font-medium text-text-secondary">
             学科
           </label>
-          <div className="flex rounded-[10px] border border-[#E5E0DA] bg-white p-0.5">
+          <div className="flex rounded-[10px] border border-border bg-white p-0.5">
             <button
               onClick={() => {
                 setSubject("english");
@@ -155,8 +155,8 @@ export default function ErrorGeneratePage() {
               }}
               className={`flex-1 rounded-[8px] py-2.5 text-[15px] font-medium transition-colors ${
                 subject === "english"
-                  ? "bg-[#6366F1] text-white"
-                  : "text-[#6B6560]"
+                  ? "bg-accent text-white"
+                  : "text-text-secondary"
               }`}
             >
               英语
@@ -168,8 +168,8 @@ export default function ErrorGeneratePage() {
               }}
               className={`flex-1 rounded-[8px] py-2.5 text-[15px] font-medium transition-colors ${
                 subject === "math"
-                  ? "bg-[#6366F1] text-white"
-                  : "text-[#6B6560]"
+                  ? "bg-accent text-white"
+                  : "text-text-secondary"
               }`}
             >
               数学
@@ -179,7 +179,7 @@ export default function ErrorGeneratePage() {
 
         {/* Question types */}
         <div>
-          <label className="mb-1.5 block text-[13px] font-medium text-[#6B6560]">
+          <label className="mb-1.5 block text-[13px] font-medium text-text-secondary">
             题型（可多选，留空表示全部）
           </label>
           <div className="flex flex-wrap gap-2">
@@ -189,8 +189,8 @@ export default function ErrorGeneratePage() {
                 onClick={() => toggleType(t)}
                 className={`rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors ${
                   selectedTypes.has(t)
-                    ? "bg-[#EEF2FF] text-[#6366F1]"
-                    : "bg-[#F3F0ED] text-[#6B6560] hover:bg-[#E5E0DA]"
+                    ? "bg-accent-subtle text-accent"
+                    : "bg-brand-hover text-text-secondary hover:bg-border"
                 }`}
               >
                 {TYPE_LABELS[t]}
@@ -201,9 +201,9 @@ export default function ErrorGeneratePage() {
 
         {/* Count slider */}
         <div>
-          <label className="mb-1.5 flex items-center justify-between text-[13px] font-medium text-[#6B6560]">
+          <label className="mb-1.5 flex items-center justify-between text-[13px] font-medium text-text-secondary">
             <span>题目数量</span>
-            <span className="font-mono text-[15px] text-[#1E1B18]">
+            <span className="font-mono text-[15px] text-text-primary">
               {count} 题
             </span>
           </label>
@@ -213,9 +213,9 @@ export default function ErrorGeneratePage() {
             max={50}
             value={count}
             onChange={(e) => setCount(Number(e.target.value))}
-            className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[#F3F0ED] accent-[#6366F1]"
+            className="h-2 w-full cursor-pointer appearance-none rounded-full bg-brand-hover accent-[#6366F1]"
           />
-          <div className="mt-1 flex justify-between text-[11px] text-[#A39D97]">
+          <div className="mt-1 flex justify-between text-[11px] text-text-tertiary">
             <span>1</span>
             <span>50</span>
           </div>
@@ -228,8 +228,8 @@ export default function ErrorGeneratePage() {
         disabled={generating || !childId}
         className={`mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-[15px] font-medium text-white shadow-sm transition-all ${
           generating || !childId
-            ? "cursor-not-allowed bg-[#6366F1] opacity-50"
-            : "bg-[#6366F1] hover:bg-[#4F46E5]"
+            ? "cursor-not-allowed bg-accent opacity-50"
+            : "bg-accent hover:bg-accent-hover"
         }`}
       >
         {generating ? (
@@ -249,12 +249,12 @@ export default function ErrorGeneratePage() {
       {result && (
         <div className="mt-6">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-[15px] font-medium text-[#6B6560]">
+            <p className="text-[15px] font-medium text-text-secondary">
               已生成 {result.question_count} 道错题试卷
             </p>
             <button
               onClick={handleSaveImage}
-              className="flex min-h-11 items-center gap-1 rounded-xl bg-[#22C55E] px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-green-600"
+              className="flex min-h-11 items-center gap-1 rounded-xl bg-success px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-green-600"
             >
               <Download size={16} strokeWidth={1.5} />
               保存图片
@@ -272,7 +272,7 @@ export default function ErrorGeneratePage() {
               setResult(null);
               handleGenerate();
             }}
-            className="mt-4 w-full rounded-xl border border-[#E5E0DA] bg-white py-3 text-[14px] font-medium text-[#6B6560] transition-colors hover:bg-[#F3F0ED]"
+            className="mt-4 w-full rounded-xl border border-border bg-white py-3 text-[14px] font-medium text-text-secondary transition-colors hover:bg-brand-hover"
           >
             重新生成
           </button>

@@ -9,9 +9,9 @@ interface ToastProps {
 }
 
 const typeStyles: Record<ToastType, string> = {
-  success: "bg-[#F0FDF4] text-[#22C55E]",
-  error: "bg-[#FEF2F2] text-[#EF4444]",
-  info: "bg-[#EEF2FF] text-[#6366F1]",
+  success: "bg-success-bg text-success",
+  error: "bg-error-bg text-error",
+  info: "bg-accent-subtle text-accent",
 };
 
 export default function Toast({ message, type, onDismiss }: ToastProps) {

@@ -13,8 +13,8 @@ function NotFoundPage() {
   return (
     <div className="flex min-h-dvh items-center justify-center px-4">
       <div className="text-center">
-        <p className="text-lg font-semibold text-[#1E1B18]">页面不存在</p>
-        <p className="mt-1 text-[13px] text-[#A39D97]">请检查链接是否正确</p>
+        <p className="text-lg font-semibold text-text-primary">页面不存在</p>
+        <p className="mt-1 text-[13px] text-text-tertiary">请检查链接是否正确</p>
       </div>
     </div>
   );

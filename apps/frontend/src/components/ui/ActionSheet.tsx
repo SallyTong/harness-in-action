@@ -29,12 +29,12 @@ export default function ActionSheet({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 pt-4">
-          <span className="text-[15px] font-medium text-[#6B6560]">
+          <span className="text-[15px] font-medium text-text-secondary">
             选择上传方式
           </span>
           <button
             onClick={onClose}
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-[#A39D97] transition-colors hover:bg-[#F3F0ED]"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-text-tertiary transition-colors hover:bg-brand-hover"
             aria-label="关闭"
           >
             <X size={20} strokeWidth={1.5} />
@@ -48,7 +48,7 @@ export default function ActionSheet({
                 opt.onClick();
                 onClose();
               }}
-              className="flex w-full items-center gap-3 rounded-[10px] px-4 py-3.5 text-left text-[15px] font-medium text-[#1E1B18] transition-colors hover:bg-[#F3F0ED]"
+              className="flex w-full items-center gap-3 rounded-[10px] px-4 py-3.5 text-left text-[15px] font-medium text-text-primary transition-colors hover:bg-brand-hover"
             >
               <span className="text-xl">{opt.icon}</span>
               <span>{opt.label}</span>

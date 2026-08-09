@@ -105,12 +105,12 @@ export default function HomePage() {
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4 pb-16">
       {/* Top bar */}
       <header className="flex items-center justify-between py-4">
-        <h1 className="text-[22px] font-semibold leading-[30px] text-[#1E1B18]">
+        <h1 className="text-[22px] font-semibold leading-[30px] text-text-primary">
           作业批改
         </h1>
         <button
           onClick={() => navigate("/children")}
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-[#A39D97] transition-colors hover:bg-[#F3F0ED] hover:text-[#6B6560]"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-text-tertiary transition-colors hover:bg-brand-hover hover:text-text-secondary"
           aria-label="小朋友管理"
         >
           <User size={22} strokeWidth={1.5} />
@@ -119,8 +119,8 @@ export default function HomePage() {
 
       {/* Phone setup */}
       {!isReady && (
-        <div className="mb-6 rounded-[14px] border border-[#F0EDE8] bg-white p-4 shadow-sm">
-          <label className="mb-2 block text-[13px] font-medium text-[#6B6560]">
+        <div className="mb-6 rounded-[14px] border border-border-light bg-white p-4 shadow-sm">
+          <label className="mb-2 block text-[13px] font-medium text-text-secondary">
             请输入家长手机号
           </label>
           <input
@@ -129,9 +129,9 @@ export default function HomePage() {
             onChange={(e) => setPhone(e.target.value)}
             placeholder="13800138000"
             maxLength={11}
-            className="w-full rounded-[10px] border border-[#E5E0DA] px-4 py-3 text-[15px] text-[#1E1B18] placeholder-[#A39D97] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
+            className="w-full rounded-[10px] border border-border px-4 py-3 text-[15px] text-text-primary placeholder-[#A39D97] focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
           />
-          <p className="mt-1 text-[11px] text-[#A39D97]">
+          <p className="mt-1 text-[11px] text-text-tertiary">
             手机号仅用于区分数据，不验证真伪
           </p>
         </div>
@@ -147,7 +147,7 @@ export default function HomePage() {
                 e.target.value ? Number(e.target.value) : null,
               )
             }
-            className="flex-1 rounded-[10px] border border-[#E5E0DA] bg-white px-3 py-3 text-[15px] text-[#1E1B18] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1] focus:outline-none"
+            className="flex-1 rounded-[10px] border border-border bg-white px-3 py-3 text-[15px] text-text-primary focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
           >
             <option value="">
               {children.length === 0
@@ -160,13 +160,13 @@ export default function HomePage() {
               </option>
             ))}
           </select>
-          <div className="flex rounded-[10px] border border-[#E5E0DA] bg-white p-0.5">
+          <div className="flex rounded-[10px] border border-border bg-white p-0.5">
             <button
               onClick={() => setSubject("english")}
               className={`min-h-11 rounded-[8px] px-4 text-[15px] font-medium transition-colors ${
                 subject === "english"
-                  ? "bg-[#6366F1] text-white"
-                  : "text-[#6B6560]"
+                  ? "bg-accent text-white"
+                  : "text-text-secondary"
               }`}
             >
               英语
@@ -175,8 +175,8 @@ export default function HomePage() {
               onClick={() => setSubject("math")}
               className={`min-h-11 rounded-[8px] px-4 text-[15px] font-medium transition-colors ${
                 subject === "math"
-                  ? "bg-[#6366F1] text-white"
-                  : "text-[#6B6560]"
+                  ? "bg-accent text-white"
+                  : "text-text-secondary"
               }`}
             >
               数学
@@ -199,13 +199,13 @@ export default function HomePage() {
                 />
                 <button
                   onClick={handleRemoveImage}
-                  className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#EF4444] text-white shadow-md transition-colors hover:bg-red-600"
+                  className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-error text-white shadow-md transition-colors hover:bg-red-600"
                   aria-label="移除图片"
                 >
                   <X size={14} strokeWidth={2} />
                 </button>
               </div>
-              <span className="mt-2 text-[13px] text-[#A39D97]">
+              <span className="mt-2 text-[13px] text-text-tertiary">
                 已压缩，点击上方 X 可移除
               </span>
             </div>
@@ -213,13 +213,13 @@ export default function HomePage() {
             /* Upload zone */
             <button
               onClick={() => setShowActionSheet(true)}
-              className="mb-6 flex flex-1 flex-col items-center justify-center rounded-[16px] border-2 border-dashed border-[#E5E0DA] bg-white p-8 transition-colors hover:border-[#6366F1]"
+              className="mb-6 flex flex-1 flex-col items-center justify-center rounded-[16px] border-2 border-dashed border-border bg-white p-8 transition-colors hover:border-accent"
             >
               <span className="mb-3 text-5xl">📸</span>
-              <span className="text-[15px] font-medium text-[#6B6560]">
+              <span className="text-[15px] font-medium text-text-secondary">
                 拍照上传试卷
               </span>
-              <span className="mt-1 text-[13px] text-[#A39D97]">
+              <span className="mt-1 text-[13px] text-text-tertiary">
                 支持英语 · 数学 · 打印体 + 手写
               </span>
             </button>
@@ -235,8 +235,8 @@ export default function HomePage() {
             disabled={!canSubmit}
             className={`w-full rounded-xl py-3 text-[15px] font-medium text-white shadow-sm transition-all ${
               canSubmit
-                ? "bg-[#6366F1] hover:bg-[#4F46E5]"
-                : "cursor-not-allowed bg-[#6366F1] opacity-50"
+                ? "bg-accent hover:bg-accent-hover"
+                : "cursor-not-allowed bg-accent opacity-50"
             }`}
           >
             {uploading ? "上传中…" : "开始批改"}

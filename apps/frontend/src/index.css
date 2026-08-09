@@ -1,1 +1,45 @@
 @import "tailwindcss";
+
+/* ── Brand Design Tokens ────────────────────────────────
+   Auto-enforced by Tailwind v4 @theme.
+   Using arbitrary values like bg-accent or the forbidden
+   Tailwind grays (bg-gray-*, bg-zinc-*, bg-slate-*, bg-neutral-*,
+   text-gray-*, etc.) will still work but are violations caught by
+   the design-enforcement skill and code review.
+
+   Prefer semantic tokens: bg-brand-page, text-accent, etc.
+   ─────────────────────────────────────────────────────── */
+
+@theme {
+  /* Background hierarchy */
+  --color-brand-page: #F8F6F4;
+  --color-brand-card: #FFFFFF;
+  --color-brand-hover: #F3F0ED;
+  --color-brand-overlay: #FFFFFF;
+
+  /* Text hierarchy */
+  --color-text-primary: #1E1B18;
+  --color-text-secondary: #6B6560;
+  --color-text-tertiary: #A39D97;
+
+  /* Accent — indigo */
+  --color-accent: #6366F1;
+  --color-accent-hover: #4F46E5;
+  --color-accent-subtle: #EEF2FF;
+
+  /* Semantic */
+  --color-success: #22C55E;
+  --color-success-bg: #F0FDF4;
+  --color-error: #EF4444;
+  --color-error-bg: #FEF2F2;
+  --color-warning: #F59E0B;
+  --color-warning-bg: #FFFBEB;
+
+  /* Borders */
+  --color-border: #E5E0DA;
+  --color-border-light: #F0EDE8;
+
+  /* Font family tokens */
+  --font-mono: "SF Mono", "Menlo", ui-monospace, monospace;
+  --font-sans: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
