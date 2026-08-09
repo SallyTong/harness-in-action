@@ -102,7 +102,7 @@ cd apps/backend && python -m pytest tests/ -v
 
 ## Agent Memory (MANDATORY — AFTER EVERY SESSION)
 
-You MUST update `[[MEMORY]].md` after every implementation session. This is NOT optional — future sessions depend on accurate memory to avoid re-doing work or starting from wrong assumptions.
+You MUST update agent memory after every implementation session. This is NOT optional — future sessions depend on accurate memory to avoid re-doing work or starting from wrong assumptions.
 
 ### What to record:
 - **What you built** (endpoints, services, models added)
@@ -112,7 +112,7 @@ You MUST update `[[MEMORY]].md` after every implementation session. This is NOT 
 - **Cross-Agent Requests** (things the frontend agent needs to do next)
 
 ### How:
-1. Read `[[MEMORY]].md` to find the current phase file
+1. Read `MEMORY.md` to find the current phase file
 2. If the phase status changed (in-progress → complete), update the phase file
 3. If you completed a new phase, create a new phase file and update the index
 4. Run `bash scripts/integration-smoke-test.sh` and record the result
@@ -121,8 +121,14 @@ You MUST update `[[MEMORY]].md` after every implementation session. This is NOT 
 ```
 .claude/agent-memory/backend-agent/
   MEMORY.md              # Index — keep this updated
-  phase-N-<slug>.md      # One per phase
+  phase-N-<slug>.md      # One per phase (N = phase number, must match above)
 ```
+
+### BEFORE committing — VERIFY:
+```bash
+python scripts/check-agent-memory.py
+```
+This script checks that every phase defined above has a matching `phase-N-*.md` file and vice versa. Exit code 1 = fix the gap before committing.
 
 ## Implementation Phases
 

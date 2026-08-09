@@ -94,6 +94,17 @@
             "statusMessage": "Checking model-migration consistency..."
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PROJECT_DIR}/scripts/check-agent-memory.py 2>&1 || echo \"Run 'python scripts/check-agent-memory.py' to verify\"",
+            "timeout": 10,
+            "statusMessage": "Checking agent memory consistency..."
+          }
+        ]
       }
     ]
   }
