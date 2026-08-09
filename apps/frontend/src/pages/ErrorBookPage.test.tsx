@@ -8,17 +8,6 @@ vi.mock("../lib/api", () => ({
   apiGet: (...args: unknown[]) => mockApiGet(...args),
 }));
 
-const ERROR_ITEM = {
-  id: 1, submission_id: 10, child_id: 1, child_name: "小明",
-  subject: "english", question_number: "2", question_type: "fill_blank",
-  question_image_path: "http://test/api/images/questions/10_2.jpg?phone=13800138000",
-  solution_note: "正确答案应为 'have gone'。",
-  error_category: "grammar", error_count: 2,
-  error_timestamps: ["2026-08-01T10:00:00Z"],
-  is_manually_fixed: false,
-  last_error_at: "2026-08-09T10:00:00Z", created_at: "2026-08-01T10:00:00Z",
-};
-
 describe("ErrorBookPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();

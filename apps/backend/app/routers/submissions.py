@@ -63,7 +63,7 @@ def _build_image_url(
     base = str(request.base_url).rstrip("/")
     normalized = rel_path.replace("\\", "/")
     if normalized.startswith("data/images/"):
-        kind_and_file = normalized[len("data/images/"):]
+        kind_and_file = normalized[len("data/images/") :]
     else:
         kind_and_file = normalized.replace("data/images/", "", 1)
     url = f"{base}/api/images/{kind_and_file}"

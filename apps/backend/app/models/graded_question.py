@@ -38,7 +38,9 @@ class GradedQuestion(Base):
     solution_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     error_category: Mapped[str | None] = mapped_column(String(50), nullable=True)
     is_manually_fixed: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(timezone.utc)
+    )
 
     submission: Mapped[Submission] = relationship(
         back_populates="graded_questions", lazy="raise"

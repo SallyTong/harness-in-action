@@ -39,9 +39,12 @@ class Submission(Base):
     correct_count: Mapped[int | None] = mapped_column(nullable=True)
     grading_raw_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     token_usage: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(timezone.utc)
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     child: Mapped[Child] = relationship(back_populates="submissions", lazy="raise")
