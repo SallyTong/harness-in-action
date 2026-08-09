@@ -358,7 +358,47 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GradedQuestion"
+                $ref: "#/components/schemas/FixQuestionResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/images/{kind}/{filename}:
+    get:
+      operationId: serveImage
+      tags: [Submissions]
+      summary: Serve an image file with ownership verification
+      description: |
+        Serves image files from the local filesystem. For submission-based
+        images (originals/annotated/thumbnails/questions), ownership is
+        verified through the submission -> child -> parent chain via the
+        submission_id embedded in the filename. For sheets, the filename
+        is a UUID and ownership was verified at generation time.
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [originals, annotated, thumbnails, questions, sheets]
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "{submission_id}.jpg or {submission_id}_{qnum}.jpg or {uuid}.jpg"
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Image file (JPEG binary)
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -658,6 +698,23 @@ components:
           type: boolean
           default: false
           description: True if parent overrode the AI grading
+
+    # ── Manual Correction ────────────────────────────
+
+    FixQuestionResponse:
+      type: object
+      required: [question, new_score]
+      properties:
+        question:
+          $ref: "#/components/schemas/GradedQuestion"
+        new_score:
+          type: object
+          required: [correct, total]
+          properties:
+            correct:
+              type: integer
+            total:
+              type: integer
 
     # ── Error Collections ─────────────────────────────
 

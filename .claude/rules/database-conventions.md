@@ -23,14 +23,14 @@ Rules that would corrupt data or leak it across parents if forgotten. Full data 
 
 ### Query Rules
 - All queries use `AsyncSession`. No synchronous sessions in async endpoints.
-- Eager-load relationships (`selectinload`/`joinedload`). No lazy loading in request path.
-- Every list query MUST paginate (`limit`/`offset`). Never load full tables.
+- Eager-load or batch-fetch relationships. All relationship access in request path must be explicit (use `lazy="raise"` on ORM relationships; batch-fetch related data in separate queries). No lazy loading in request path.
+- Every list query MUST paginate (`limit`/`offset`). Never load full tables. Exception: bounded lists (e.g., children per parent, max ~10) may omit pagination.
 - No raw SQL with user input. Always parameterized ORM queries.
 
 ### Transactions
 - ErrorQuestion sync MUST happen in the **same transaction** as GradedQuestion changes.
 - Use `async with db.begin():` for explicit boundaries. Rollback on any exception.
-- Missing `ondelete` on any ForeignKey is a bug.
+- Missing `ondelete` on any ForeignKey is a bug, unless intentionally omitted (e.g., ErrorQuestion FKs preserve data when parent rows are deleted).
 
 ### Migrations (Alembic)
 - **Forward-only** in MVP. No downgrade scripts.

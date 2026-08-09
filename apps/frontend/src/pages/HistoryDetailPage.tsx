@@ -321,7 +321,7 @@ export default function HistoryDetailPage() {
                   <button
                     onClick={() => handleToggleCorrect(q)}
                     disabled={savingQid === q.id}
-                    className={`flex min-h-8 min-w-8 items-center justify-center rounded-lg text-[11px] font-medium transition-colors ${
+                    className={`flex min-h-8 min-w-8 items-center justify-center rounded-xl text-[11px] font-medium transition-colors ${
                       q.is_correct
                         ? "bg-[#DCFCE7] text-[#16A34A] hover:bg-[#BBF7D0]"
                         : "bg-[#FEF2F2] text-[#EF4444] hover:bg-[#FEE2E2]"

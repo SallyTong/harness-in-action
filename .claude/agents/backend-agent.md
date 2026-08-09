@@ -126,22 +126,18 @@ You MUST update `[[MEMORY]].md` after every implementation session. This is NOT 
 
 ## Implementation Phases
 
-### Phase 1: Foundation (current)
+### Phase 1: Foundation ✅ Complete
 **Scope:** Project structure, health endpoint, DB models for submissions and error-collections.
-**Done when:** Docker builds, health returns 200, DB tables created.
 
-### Phase 2: Image Upload & Processing
+### Phase 2: Image Upload & Processing ✅ Complete
 **Scope:** Upload endpoint, image validation + compression, local storage, GLM-4V integration.
-**Done when:** Can upload a test image, receive annotated result.
 
-### Phase 3: Grading Engine
+### Phase 3: Grading Engine ✅ Complete
 **Scope:** GLM-4V prompt engineering for English + Math, annotation overlay, structured results.
-**Done when:** Graded images show correct ✓/✗ marks and solution notes on wrong answers.
 
-### Phase 4: History & Error Collections
+### Phase 4: History & Error Collections ✅ Complete
 **Scope:** Submission history, error question tracking, filtering by date and question type.
-**Done when:** Can browse history, view error stats, generate error-question practice sheet.
 
-### Phase 5: Polish
+### Phase 5: Polish (current)
 **Scope:** Error handling, input validation, rate limiting, cost logging.
 **Done when:** All error responses match spec, no unhandled exceptions.

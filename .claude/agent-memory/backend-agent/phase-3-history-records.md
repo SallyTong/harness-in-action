@@ -30,7 +30,7 @@ metadata:
 - Filters: child_id, subject, question_type, from_date, to_date
 - Per-request date validation (YYYY-MM-DD), to_date inclusive (adds 1 day)
 - Ownership: JOIN Child with parent_id filter
-- Image URLs include phone param ([[image-url-phone-param]])
+- Image URLs include phone param (see [[../shared/cross-cutting]])
 
 #### `POST /api/error-collections/generate` — Practice Sheet
 - Body: child_id, subject, question_types[], from_date, to_date, count (1-50)
@@ -45,10 +45,23 @@ metadata:
 - `schemas/submissions.py`: `SubmissionListResponse`, `FixQuestionRequest`, `FixQuestionResponse`
 - `schemas/error_collections.py`: `ErrorQuestionResponse`, `ErrorCollectionListResponse`, `GenerateSheetRequest`, `GenerateSheetResponse`
 
+### Key Design Decisions (carried from Phase 2)
+- `_sanitize_question_number()` in `grading.py` — truncates to 50 chars, takes first line
+- `_sanitize_question_type()` — fuzzy-match model output to valid DB enum via substring
+- `_sanitize_error_category()` — same pattern for error categories
+- `_percent_to_pixels()` in `annotation.py` — converts GLM-4V percentage coords to pixel coords
+- Polling: frontend polls `GET /api/submissions/{id}` every 2s, 30s hard timeout
+
 ### Bugs Fixed
-- [[image-url-phone-param]] — image URLs must include `?phone=` or 422
-- `sheets` kind added to `serve_image` allowed_kinds
-- Windows path separator (`\`) normalized to `/` in `_build_image_url`
+- Image URLs without `?phone=` param → 422 on load (see [[../shared/cross-cutting]])
+- `sheets` kind added to `serve_image` allowed_kinds (was missing → 404)
+- Windows path separator (`\`) → `/` normalized in `_build_image_url` (error_collections.py)
+- `_build_image_url` in `submissions.py` still missing path normalization — known gap
+
+### Known Limitations
+- `submission_count` hardcoded to 0 in `GET /api/children` response
+- `error_collections.py` router has 0 backend tests (smoke test covers integration)
+- `PATCH` and `GET /api/submissions` list endpoints also lack dedicated tests
 
 ### Contract Deviations
 None.

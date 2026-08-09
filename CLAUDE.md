@@ -14,7 +14,7 @@ AI 驱动的作业批改 SaaS，帮助家长高效检查孩子的试卷和作业
 | 后端     | FastAPI, Python 3.12+                         |
 | 数据库   | MySQL 8.4                                     |
 | AI 模型  | 智谱 GLM-4V-Flash（免费版先行）                |
-| 图片存储 | 本地文件系统（`data/images/`）                 |
+| 图片存储 | 本地文件系统（`apps/backend/data/images/originals\|annotated\|thumbnails\|questions\|sheets/`） |
 | 部署     | Docker Compose                                |
 
 ## 项目结构
@@ -101,7 +101,7 @@ bash scripts/dev.sh
 
 以下技能在特定类型的工作中**必须**调用，不可跳过：
 
-- **`/design-check`** — 创建或修改任何 UI 组件/页面**之前**必须调用。
+- **`/design-enforcement`** — 创建或修改任何 UI 组件/页面**之前**必须调用。
 - **`/security-review`** — 实现或修改任何 API 端点**之后**必须调用。
 
 其他技能按需调用：[doc-review](.claude/skills/doc-review/SKILL.md)。
@@ -109,7 +109,7 @@ bash scripts/dev.sh
 ### 自动化 Hooks（`.claude/settings.json`）
 
 - **PreToolUse**: 写入文件前自动扫描硬编码密钥，命中则阻止写入。
-- **PostToolUse**: 编辑后端 Python 文件后运行 ruff + pytest；编辑前端 TSX 文件后运行 tsc + vitest；编辑模型文件后提醒执行 Alembic 迁移。
+- **PostToolUse**: 每次文件写入后运行 ruff + pytest + tsc + vitest + Alembic 检查（当前未按文件类型筛选，所有检查对所有 Write/Edit 生效）。
 
 ### 子代理
 

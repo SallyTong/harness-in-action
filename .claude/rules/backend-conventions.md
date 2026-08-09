@@ -21,7 +21,7 @@ Rules that would cause real bugs if forgotten. Detailed architecture is in `docs
 - Cross-resource ownership checks (child_id/submission_id/question_id → trace FK to Parent): return **404** (not 403) on mismatch.
 - Zero hardcoded secrets. GLM_API_KEY, DB passwords from env vars only.
 - GLM-4V calls via dedicated service `app/services/glm_client.py`. Log token usage per call. Model from `GLM_MODEL` env var.
-- Image storage paths per architecture §8: `originals/{id}.jpg`, `annotated/{id}.jpg`, `thumbnails/{id}.jpg`, `questions/{id}_{num}.jpg`. Store relative paths in DB.
+- Image storage paths per architecture §8: stored relative to `apps/backend/` as `data/images/originals/{id}.jpg`, `data/images/annotated/{id}.jpg`, `data/images/thumbnails/{id}.jpg`, `data/images/questions/{id}_{num}.jpg`, `data/images/sheets/{uuid}.jpg`. Store relative paths in DB.
 - Annotation: green `#22C55E` (✓), red `#EF4444` (?). Use bundled Noto Sans SC font.
 - Grading flow: `POST /api/submissions` → 202 Accepted → BackgroundTasks → GLM-4V → annotate → sync ErrorQuestion → status=completed|failed. Frontend polls every 2s.
 - ErrorQuestion sync MUST happen in the same transaction as GradedQuestion changes. No eventual consistency.

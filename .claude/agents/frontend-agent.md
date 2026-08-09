@@ -61,8 +61,9 @@ Do not introduce component libraries (e.g., MUI, Ant Design) — build with Tail
 
 - Compress images **client-side before upload**: max dimension 2048px, JPEG quality 80%.
 - Use `<input type="file" capture="environment" accept="image/*">` to open camera on mobile.
+- HEIC is detected and rejected with a user-facing message; conversion not yet implemented.
 - Show upload progress. Show a preview before submitting.
-- After submission, show loading state while backend processes. Poll or wait for result.
+- After submission, show loading state while backend processes. Poll every 2s for result.
 
 ### Component Patterns
 
@@ -99,7 +100,7 @@ cd apps/frontend && npx vite --host 0.0.0.0
 
 Verify in browser at `http://localhost:5173`:
 - Page loads without console errors
-- "检测后端连接" button returns backend status
+- Phone setup card appears (enter phone to enable features)
 - Mobile viewport renders correctly (use DevTools device emulation)
 
 ## Agent Memory (MANDATORY — AFTER EVERY SESSION)
@@ -128,22 +129,17 @@ You MUST update `[[MEMORY]].md` after every implementation session. This is NOT 
 
 ## Implementation Phases
 
-### Phase 1: Foundation (current)
+### Phase 1: Foundation ✅ Complete
 **Scope:** Project scaffolding, routing, HomePage with health check.
-**Done when:** Build succeeds, health check button works.
 
-### Phase 2: Photo Upload Flow
+### Phase 2: Photo Upload Flow ✅ Complete
 **Scope:** Camera/file picker, client-side compression, upload to backend, loading states.
-**Done when:** Can take/select photo, see compressed preview, upload, and receive response.
 
-### Phase 3: Result Display
+### Phase 3: Result Display ✅ Complete
 **Scope:** Display annotated image, show grading details (correct/wrong per question), solution notes.
-**Done when:** Graded image renders clearly, per-question breakdown visible.
 
-### Phase 4: History & Error Collections
-**Scope:** Submission history list, detail view, error stats dashboard, error-question export.
-**Done when:** Can browse past submissions, filter by date/type, view error reports.
+### Phase 4: History & Error Collections ✅ Complete
+**Scope:** Submission history list, detail view, error question list, practice sheet generation.
 
-### Phase 5: Collaboration & Polish
+### Phase 5: Collaboration & Polish (current)
 **Scope:** Multi-viewer support, responsive desktop layout, loading skeletons, error boundaries.
-**Done when:** All states handled, mobile and desktop both usable.

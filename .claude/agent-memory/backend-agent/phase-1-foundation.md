@@ -16,7 +16,8 @@ metadata:
 - Docker Compose: `infra/docker-compose.yml`
 - DB models: Parent, Child, Submission, GradedQuestion, ErrorQuestion
 - Database connection: `app/database.py` with async SQLAlchemy session
-- Alembic initialized and migrations created
+- `app/dependencies.py` — `get_db()` async session, `get_parent()` auto-creates Parent + default children on first use
+- Alembic initialized (`migrations/`) with 2 revisions
 - Harness: ruff + pytest PostToolUse hooks active
 
 See [[phase-2-core-grading]] and [[phase-3-history-records]] for subsequent work.

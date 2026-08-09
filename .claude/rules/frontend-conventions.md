@@ -29,7 +29,7 @@ Rules that would cause real bugs or brand violations if forgotten. Full design s
 
 ### Image Upload
 - Client-side compression: max 2048px longest edge, JPEG Q80%.
-- Use `capture="environment"` for camera. HEIC conversion via `heic2any`.
+- Use `capture="environment"` for camera. HEIC detected and rejected with guidance message (conversion not yet implemented).
 - Show preview before upload. Display progress.
 
 ### Routing (React Router v7)

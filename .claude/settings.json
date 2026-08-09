@@ -18,6 +18,9 @@
       "Bash(git branch *)",
       "Bash(git checkout *)",
       "Bash(curl *)",
+      "Bash(bash scripts/*)",
+      "Bash(grep *)",
+      "Bash(find *)",
       "Read(*.*)",
       "Bash(powershell.exe -Command \"netstat -a -n -o -b 2>&1 | Select-String -Pattern '8000' -Context 1\")"
     ]
@@ -29,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ../.claude/hooks/secrets-blocker.py || python .claude/hooks/secrets-blocker.py || true",
+            "command": "python .claude/hooks/secrets-blocker.py",
             "timeout": 10,
             "statusMessage": "Checking for hardcoded secrets..."
           }
@@ -86,7 +89,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd apps/backend && python -c \"from alembic.config import Config; from alembic import command; config = Config('alembic.ini'); print('Alembic OK - remember to run: alembic revision --autogenerate')\" 2>&1 || echo \"WARNING: Models changed. Run 'alembic revision --autogenerate' to create migration.\"",
+            "command": "cd apps/backend && python -c \"from alembic.config import Config; from alembic.script import ScriptDirectory; config = Config('alembic.ini'); script = ScriptDirectory.from_config(config); head = script.get_current_head(); print(f'Migrations OK — current head: {head}')\" 2>&1 || echo \"WARNING: Cannot read Alembic migrations. Run 'alembic revision --autogenerate' to create migration.\"",
             "timeout": 15,
             "statusMessage": "Checking model-migration consistency..."
           }
