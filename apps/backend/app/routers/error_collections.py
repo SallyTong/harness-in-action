@@ -1,5 +1,6 @@
 """Error collection endpoints: browse wrong answers and generate practice sheets."""
 
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
@@ -18,6 +19,8 @@ from app.schemas.error_collections import (
     GenerateSheetResponse,
 )
 from app.services.annotation import compose_sheet
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["Error Collections"])
 
@@ -247,11 +250,18 @@ async def generate_error_sheet(
     child_name = child.name
 
     # Generate the practice sheet
-    sheet_path = compose_sheet(
-        errors=errors,
-        child_name=child_name,
-        subject=body.subject,
-    )
+    try:
+        sheet_path = compose_sheet(
+            errors=errors,
+            child_name=child_name,
+            subject=body.subject,
+        )
+    except Exception:
+        logger.exception("Failed to compose practice sheet")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate practice sheet. Please try again later.",
+        )
 
     # Build image URL
     image_url = _build_image_url(request, sheet_path, parent.phone)

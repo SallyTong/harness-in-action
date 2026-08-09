@@ -1,12 +1,13 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_db, get_parent
 from app.models.child import Child
 from app.models.parent import Parent
+from app.models.submission import Submission
 from app.schemas.children import ChildResponse, CreateChildRequest, UpdateChildRequest
 
 router = APIRouter(prefix="/api", tags=["Children"])
@@ -23,6 +24,20 @@ async def _get_owned_child(child_id: int, parent_id: int, db: AsyncSession) -> C
     return child
 
 
+async def _get_submission_counts(
+    child_ids: list[int], db: AsyncSession
+) -> dict[int, int]:
+    """Batch-query submission counts for children. Returns {child_id: count}."""
+    if not child_ids:
+        return {}
+    result = await db.execute(
+        select(Submission.child_id, func.count())
+        .where(Submission.child_id.in_(child_ids))
+        .group_by(Submission.child_id)
+    )
+    return {row[0]: row[1] for row in result.all()}
+
+
 @router.get("/children", response_model=list[ChildResponse])
 async def list_children(
     parent: Annotated[Parent, Depends(get_parent)],
@@ -32,11 +47,12 @@ async def list_children(
         select(Child).where(Child.parent_id == parent.id).order_by(Child.id)
     )
     children = result.scalars().all()
+    counts = await _get_submission_counts([c.id for c in children], db)
     return [
         ChildResponse(
             id=c.id,
             name=c.name,
-            submission_count=0,
+            submission_count=counts.get(c.id, 0),
             created_at=c.created_at,
         )
         for c in children
@@ -99,10 +115,11 @@ async def update_child(
     await db.flush()
     await db.refresh(child)
 
+    counts = await _get_submission_counts([child.id], db)
     return ChildResponse(
         id=child.id,
         name=child.name,
-        submission_count=0,
+        submission_count=counts.get(child.id, 0),
         created_at=child.created_at,
     )
 

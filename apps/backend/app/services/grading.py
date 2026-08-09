@@ -14,7 +14,8 @@ from app.models.error_question import ErrorQuestion
 from app.models.graded_question import GradedQuestion
 from app.models.submission import Submission
 from app.services.annotation import annotate_image, create_thumbnail, crop_question
-from app.services.glm_client import grade_image
+from app.services.cost_logger import log_token_usage
+from app.services.glm_client import GLM_MODEL, grade_image
 
 logger = logging.getLogger(__name__)
 
@@ -167,9 +168,16 @@ async def process_submission(submission_id: int) -> None:
             image_path = submission.original_image_path
             glm_result = await grade_image(image_path, submission.subject)
 
-            # Step 3: Store token usage + raw response
+            # Step 3: Store token usage + raw response + log cost
             submission.token_usage = glm_result["token_usage"]
             submission.grading_raw_json = glm_result["raw_response"]
+            log_token_usage(
+                model=GLM_MODEL,
+                token_usage=glm_result["token_usage"],
+                subject=submission.subject,
+                submission_id=submission_id,
+                success=True,
+            )
 
             questions_data = glm_result["questions"]
             submission.total_questions = len(questions_data)
