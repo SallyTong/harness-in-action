@@ -355,6 +355,8 @@ def compose_sheet(
     filename = f"{uuid.uuid4().hex}.jpg"
     output_path = f"{output_dir}/{filename}"  # forward slash, cross-platform
     sheet.save(output_path, "JPEG", quality=90)
-    logger.info("Practice sheet saved: %s (%d questions)", output_path, len(question_sections))
+    logger.info(
+        "Practice sheet saved: %s (%d questions)", output_path, len(question_sections)
+    )
 
     return output_path

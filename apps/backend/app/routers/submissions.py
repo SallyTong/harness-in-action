@@ -201,10 +201,7 @@ async def list_submissions(
 
     # Fetch page
     result = await db.execute(
-        base_query
-        .order_by(Submission.created_at.desc())
-        .offset(offset)
-        .limit(limit)
+        base_query.order_by(Submission.created_at.desc()).offset(offset).limit(limit)
     )
     submissions = result.scalars().all()
 

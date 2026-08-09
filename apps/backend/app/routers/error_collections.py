@@ -27,14 +27,16 @@ VALID_QUESTION_TYPES = frozenset(
 )
 
 
-def _build_image_url(request: Request, rel_path: str | None, phone: str = "") -> str | None:
+def _build_image_url(
+    request: Request, rel_path: str | None, phone: str = ""
+) -> str | None:
     if not rel_path:
         return None
     base = str(request.base_url).rstrip("/")
     # Normalize Windows backslash paths and strip the data/images/ prefix
     normalized = rel_path.replace("\\", "/")
     if normalized.startswith("data/images/"):
-        kind_and_file = normalized[len("data/images/"):]
+        kind_and_file = normalized[len("data/images/") :]
     else:
         kind_and_file = normalized.replace("data/images/", "", 1)
     url = f"{base}/api/images/{kind_and_file}"
@@ -114,8 +116,7 @@ async def list_error_questions(
 
     # Fetch page
     result = await db.execute(
-        base_query
-        .order_by(ErrorQuestion.last_error_at.desc())
+        base_query.order_by(ErrorQuestion.last_error_at.desc())
         .offset(offset)
         .limit(limit)
     )
@@ -139,7 +140,10 @@ async def list_error_questions(
             subject=e.subject,
             question_number=e.question_number,
             question_type=e.question_type,
-            question_image_path=_build_image_url(request, e.question_image_path, parent.phone) or "",
+            question_image_path=_build_image_url(
+                request, e.question_image_path, parent.phone
+            )
+            or "",
             solution_note=e.solution_note,
             error_category=e.error_category,
             error_count=e.error_count,
@@ -208,7 +212,9 @@ async def generate_error_sheet(
 
     if body.from_date:
         try:
-            dt = datetime.strptime(body.from_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            dt = datetime.strptime(body.from_date, "%Y-%m-%d").replace(
+                tzinfo=timezone.utc
+            )
             query = query.where(ErrorQuestion.last_error_at >= dt)
         except ValueError:
             raise HTTPException(
@@ -217,7 +223,9 @@ async def generate_error_sheet(
 
     if body.to_date:
         try:
-            dt = datetime.strptime(body.to_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            dt = datetime.strptime(body.to_date, "%Y-%m-%d").replace(
+                tzinfo=timezone.utc
+            )
             dt_end = dt + timedelta(days=1)
             query = query.where(ErrorQuestion.last_error_at < dt_end)
         except ValueError:
