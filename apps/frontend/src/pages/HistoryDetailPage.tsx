@@ -6,6 +6,7 @@ import {
   HelpCircle,
   ChevronDown,
   ChevronUp,
+  Image,
 } from "lucide-react";
 import { apiGet, apiPatch } from "../lib/api";
 import Skeleton from "../components/ui/Skeleton";
@@ -42,7 +43,17 @@ const TYPE_LABELS: Record<string, string> = {
   word_problem: "应用题",
 };
 
-export default function ResultPage() {
+const ERROR_LABELS: Record<string, string> = {
+  grammar: "语法",
+  vocabulary: "词汇",
+  spelling: "拼写",
+  logic: "逻辑",
+  calculation: "计算",
+  careless: "粗心",
+  comprehension: "理解",
+};
+
+export default function HistoryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [submission, setSubmission] = useState<Submission | null>(null);
@@ -50,6 +61,9 @@ export default function ResultPage() {
   const [error, setError] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set());
+  const [activeTab, setActiveTab] = useState<"annotated" | "original">(
+    "annotated",
+  );
   const [toast, setToast] = useState<{
     message: string;
     type: ToastType;
@@ -140,11 +154,8 @@ export default function ResultPage() {
           <Skeleton className="h-6 w-6 rounded" />
           <Skeleton className="h-6 w-24 rounded" />
         </header>
-        {/* Score card skeleton */}
         <Skeleton className="mb-4 h-24 w-full rounded-[14px]" />
-        {/* Image skeleton */}
         <Skeleton className="mb-6 h-48 w-full rounded-[14px]" />
-        {/* Question rows */}
         <Skeleton className="mb-2 h-16 w-full rounded-[10px]" />
         <Skeleton className="mb-2 h-16 w-full rounded-[10px]" />
         <Skeleton className="mb-2 h-16 w-full rounded-[10px]" />
@@ -157,12 +168,14 @@ export default function ResultPage() {
     return (
       <div className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center px-4 pb-16">
         <span className="text-5xl">😞</span>
-        <p className="mt-4 text-[15px] text-[#EF4444]">{error || "加载失败"}</p>
+        <p className="mt-4 text-[15px] text-[#EF4444]">
+          {error || "加载失败"}
+        </p>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate(-1)}
           className="mt-6 min-h-11 rounded-xl bg-[#6366F1] px-6 py-2 text-[15px] font-medium text-white transition-colors hover:bg-[#4F46E5]"
         >
-          返回首页
+          返回
         </button>
       </div>
     );
@@ -171,20 +184,24 @@ export default function ResultPage() {
   const score = submission.score;
   const questions = submission.questions || [];
   const isGoodScore = score ? score.correct / score.total >= 0.6 : true;
+  const displayImage =
+    activeTab === "annotated"
+      ? submission.annotated_image_url
+      : submission.original_image_url;
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4 pb-16">
       {/* Top bar */}
       <header className="flex items-center gap-3 py-4">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate(-1)}
           className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-[#A39D97] transition-colors hover:bg-[#F3F0ED]"
-          aria-label="返回首页"
+          aria-label="返回"
         >
           <ArrowLeft size={22} strokeWidth={1.5} />
         </button>
         <h1 className="text-[18px] font-semibold text-[#1E1B18]">
-          批改结果
+          批改详情
         </h1>
         {submission.subject && (
           <span className="ml-auto rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-medium text-[#6366F1]">
@@ -219,24 +236,56 @@ export default function ResultPage() {
         </div>
       )}
 
-      {/* Annotated image */}
-      {submission.annotated_image_url && (
-        <div className="mb-6">
+      {/* Tab bar + Image */}
+      <div className="mb-6">
+        <div className="mb-2 flex rounded-[10px] border border-[#E5E0DA] bg-white p-0.5">
+          <button
+            onClick={() => setActiveTab("annotated")}
+            className={`flex-1 rounded-[8px] py-2 text-[13px] font-medium transition-colors ${
+              activeTab === "annotated"
+                ? "bg-[#6366F1] text-white"
+                : "text-[#6B6560]"
+            }`}
+          >
+            批改后
+          </button>
+          <button
+            onClick={() => setActiveTab("original")}
+            className={`flex-1 rounded-[8px] py-2 text-[13px] font-medium transition-colors ${
+              activeTab === "original"
+                ? "bg-[#6366F1] text-white"
+                : "text-[#6B6560]"
+            }`}
+          >
+            原图
+          </button>
+        </div>
+
+        {displayImage ? (
           <button
             onClick={() => setLightboxOpen(true)}
             className="w-full overflow-hidden rounded-[14px] shadow-sm transition-opacity hover:opacity-90"
           >
             <img
-              src={submission.annotated_image_url}
-              alt="批改后试卷"
+              src={displayImage}
+              alt={
+                activeTab === "annotated" ? "批改后试卷" : "原始试卷"
+              }
               className="w-full object-contain"
             />
           </button>
-          <p className="mt-1 text-center text-[11px] text-[#A39D97]">
-            点击图片可放大查看
-          </p>
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-col items-center justify-center rounded-[14px] border border-[#F0EDE8] bg-white py-12">
+            <Image size={32} className="text-[#A39D97]" strokeWidth={1.5} />
+            <p className="mt-2 text-[13px] text-[#A39D97]">
+              图片加载失败
+            </p>
+          </div>
+        )}
+        <p className="mt-1 text-center text-[11px] text-[#A39D97]">
+          点击图片可放大查看
+        </p>
+      </div>
 
       {/* Question detail list */}
       {questions.length > 0 && (
@@ -287,6 +336,8 @@ export default function ResultPage() {
                       <HelpCircle size={14} strokeWidth={1.5} />
                     )}
                   </button>
+
+                  {/* Solution note expand toggle */}
                   {q.solution_note && (
                     <button
                       onClick={() => toggleNote(q.id)}
@@ -312,17 +363,7 @@ export default function ResultPage() {
                   </p>
                   {q.error_category && (
                     <span className="mt-1 inline-block rounded-full bg-[#FEF2F2] px-2 py-0.5 text-[11px] font-medium text-[#EF4444]">
-                      {
-                        {
-                          grammar: "语法",
-                          vocabulary: "词汇",
-                          spelling: "拼写",
-                          logic: "逻辑",
-                          calculation: "计算",
-                          careless: "粗心",
-                          comprehension: "理解",
-                        }[q.error_category] || q.error_category
-                      }
+                      {ERROR_LABELS[q.error_category] || q.error_category}
                     </span>
                   )}
                 </div>
@@ -343,10 +384,12 @@ export default function ResultPage() {
       </div>
 
       {/* Lightbox */}
-      {submission.annotated_image_url && (
+      {displayImage && (
         <ImageLightbox
-          src={submission.annotated_image_url}
-          alt="批改后试卷"
+          src={displayImage}
+          alt={
+            activeTab === "annotated" ? "批改后试卷" : "原始试卷"
+          }
           open={lightboxOpen}
           onClose={() => setLightboxOpen(false)}
         />

@@ -201,3 +201,160 @@ def create_thumbnail(
     os.makedirs(os.path.dirname(thumbnail_path), exist_ok=True)
     img.save(thumbnail_path, "JPEG", quality=80)
     logger.info("Thumbnail saved: %s", thumbnail_path)
+
+
+def compose_sheet(
+    errors: list,
+    child_name: str,
+    subject: str,
+    output_dir: str = "data/images/sheets",
+) -> str:
+    """Compose error questions into a printable practice sheet.
+
+    Args:
+        errors: List of ErrorQuestion ORM objects (must have question_image_path,
+                question_number, question_type, solution_note).
+        child_name: Name to display in the title bar.
+        subject: "english" or "math".
+        output_dir: Where to save the generated sheet image.
+
+    Returns:
+        Relative path to the generated sheet image.
+    """
+    import uuid
+    from datetime import datetime
+
+    # Constants
+    PAGE_WIDTH = 1200
+    MARGIN = 40
+    HEADER_HEIGHT = 120
+    ANSWER_SPACE = 80
+    GAP = 20
+    TITLE_COLOR = (30, 27, 24)  # #1E1B18
+    SUBTITLE_COLOR = (107, 101, 96)  # #6B6560
+    BG_COLOR = (255, 255, 255)
+    SEPARATOR_COLOR = (229, 224, 218)  # #E5E0DA
+
+    title_font = _load_font(32)
+    subtitle_font = _load_font(16)
+    label_font = _load_font(18)
+
+    subject_label = "英语" if subject == "english" else "数学"
+    today = datetime.now().strftime("%Y年%m月%d日")
+
+    # Calculate total height: header + each question image + answer space + gaps
+    question_sections: list[Image.Image] = []
+    total_content_height = 0
+
+    for eq in errors:
+        img_path = eq.question_image_path
+        if not img_path or not os.path.isfile(img_path):
+            continue
+
+        try:
+            q_img = Image.open(img_path).convert("RGB")
+        except Exception:
+            logger.warning("Cannot open question image: %s", img_path)
+            continue
+
+        # Scale question image to fit within page width
+        q_width, q_height = q_img.size
+        available_width = PAGE_WIDTH - 2 * MARGIN
+        if q_width > available_width:
+            scale = available_width / q_width
+            new_height = int(q_height * scale)
+            q_img = q_img.resize((available_width, new_height), Image.LANCZOS)
+            q_width, q_height = q_img.size
+
+        question_sections.append(q_img)
+        total_content_height += q_height + ANSWER_SPACE + GAP
+
+    if not question_sections:
+        # Create a minimal sheet with just a "no questions" message
+        total_content_height = 200
+
+    total_height = HEADER_HEIGHT + total_content_height + MARGIN
+    sheet = Image.new("RGB", (PAGE_WIDTH, total_height), BG_COLOR)
+    draw = ImageDraw.Draw(sheet)
+
+    # --- Title bar ---
+    draw.text(
+        (MARGIN, 24),
+        f"错题练习试卷",
+        fill=TITLE_COLOR,
+        font=title_font,
+    )
+    draw.text(
+        (MARGIN, 68),
+        f"{child_name}  |  {subject_label}  |  {today}",
+        fill=SUBTITLE_COLOR,
+        font=subtitle_font,
+    )
+
+    # Separator line
+    draw.line(
+        [(MARGIN, 110), (PAGE_WIDTH - MARGIN, 110)],
+        fill=SEPARATOR_COLOR,
+        width=1,
+    )
+
+    # --- Question sections ---
+    y_cursor = HEADER_HEIGHT
+
+    for i, (q_img, eq) in enumerate(zip(question_sections, errors)):
+        q_width, q_height = q_img.size
+
+        # Question label
+        type_labels = {
+            "choice": "选择题",
+            "fill_blank": "填空题",
+            "reading": "阅读理解",
+            "composition": "作文",
+            "calculation": "计算题",
+            "word_problem": "应用题",
+        }
+        type_label = type_labels.get(eq.question_type, eq.question_type)
+        label = f"第 {eq.question_number} 题  [{type_label}]"
+
+        # Draw label
+        draw.text((MARGIN, y_cursor), label, fill=TITLE_COLOR, font=label_font)
+        y_cursor += 28
+
+        # Paste question image
+        sheet.paste(q_img, (MARGIN, y_cursor))
+        y_cursor += q_height
+
+        # Solution note
+        if eq.solution_note:
+            note_y = y_cursor + 6
+            draw.text(
+                (MARGIN, note_y),
+                f"💡 {eq.solution_note[:100]}",
+                fill=SUBTITLE_COLOR,
+                font=subtitle_font,
+            )
+            y_cursor += 24
+
+        # Answer space
+        y_cursor += 8
+        draw.rectangle(
+            [(MARGIN, y_cursor), (PAGE_WIDTH - MARGIN, y_cursor + ANSWER_SPACE)],
+            outline=SEPARATOR_COLOR,
+            width=1,
+        )
+        draw.text(
+            (MARGIN + 10, y_cursor + 10),
+            "作答区域",
+            fill=SEPARATOR_COLOR,
+            font=subtitle_font,
+        )
+        y_cursor += ANSWER_SPACE + GAP
+
+    # Save
+    os.makedirs(output_dir, exist_ok=True)
+    filename = f"{uuid.uuid4().hex}.jpg"
+    output_path = f"{output_dir}/{filename}"  # forward slash, cross-platform
+    sheet.save(output_path, "JPEG", quality=90)
+    logger.info("Practice sheet saved: %s (%d questions)", output_path, len(question_sections))
+
+    return output_path

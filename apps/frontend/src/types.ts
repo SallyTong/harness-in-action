@@ -51,3 +51,52 @@ export interface Submission {
   questions: GradedQuestion[] | null;
   updated_at: string | null;
 }
+
+export interface SubmissionSummary {
+  id: number;
+  child_id: number;
+  child_name: string;
+  subject: "english" | "math";
+  status: "pending" | "processing" | "completed" | "failed";
+  score: ScoreSummary | null;
+  thumbnail_url: string | null;
+  created_at: string;
+}
+
+export interface SubmissionListResponse {
+  items: SubmissionSummary[];
+  total: number;
+}
+
+export interface ErrorQuestionItem {
+  id: number;
+  submission_id: number;
+  child_id: number;
+  child_name: string;
+  subject: "english" | "math";
+  question_number: string;
+  question_type: string;
+  question_image_path: string;
+  solution_note: string | null;
+  error_category: string | null;
+  error_count: number;
+  error_timestamps: string[];
+  is_manually_fixed: boolean;
+  last_error_at: string;
+  created_at: string;
+}
+
+export interface ErrorCollectionListResponse {
+  items: ErrorQuestionItem[];
+  total: number;
+}
+
+export interface FixQuestionResponse {
+  question: GradedQuestion;
+  new_score: ScoreSummary;
+}
+
+export interface GenerateSheetResponse {
+  image_url: string;
+  question_count: number;
+}

@@ -102,6 +102,30 @@ Verify in browser at `http://localhost:5173`:
 - "检测后端连接" button returns backend status
 - Mobile viewport renders correctly (use DevTools device emulation)
 
+## Agent Memory (MANDATORY — AFTER EVERY SESSION)
+
+You MUST update `[[MEMORY]].md` after every implementation session. This is NOT optional — future sessions depend on accurate memory to avoid re-doing work or starting from wrong assumptions.
+
+### What to record:
+- **What you built** (pages, components, hooks added)
+- **What you changed** (refactors, bug fixes, design updates)
+- **Known issues** (UI quirks, browser compatibility notes)
+- **Contract Deviations** (any place you diverged from `contracts/openapi.yaml`)
+- **Cross-Agent Requests** (things the backend agent needs to do next)
+
+### How:
+1. Read `[[MEMORY]].md` to find the current phase file
+2. If the phase status changed (in-progress → complete), update the phase file
+3. If you completed a new phase, create a new phase file and update the index
+4. Verify all pages load (HTTP 200) with: `for p in / /children /history /errors /errors/generate; do curl -s -o /dev/null -w "$p → %{http_code}\n" http://localhost:5173$p; done`
+
+### Memory file locations:
+```
+.claude/agent-memory/frontend-agent/
+  MEMORY.md              # Index — keep this updated
+  phase-N-<slug>.md      # One per phase
+```
+
 ## Implementation Phases
 
 ### Phase 1: Foundation (current)

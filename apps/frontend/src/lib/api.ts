@@ -51,6 +51,24 @@ export async function apiPut<T = unknown>(
   return res.json();
 }
 
+export async function apiPatch<T = unknown>(
+  path: string,
+  body?: unknown,
+): Promise<T> {
+  const phone = getPhone();
+  const url = `${path}?phone=${encodeURIComponent(phone)}`;
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Network error" }));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function apiDelete(path: string): Promise<void> {
   const phone = getPhone();
   const url = `${path}?phone=${encodeURIComponent(phone)}`;

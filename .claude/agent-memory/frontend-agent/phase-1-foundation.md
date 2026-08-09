@@ -1,34 +1,21 @@
 ---
 name: phase-1-foundation
-description: Frontend Phase 1 (Foundation) status — project scaffold, HomePage with health check, routing pending
+description: Frontend Phase 1 (Foundation) status — COMPLETE. Scaffold, routing, HomePage, design tokens
 metadata:
   type: project
   phase: 1 — Foundation
-  last_updated: 2026-07-26
+  status: complete
+  last_updated: 2026-08-09
 ---
 
-## Phase 1: Foundation — In Progress
+## Phase 1: Foundation — ✅ Complete
 
 ### Completed
-- Project scaffolding: Vite + React 19 + TypeScript 5.7 at `apps/frontend/`
-- HomePage at `apps/frontend/src/pages/HomePage.tsx` with backend health check button
-- Tailwind v4 configured
-- Harness: tsc + vitest PostToolUse hooks active in `.claude/settings.json`
-- Vite dev server proxies `/api` → `http://backend:8000`
+- Vite + React 19 + TypeScript 5.7 at `apps/frontend/`
+- React Router v7 wired with routes: `/`, `/children`, `/history`, `/errors`, `/errors/generate`, `/submissions/:id/processing`, `/submissions/:id/result`, `/submissions/:id`
+- HomePage with phone setup, child selector, subject toggle, photo upload, image compression
+- Design tokens from `docs/brand-identity.md` enforced
+- Tailwind v4 with brand palette (indigo #6366F1, green #22C55E, red #EF4444)
+- No gray/zinc/slate/neutral classes anywhere
 
-### Not Yet Done
-- React Router not wired (only HomePage exists, no routing)
-- No component tests written
-- No shared UI primitives in `src/components/ui/`
-
-### Known Issues
-- HomePage uses forbidden Tailwind classes (`text-gray-500`, `text-gray-400`, `text-gray-600`, `border-gray-300`) — needs design-check pass per `docs/brand-identity.md`
-
-### Next Step
-Wire React Router v7, create route structure per `docs/ux-spec.md`, then build PhotoUpload component.
-
-### Contract Deviations
-None yet.
-
-### Cross-Agent Requests
-None yet.
+See [[phase-2-upload-result]] and [[phase-3-history-errors]] for subsequent work.

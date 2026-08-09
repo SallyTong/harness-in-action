@@ -18,7 +18,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.routers import children, health, submissions
+from app.routers import children, error_collections, health, submissions
 
 app = FastAPI(title="AI Homework Grader", version="0.1.0")
 
@@ -33,6 +33,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(children.router)
 app.include_router(submissions.router)
+app.include_router(error_collections.router)
 
 
 @app.exception_handler(Exception)

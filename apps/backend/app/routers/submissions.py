@@ -1,6 +1,7 @@
 """Submission endpoints: upload exam images and query grading results."""
 
 import os
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import (
@@ -10,24 +11,30 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Query,
     Request,
     UploadFile,
     status,
 )
 from fastapi.responses import FileResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_db, get_parent
 from app.models.child import Child
+from app.models.error_question import ErrorQuestion
 from app.models.graded_question import GradedQuestion
 from app.models.parent import Parent
 from app.models.submission import Submission
 from app.schemas.submissions import (
+    FixQuestionRequest,
+    FixQuestionResponse,
     GradedQuestionResponse,
     ScoreSummary,
     SubmissionAccepted,
+    SubmissionListResponse,
     SubmissionResponse,
+    SubmissionSummary,
 )
 from app.services.grading import process_submission
 
@@ -151,6 +158,89 @@ async def create_submission(
     return SubmissionAccepted(submission_id=submission.id, status="pending")
 
 
+@router.get("/submissions", response_model=SubmissionListResponse)
+async def list_submissions(
+    request: Request,
+    parent: Annotated[Parent, Depends(get_parent)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    child_id: int | None = None,
+    subject: str | None = None,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    """List past submissions for the current parent with pagination.
+
+    Filters: child_id, subject. Sorted by created_at descending.
+    """
+    phone = parent.phone
+
+    # Base query: only submissions owned by this parent
+    base_query = (
+        select(Submission)
+        .join(Child, Submission.child_id == Child.id)
+        .where(Child.parent_id == parent.id)
+    )
+    count_query = (
+        select(func.count())
+        .select_from(Submission)
+        .join(Child, Submission.child_id == Child.id)
+        .where(Child.parent_id == parent.id)
+    )
+
+    if child_id is not None:
+        base_query = base_query.where(Submission.child_id == child_id)
+        count_query = count_query.where(Submission.child_id == child_id)
+
+    if subject is not None:
+        base_query = base_query.where(Submission.subject == subject)
+        count_query = count_query.where(Submission.subject == subject)
+
+    # Count total
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    # Fetch page
+    result = await db.execute(
+        base_query
+        .order_by(Submission.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    submissions = result.scalars().all()
+
+    # Collect child names in one query (more efficient than N queries)
+    child_ids = list({s.child_id for s in submissions})
+    child_names: dict[int, str] = {}
+    if child_ids:
+        child_result = await db.execute(
+            select(Child.id, Child.name).where(Child.id.in_(child_ids))
+        )
+        child_names = {row[0]: row[1] for row in child_result.all()}
+
+    items: list[SubmissionSummary] = []
+    for s in submissions:
+        score = None
+        if s.status == "completed" and s.total_questions:
+            score = ScoreSummary(
+                correct=s.correct_count or 0,
+                total=s.total_questions,
+            )
+        items.append(
+            SubmissionSummary(
+                id=s.id,
+                child_id=s.child_id,
+                child_name=child_names.get(s.child_id, ""),
+                subject=s.subject,
+                status=s.status,
+                score=score,
+                thumbnail_url=_build_image_url(request, s.thumbnail_path, phone),
+                created_at=s.created_at,
+            )
+        )
+
+    return SubmissionListResponse(items=items, total=total)
+
+
 @router.get("/submissions/{submission_id}", response_model=SubmissionResponse)
 async def get_submission(
     submission_id: int,
@@ -239,6 +329,167 @@ async def get_submission(
     )
 
 
+@router.patch(
+    "/submissions/{submission_id}/questions/{question_id}",
+    response_model=FixQuestionResponse,
+)
+async def fix_question_grade(
+    submission_id: int,
+    question_id: int,
+    body: FixQuestionRequest,
+    request: Request,
+    parent: Annotated[Parent, Depends(get_parent)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Manually override a question's grading result.
+
+    Updates GradedQuestion.is_correct, sets is_manually_fixed=True,
+    recalculates Submission.correct_count, and syncs ErrorQuestion.
+    All in one transaction.
+    """
+    phone = parent.phone
+
+    # 1. Verify ownership: Submission → Child → Parent
+    sub_result = await db.execute(
+        select(Submission)
+        .join(Child, Submission.child_id == Child.id)
+        .where(Submission.id == submission_id, Child.parent_id == parent.id)
+    )
+    submission = sub_result.scalar_one_or_none()
+    if submission is None:
+        raise HTTPException(status_code=404, detail="Submission not found")
+
+    # Only allow correction on completed submissions
+    if submission.status != "completed":
+        raise HTTPException(
+            status_code=400,
+            detail="Can only correct questions on completed submissions",
+        )
+
+    # 2. Load the GradedQuestion, verify it belongs to this submission
+    gq_result = await db.execute(
+        select(GradedQuestion).where(
+            GradedQuestion.id == question_id,
+            GradedQuestion.submission_id == submission_id,
+        )
+    )
+    gq = gq_result.scalar_one_or_none()
+    if gq is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    old_is_correct = gq.is_correct
+    new_is_correct = body.is_correct
+
+    # No change — return current state
+    if old_is_correct == new_is_correct:
+        return FixQuestionResponse(
+            question=GradedQuestionResponse(
+                id=gq.id,
+                question_number=gq.question_number,
+                question_position=gq.question_position,
+                question_image_path=_build_image_url(
+                    request, gq.question_image_path, phone
+                ),
+                question_type=gq.question_type,
+                is_correct=gq.is_correct,
+                solution_note=gq.solution_note,
+                error_category=gq.error_category,
+                is_manually_fixed=gq.is_manually_fixed,
+            ),
+            new_score=ScoreSummary(
+                correct=submission.correct_count or 0,
+                total=submission.total_questions or 0,
+            ),
+        )
+
+    # 3. Update the question
+    gq.is_correct = new_is_correct
+    gq.is_manually_fixed = True
+
+    # 4. Recalculate correct_count
+    count_result = await db.execute(
+        select(func.count())
+        .select_from(GradedQuestion)
+        .where(
+            GradedQuestion.submission_id == submission_id,
+            GradedQuestion.is_correct == True,  # noqa: E712
+        )
+    )
+    new_correct = count_result.scalar() or 0
+    submission.correct_count = new_correct
+
+    # 5. Sync ErrorQuestion
+    now = datetime.now(timezone.utc)
+
+    if old_is_correct and not new_is_correct:
+        # Correct → Wrong: add to ErrorQuestion
+        eq_result = await db.execute(
+            select(ErrorQuestion).where(
+                ErrorQuestion.submission_id == submission_id,
+                ErrorQuestion.question_number == gq.question_number,
+            )
+        )
+        eq = eq_result.scalar_one_or_none()
+
+        if eq:
+            eq.error_count += 1
+            eq.error_timestamps = eq.error_timestamps + [now.isoformat()]
+            eq.last_error_at = now
+            eq.solution_note = gq.solution_note
+            eq.error_category = gq.error_category
+            eq.is_manually_fixed = True
+        else:
+            eq = ErrorQuestion(
+                submission_id=submission.id,
+                child_id=submission.child_id,
+                subject=submission.subject,
+                question_number=gq.question_number,
+                question_type=gq.question_type,
+                question_image_path=gq.question_image_path or "",
+                solution_note=gq.solution_note,
+                error_category=gq.error_category,
+                is_manually_fixed=True,
+                error_count=1,
+                error_timestamps=[now.isoformat()],
+                last_error_at=now,
+            )
+            db.add(eq)
+
+    elif not old_is_correct and new_is_correct:
+        # Wrong → Correct: remove from ErrorQuestion
+        eq_result = await db.execute(
+            select(ErrorQuestion).where(
+                ErrorQuestion.submission_id == submission_id,
+                ErrorQuestion.question_number == gq.question_number,
+            )
+        )
+        eq = eq_result.scalar_one_or_none()
+        if eq:
+            await db.delete(eq)
+
+    await db.flush()
+
+    return FixQuestionResponse(
+        question=GradedQuestionResponse(
+            id=gq.id,
+            question_number=gq.question_number,
+            question_position=gq.question_position,
+            question_image_path=_build_image_url(
+                request, gq.question_image_path, phone
+            ),
+            question_type=gq.question_type,
+            is_correct=gq.is_correct,
+            solution_note=gq.solution_note,
+            error_category=gq.error_category,
+            is_manually_fixed=gq.is_manually_fixed,
+        ),
+        new_score=ScoreSummary(
+            correct=new_correct,
+            total=submission.total_questions or 0,
+        ),
+    )
+
+
 @router.get("/images/{kind}/{filename}")
 async def serve_image(
     kind: str,
@@ -249,12 +500,23 @@ async def serve_image(
 ):
     """Serve an image file with ownership verification.
 
-    The filename is '{submission_id}.jpg' or '{submission_id}_{qnum}.jpg'.
+    For submission-based images (originals/annotated/thumbnails/questions),
+    the filename is '{submission_id}.jpg' or '{submission_id}_{qnum}.jpg'.
     Ownership is verified through the submission → child → parent chain.
+
+    For sheets, the filename is a UUID (generated at request time for a
+    parent whose child ownership was already verified).
     """
-    allowed_kinds = {"originals", "annotated", "thumbnails", "questions"}
+    allowed_kinds = {"originals", "annotated", "thumbnails", "questions", "sheets"}
     if kind not in allowed_kinds:
         raise HTTPException(status_code=404, detail="Image kind not found")
+
+    if kind == "sheets":
+        # Sheet images have UUID filenames — ownership was verified at generation time
+        file_path = f"data/images/sheets/{filename}"
+        if not os.path.isfile(file_path):
+            raise HTTPException(status_code=404, detail="Image file not found")
+        return FileResponse(file_path, media_type="image/jpeg")
 
     # Extract submission_id from filename
     submission_id_str = filename.split("_")[0]

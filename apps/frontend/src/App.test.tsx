@@ -22,13 +22,17 @@ describe("App routing", () => {
     expect(screen.getByText("小朋友管理")).toBeInTheDocument();
   });
 
-  it("renders placeholder at /history", () => {
+  it("renders history page at /history", () => {
     render(
       <MemoryRouter initialEntries={["/history"]}>
         <App />
       </MemoryRouter>,
     );
-    const items = screen.getAllByText(/即将推出/);
-    expect(items.length).toBeGreaterThanOrEqual(1);
+    // HistoryPage renders header "批改历史"
+    expect(screen.getByText("批改历史")).toBeInTheDocument();
+    // Phone input appears (may also appear in other components like HomePage
+    // due to how React Router renders, so use getAllByText)
+    const phoneLabels = screen.getAllByText("请输入家长手机号");
+    expect(phoneLabels.length).toBeGreaterThanOrEqual(1);
   });
 });

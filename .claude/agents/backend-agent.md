@@ -100,6 +100,30 @@ curl -f http://localhost:8000/api/health
 cd apps/backend && python -m pytest tests/ -v
 ```
 
+## Agent Memory (MANDATORY — AFTER EVERY SESSION)
+
+You MUST update `[[MEMORY]].md` after every implementation session. This is NOT optional — future sessions depend on accurate memory to avoid re-doing work or starting from wrong assumptions.
+
+### What to record:
+- **What you built** (endpoints, services, models added)
+- **What you changed** (refactors, bug fixes, schema changes)
+- **Known issues** (problems you couldn't solve, workarounds applied)
+- **Contract Deviations** (any place you diverged from `contracts/openapi.yaml`)
+- **Cross-Agent Requests** (things the frontend agent needs to do next)
+
+### How:
+1. Read `[[MEMORY]].md` to find the current phase file
+2. If the phase status changed (in-progress → complete), update the phase file
+3. If you completed a new phase, create a new phase file and update the index
+4. Run `bash scripts/integration-smoke-test.sh` and record the result
+
+### Memory file locations:
+```
+.claude/agent-memory/backend-agent/
+  MEMORY.md              # Index — keep this updated
+  phase-N-<slug>.md      # One per phase
+```
+
 ## Implementation Phases
 
 ### Phase 1: Foundation (current)

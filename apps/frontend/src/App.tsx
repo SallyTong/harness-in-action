@@ -3,15 +3,11 @@ import HomePage from "./pages/HomePage";
 import ChildrenPage from "./pages/ChildrenPage";
 import ProcessingPage from "./pages/ProcessingPage";
 import ResultPage from "./pages/ResultPage";
+import HistoryPage from "./pages/HistoryPage";
+import HistoryDetailPage from "./pages/HistoryDetailPage";
+import ErrorBookPage from "./pages/ErrorBookPage";
+import ErrorGeneratePage from "./pages/ErrorGeneratePage";
 import BottomNav from "./components/layout/BottomNav";
-
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div className="flex min-h-dvh items-center justify-center px-4">
-      <p className="text-[15px] text-[#6B6560]">{title}</p>
-    </div>
-  );
-}
 
 function NotFoundPage() {
   return (
@@ -38,18 +34,10 @@ export default function App() {
           path="/submissions/:id/result"
           element={<ResultPage />}
         />
-        <Route
-          path="/history"
-          element={<PlaceholderPage title="批改历史（即将推出）" />}
-        />
-        <Route
-          path="/errors"
-          element={<PlaceholderPage title="错题集（即将推出）" />}
-        />
-        <Route
-          path="/errors/generate"
-          element={<PlaceholderPage title="错题试卷生成（即将推出）" />}
-        />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/submissions/:id" element={<HistoryDetailPage />} />
+        <Route path="/errors" element={<ErrorBookPage />} />
+        <Route path="/errors/generate" element={<ErrorGeneratePage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <BottomNav />

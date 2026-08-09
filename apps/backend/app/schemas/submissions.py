@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SubmissionAccepted(BaseModel):
@@ -58,3 +58,17 @@ class SubmissionResponse(BaseModel):
     updated_at: datetime | None = None
 
     model_config = {"from_attributes": True}
+
+
+class SubmissionListResponse(BaseModel):
+    items: list[SubmissionSummary]
+    total: int
+
+
+class FixQuestionRequest(BaseModel):
+    is_correct: bool
+
+
+class FixQuestionResponse(BaseModel):
+    question: GradedQuestionResponse
+    new_score: ScoreSummary

@@ -410,7 +410,186 @@ fi
 # ═══════════════════════════════════════════════════════
 fi  # end of "test image exists" check
 
-# 6. Frontend Pages
+# ═══════════════════════════════════════════════════════
+# 5b. Submissions — List Endpoint (Phase 3)
+# ═══════════════════════════════════════════════════════
+
+echo ""
+echo "--- 5b. Submissions List (Phase 3) ---"
+
+# List submissions with pagination
+SUBM_LIST=$(curl -s -w '\n%{http_code}' \
+    "$BACKEND_URL/api/submissions?phone=$SMOKE_PHONE&limit=5&offset=0" \
+    2>/dev/null || echo -e "\n000")
+SUBM_LIST_STATUS=$(echo "$SUBM_LIST" | tail -1)
+SUBM_LIST_BODY=$(echo "$SUBM_LIST" | head -n -1)
+check "GET /api/submissions → 200" "$SUBM_LIST_STATUS" "200"
+check_contains "List response has items" "$SUBM_LIST_BODY" '"items"'
+check_contains "List response has total" "$SUBM_LIST_BODY" '"total"'
+
+# Filter by subject
+SUBM_LIST_EN=$(curl -s \
+    "$BACKEND_URL/api/submissions?phone=$SMOKE_PHONE&subject=english&limit=5" \
+    2>/dev/null || echo "")
+if [ -n "$SUBM_LIST_EN" ]; then
+    check_contains "List filtered by subject=english" "$SUBM_LIST_EN" '"items"'
+fi
+
+# ═══════════════════════════════════════════════════════
+# 5c. Submissions — Manual Correction (Phase 3)
+# ═══════════════════════════════════════════════════════
+
+echo ""
+echo "--- 5c. Manual Correction (Phase 3) ---"
+
+# Wait for the submission to complete (poll up to 30s)
+SUB_COMPLETED=false
+if [ -n "${CREATED_SUBMISSION_ID:-}" ] && [ "${CREATED_SUBMISSION_ID:-}" != "" ]; then
+    echo "         polling submission ${CREATED_SUBMISSION_ID:-} for completion..."
+    POLL_ATTEMPTS=0
+    MAX_POLL=15
+    SUB_COMPLETED=false
+
+    while [ $POLL_ATTEMPTS -lt $MAX_POLL ]; do
+        POLL_RESP=$(curl -s "$BACKEND_URL/api/submissions/$CREATED_SUBMISSION_ID?phone=$SMOKE_PHONE" 2>/dev/null || echo "")
+        SUB_STATUS=$(echo "$POLL_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "")
+        if [ "$SUB_STATUS" = "completed" ]; then
+            SUB_COMPLETED=true
+            echo "         submission $CREATED_SUBMISSION_ID completed"
+            break
+        elif [ "$SUB_STATUS" = "failed" ]; then
+            echo "         submission $CREATED_SUBMISSION_ID failed (GLM-4V may not be configured)"
+            break
+        fi
+        POLL_ATTEMPTS=$((POLL_ATTEMPTS + 1))
+        sleep 2
+    done
+
+    if [ "$SUB_COMPLETED" = "true" ]; then
+        # Get question IDs from the completed submission
+        Q_JSON=$(curl -s "$BACKEND_URL/api/submissions/$CREATED_SUBMISSION_ID?phone=$SMOKE_PHONE" 2>/dev/null || echo "")
+        Q_ID=$(echo "$Q_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); qs=d.get('questions') or []; print(qs[0]['id'] if qs else '')" 2>/dev/null || echo "")
+        Q_IS_CORRECT=$(echo "$Q_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); qs=d.get('questions') or []; print(qs[0]['is_correct'] if qs else '')" 2>/dev/null || echo "")
+
+        if [ -n "$Q_ID" ] && [ "$Q_ID" != "" ]; then
+            # Flip the correctness
+            if [ "$Q_IS_CORRECT" = "True" ]; then
+                NEW_VAL="false"
+            else
+                NEW_VAL="true"
+            fi
+
+            PATCH_RESPONSE=$(curl -s -w '\n%{http_code}' \
+                -X PATCH "$BACKEND_URL/api/submissions/$CREATED_SUBMISSION_ID/questions/$Q_ID?phone=$SMOKE_PHONE" \
+                -H "Content-Type: application/json" \
+                -d "{\"is_correct\": $NEW_VAL}" \
+                2>/dev/null || echo -e "\n000")
+            PATCH_STATUS=$(echo "$PATCH_RESPONSE" | tail -1)
+            PATCH_BODY=$(echo "$PATCH_RESPONSE" | head -n -1)
+            check "PATCH .../questions/{qid} → 200" "$PATCH_STATUS" "200"
+            check_contains "PATCH response has question" "$PATCH_BODY" '"question"'
+            check_contains "PATCH response has new_score" "$PATCH_BODY" '"new_score"'
+
+            # Verify is_manually_fixed is now true
+            FIXED_FLAG=$(echo "$PATCH_BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['question']['is_manually_fixed'])" 2>/dev/null || echo "")
+            check "PATCH sets is_manually_fixed=True" "$FIXED_FLAG" "True"
+
+            # Revert to original value
+            REVERT_VAL=$([ "$Q_IS_CORRECT" = "True" ] && echo "true" || echo "false")
+            curl -s -X PATCH "$BACKEND_URL/api/submissions/$CREATED_SUBMISSION_ID/questions/$Q_ID?phone=$SMOKE_PHONE" \
+                -H "Content-Type: application/json" \
+                -d "{\"is_correct\": $REVERT_VAL}" > /dev/null 2>&1
+        else
+            echo -e "  ${YELLOW}SKIP${NC}  PATCH check (no questions in submission)"
+            SKIP_COUNT=$((SKIP_COUNT + 4))
+        fi
+    else
+        echo -e "  ${YELLOW}SKIP${NC}  PATCH check (submission did not complete in time)"
+        SKIP_COUNT=$((SKIP_COUNT + 4))
+    fi
+else
+    echo -e "  ${YELLOW}SKIP${NC}  PATCH check (no submission created)"
+    SKIP_COUNT=$((SKIP_COUNT + 4))
+fi
+
+# ═══════════════════════════════════════════════════════
+# 5d. Error Collections (Phase 3)
+# ═══════════════════════════════════════════════════════
+
+echo ""
+echo "--- 5d. Error Collections (Phase 3) ---"
+
+# List error questions
+ERR_LIST=$(curl -s -w '\n%{http_code}' \
+    "$BACKEND_URL/api/error-collections?phone=$SMOKE_PHONE&limit=5&offset=0" \
+    2>/dev/null || echo -e "\n000")
+ERR_LIST_STATUS=$(echo "$ERR_LIST" | tail -1)
+ERR_LIST_BODY=$(echo "$ERR_LIST" | head -n -1)
+check "GET /api/error-collections → 200" "$ERR_LIST_STATUS" "200"
+check_contains "Error list has items" "$ERR_LIST_BODY" '"items"'
+check_contains "Error list has total" "$ERR_LIST_BODY" '"total"'
+
+# Verify error question image URLs include phone param (regression check)
+if [ "$ERR_LIST_STATUS" = "200" ]; then
+    ERR_IMG_COUNT=$(echo "$ERR_LIST_BODY" | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+items=d.get('items',[])
+wrong=[item.get('question_image_path','') for item in items if item.get('question_image_path','') and 'phone=' not in item.get('question_image_path','')]
+print(len(wrong))
+" 2>/dev/null || echo "0")
+    check "All error question image URLs have phone=" "$ERR_IMG_COUNT" "0"
+fi
+
+# Filter by subject and type
+ERR_FILTERED=$(curl -s \
+    "$BACKEND_URL/api/error-collections?phone=$SMOKE_PHONE&subject=english&question_type=choice&limit=5" \
+    2>/dev/null || echo "")
+check_contains "Error list filtered by subject+type" "$ERR_FILTERED" '"items"'
+
+# Generate error sheet
+if [ "${SUB_COMPLETED:-false}" = "true" ] && [ -n "${VALID_CHILD_ID:-}" ]; then
+    SHEET_RESPONSE=$(curl -s -w '\n%{http_code}' \
+        -X POST "$BACKEND_URL/api/error-collections/generate?phone=$SMOKE_PHONE" \
+        -H "Content-Type: application/json" \
+        -d "{\"child_id\": ${VALID_CHILD_ID:-0}, \"subject\": \"english\", \"count\": 5}" \
+        2>/dev/null || echo -e "\n000")
+    SHEET_STATUS=$(echo "$SHEET_RESPONSE" | tail -1)
+    SHEET_BODY=$(echo "$SHEET_RESPONSE" | head -n -1)
+    # Generate can return 200 (with image) or 400 (no matching errors) — both are valid
+    if [ "$SHEET_STATUS" = "200" ] || [ "$SHEET_STATUS" = "400" ]; then
+        check "POST /api/error-collections/generate → 200/400" "$SHEET_STATUS" "$SHEET_STATUS"
+    else
+        check "POST /api/error-collections/generate → 200/400" "$SHEET_STATUS" "200 or 400"
+    fi
+
+    if [ "$SHEET_STATUS" = "200" ]; then
+        check_contains "Generate response has image_url" "$SHEET_BODY" '"image_url"'
+        check_contains "Generate response has question_count" "$SHEET_BODY" '"question_count"'
+
+        # Verify image_url includes phone param (regression check)
+        SHEET_IMG_URL=$(echo "$SHEET_BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('image_url',''))" 2>/dev/null || echo "")
+        check_contains "Generate image_url includes phone=" "$SHEET_IMG_URL" "phone="
+
+        # Verify the image is actually fetchable
+        if echo "$SHEET_IMG_URL" | grep -q "phone="; then
+            SHEET_IMG_STATUS=$(curl -s -o /dev/null -w '%{http_code}' "$SHEET_IMG_URL" 2>/dev/null || echo "000")
+            check "Generated sheet image is fetchable (200)" "$SHEET_IMG_STATUS" "200"
+        fi
+    fi
+
+    # Cross-phone: phone B cannot generate sheet for phone A's child
+    SHEET_ISOLATION_STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
+        -X POST "$BACKEND_URL/api/error-collections/generate?phone=$SMOKE_PHONE_B" \
+        -H "Content-Type: application/json" \
+        -d "{\"child_id\": ${VALID_CHILD_ID:-0}, \"subject\": \"english\", \"count\": 5}" \
+        2>/dev/null || echo "000")
+    check "Isolation: phone B cannot generate sheet for phone A's child (404)" "$SHEET_ISOLATION_STATUS" "404"
+else
+    echo -e "  ${YELLOW}SKIP${NC}  Generate sheet check (no completed submission or no child)"
+    SKIP_COUNT=$((SKIP_COUNT + 2))
+fi
+
 # ═══════════════════════════════════════════════════════
 
 echo ""
