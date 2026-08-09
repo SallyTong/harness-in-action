@@ -60,6 +60,17 @@ def _encode_image(image_path: str) -> str:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
+def _get_max_tokens(model: str) -> int:
+    """Return appropriate max_tokens for the given model.
+
+    Free (flash) models are limited to 1024 output tokens.
+    Paid models support up to 4096.
+    """
+    if "flash" in model.lower():
+        return 1024
+    return 4096
+
+
 def _build_prompt(subject: str) -> str:
     qtypes = SUBJECT_TYPES.get(subject, SUBJECT_TYPES["english"])
     subject_name = "英语" if subject == "english" else "数学"
@@ -109,7 +120,7 @@ async def grade_image(
             },
         ],
         "temperature": 0.1,
-        "max_tokens": 1024,
+        "max_tokens": _get_max_tokens(mdl),
     }
 
     url = f"{GLM_API_BASE}/chat/completions"
