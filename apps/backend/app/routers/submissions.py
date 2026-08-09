@@ -53,13 +53,19 @@ PNG_MAGIC = b"\x89PNG"
 def _build_image_url(
     request: Request, rel_path: str | None, phone: str = ""
 ) -> str | None:
-    """Convert a relative image path to the serve-image API URL."""
+    """Convert a relative image path to the serve-image API URL.
+
+    Normalizes Windows backslash paths and strips the data/images/ prefix.
+    The serve_image route is at GET /api/images/{kind}/{filename}.
+    """
     if not rel_path:
         return None
     base = str(request.base_url).rstrip("/")
-    # Convert "data/images/originals/1.jpg" → "/api/images/originals/1.jpg"
-    # The serve_image route is at GET /api/images/{kind}/{filename}
-    kind_and_file = rel_path.replace("data/images/", "", 1)
+    normalized = rel_path.replace("\\", "/")
+    if normalized.startswith("data/images/"):
+        kind_and_file = normalized[len("data/images/"):]
+    else:
+        kind_and_file = normalized.replace("data/images/", "", 1)
     url = f"{base}/api/images/{kind_and_file}"
     if phone:
         url += f"?phone={phone}"

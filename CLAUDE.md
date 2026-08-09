@@ -110,7 +110,7 @@ bash scripts/dev.sh
 ### 自动化 Hooks（`.claude/settings.json`）
 
 - **PreToolUse**: 写入文件前自动扫描硬编码密钥，命中则阻止写入。
-- **PostToolUse**: 每次文件写入后运行 ruff + pytest + tsc + vitest + Alembic 检查（当前未按文件类型筛选，所有检查对所有 Write/Edit 生效）。
+- **PostToolUse**: [hook-router.py](scripts/hook-router.py) 按文件路径分发检查：后端文件只跑 ruff+pytest，前端文件只跑 tsc+vitest，harness 文件跑 validate-harness.py。
 
 ### 子代理
 
@@ -171,6 +171,19 @@ GLM-4V API 月度预算 50 元。MVP 阶段优先使用免费模型 `GLM-4V-Flas
 - 加 `.gitignore` / `# noqa` / `|| true` 掩盖症状
 - 修改 CI 配置降低检查标准
 - 在测试中跳过失败用例而不修复问题本身
+
+### 已知限制必须修复或升级为已接受的技术债务
+
+Agent memory 中记录的 Known Limitations **不得**跨多个 Phase 遗留。每个 Phase 结束时：
+
+1. 修复上一 Phase 记录的所有已知限制，或
+2. 明确将其升级为"已接受的技术债务"并说明理由（如 "MVP 不需多进程部署"）
+3. 记录在 memory 文件的 "Accepted Technical Debt" 小节，不再作为 Known Limitation
+
+三种绕过算违规：
+- 记录问题但不修复、不升级（沉默累积）
+- 在 commit message 中承诺"后续修复"但从未执行
+- 将问题从 Known Limitations 移到 Accepted Technical Debt 但不写理由
 
 如果根因在第三方依赖或系统限制，必须在 commit message 中说明原因和后续计划。
 
