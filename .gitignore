@@ -27,3 +27,4 @@ data/images/*
 
 # Docker
 mysql_data/
+apps/backend/data/
