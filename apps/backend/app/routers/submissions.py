@@ -412,7 +412,7 @@ async def fix_question_grade(
         .select_from(GradedQuestion)
         .where(
             GradedQuestion.submission_id == submission_id,
-            GradedQuestion.is_correct == True,  # noqa: E712
+            GradedQuestion.is_correct == True,
         )
     )
     new_correct = count_result.scalar() or 0

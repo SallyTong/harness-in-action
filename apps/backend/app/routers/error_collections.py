@@ -1,6 +1,6 @@
 """Error collection endpoints: browse wrong answers and generate practice sheets."""
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -88,7 +88,7 @@ async def list_error_questions(
 
     if from_date is not None:
         try:
-            dt = datetime.strptime(from_date, "%Y-%m-%d")
+            dt = datetime.strptime(from_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             base_query = base_query.where(ErrorQuestion.last_error_at >= dt)
             count_query = count_query.where(ErrorQuestion.last_error_at >= dt)
         except ValueError:
@@ -98,7 +98,7 @@ async def list_error_questions(
 
     if to_date is not None:
         try:
-            dt = datetime.strptime(to_date, "%Y-%m-%d")
+            dt = datetime.strptime(to_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             # Include the entire to_date day (strictly before next day)
             dt_end = dt + timedelta(days=1)
             base_query = base_query.where(ErrorQuestion.last_error_at < dt_end)
@@ -208,7 +208,7 @@ async def generate_error_sheet(
 
     if body.from_date:
         try:
-            dt = datetime.strptime(body.from_date, "%Y-%m-%d")
+            dt = datetime.strptime(body.from_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             query = query.where(ErrorQuestion.last_error_at >= dt)
         except ValueError:
             raise HTTPException(
@@ -217,7 +217,7 @@ async def generate_error_sheet(
 
     if body.to_date:
         try:
-            dt = datetime.strptime(body.to_date, "%Y-%m-%d")
+            dt = datetime.strptime(body.to_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             dt_end = dt + timedelta(days=1)
             query = query.where(ErrorQuestion.last_error_at < dt_end)
         except ValueError:

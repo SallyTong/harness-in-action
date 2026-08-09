@@ -222,7 +222,7 @@ def compose_sheet(
         Relative path to the generated sheet image.
     """
     import uuid
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     # Constants
     PAGE_WIDTH = 1200
@@ -240,7 +240,7 @@ def compose_sheet(
     label_font = _load_font(18)
 
     subject_label = "英语" if subject == "english" else "数学"
-    today = datetime.now().strftime("%Y年%m月%d日")
+    today = datetime.now(timezone.utc).strftime("%Y年%m月%d日")
 
     # Calculate total height: header + each question image + answer space + gaps
     question_sections: list[Image.Image] = []
@@ -253,8 +253,8 @@ def compose_sheet(
 
         try:
             q_img = Image.open(img_path).convert("RGB")
-        except Exception:
-            logger.warning("Cannot open question image: %s", img_path)
+        except (OSError, ValueError) as exc:
+            logger.warning("Cannot open question image %s: %s", img_path, exc)
             continue
 
         # Scale question image to fit within page width
@@ -280,7 +280,7 @@ def compose_sheet(
     # --- Title bar ---
     draw.text(
         (MARGIN, 24),
-        f"错题练习试卷",
+        "错题练习试卷",
         fill=TITLE_COLOR,
         font=title_font,
     )
