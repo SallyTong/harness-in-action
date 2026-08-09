@@ -100,9 +100,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PROJECT_DIR}/scripts/check-agent-memory.py 2>&1 || echo \"Run 'python scripts/check-agent-memory.py' to verify\"",
-            "timeout": 10,
-            "statusMessage": "Checking agent memory consistency..."
+            "command": "python ${CLAUDE_PROJECT_DIR}/scripts/validate-harness.py 2>&1 || echo \"HARNESS ISSUES FOUND — run 'python scripts/validate-harness.py' to see details\"",
+            "timeout": 15,
+            "statusMessage": "Validating harness configuration..."
           }
         ]
       }

@@ -20,4 +20,4 @@ metadata:
 - Alembic initialized (`migrations/`) with 2 revisions
 - Harness: ruff + pytest PostToolUse hooks active
 
-See [[phase-2-core-grading]] and [[phase-3-history-records]] for subsequent work.
+See [[phase-2-image-upload]], [[phase-3-grading-engine]], [[phase-4-history-records]], and [[phase-5-polish]] for subsequent work.
