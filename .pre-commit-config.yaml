@@ -1,0 +1,55 @@
+# Pre-commit hooks for human-made changes.
+#
+# Claude Code PostToolUse hooks catch AI-generated issues in real time,
+# but human edits (manual changes, merge conflict resolution) bypass
+# those hooks. This file provides the commit-time safety net.
+#
+# Install:  pip install pre-commit && pre-commit install
+# Run once:  pre-commit run --all-files
+
+repos:
+  # ── Python / Backend ──────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.8
+    hooks:
+      - id: ruff
+        name: ruff (lint)
+        args: [check]
+        files: ^apps/backend/
+        types_or: [python, pyi]
+
+      - id: ruff-format
+        name: ruff (format)
+        files: ^apps/backend/
+        types_or: [python, pyi]
+
+  # ── Frontend / TypeScript + CSS ───────────────────
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        name: prettier (tsx/css/json)
+        files: ^apps/frontend/
+        types_or: [tsx, ts, css, json]
+
+  # ── Generic / Catch-all ───────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: trim trailing whitespace
+        exclude: \.svg$
+
+      - id: end-of-file-fixer
+        name: ensure newline at EOF
+        exclude: \.svg$
+
+      - id: check-merge-conflict
+        name: check for unresolved merge conflicts
+
+      - id: check-yaml
+        name: validate YAML syntax
+        args: [--allow-multiple-documents]
+
+      - id: check-json
+        name: validate JSON syntax
