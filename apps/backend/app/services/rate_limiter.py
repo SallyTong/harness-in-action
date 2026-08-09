@@ -2,6 +2,11 @@
 
 Uses a sliding-window approach per client (phone number). No external
 dependencies — pure Python with FastAPI middleware integration.
+
+Exemptions:
+  - /api/health — no auth needed
+  - /api/images/* — static file serving from disk, no external API cost,
+    inherently bursty (one page load = N thumbnails)
 """
 
 import logging
@@ -14,24 +19,31 @@ from starlette.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 
-# Default limits — conservative for MVP with free-tier API budget
+# Rate limits — conservative for MVP with free-tier API budget
 DEFAULT_WINDOW_SECONDS = 60
-DEFAULT_MAX_REQUESTS = 60  # per window
+MAX_REQUESTS_PER_WINDOW = 120  # reads + mutations combined
 
 # Store: {phone: [timestamp, ...]}
 _hits: dict[str, list[float]] = defaultdict(list)
+
+# Paths exempt from rate limiting
+EXEMPT_PATHS = (
+    "/api/health",
+    "/api/images/",  # static file serving — bursty by nature (thumbnails, annotated)
+)
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Rate-limit requests by phone identity.
 
-    Only applies to endpoints that require a phone parameter. Health
-    check is exempt.
+    Exempts health check and image serving (static files from disk).
     """
 
     async def dispatch(self, request: Request, call_next):
-        # Health check is exempt
-        if request.url.path == "/api/health":
+        path = request.url.path
+
+        # Health check and image serving are exempt
+        if path == "/api/health" or path.startswith("/api/images/"):
             return await call_next(request)
 
         # Extract identity: phone query param or X-Parent-Phone header
@@ -50,7 +62,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         window_hits = [t for t in _hits[phone] if t > cutoff]
         _hits[phone] = window_hits
 
-        if len(window_hits) >= DEFAULT_MAX_REQUESTS:
+        if len(window_hits) >= MAX_REQUESTS_PER_WINDOW:
             logger.warning("Rate limit hit for phone=%s", phone[:4] + "*****")
             retry_after = int(window_hits[0] + DEFAULT_WINDOW_SECONDS - now) + 1
             return JSONResponse(
