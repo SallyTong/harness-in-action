@@ -11,6 +11,7 @@ AI 驱动的作业批改 SaaS，帮助家长高效检查孩子的试卷和作业
 | 层级     | 选型                                          |
 | -------- | --------------------------------------------- |
 | 前端     | React 19, Vite 6, TypeScript 5.7, Tailwind v4 |
+| 小程序   | Taro (React), TypeScript                      |
 | 后端     | FastAPI, Python 3.12+                         |
 | 数据库   | MySQL 8.4                                     |
 | AI 模型  | 智谱 GLM-4V-Flash（免费版先行）                |
@@ -28,6 +29,7 @@ apps/backend/          FastAPI 后端
 apps/frontend/         React 前端（移动端优先）
   src/pages/           页面组件
   src/components/      可复用组件（按功能域分文件夹）
+apps/miniapp/         微信小程序前端（Taro + React）
 infra/                 Docker Compose 及部署配置
 data/images/           本地图片存储（gitignore 中排除实际文件）
 docs/                  设计文档（只读，实施阶段不修改）
@@ -68,6 +70,8 @@ bash scripts/dev.sh
 - `docs/ux-spec.md` — UX 规范（8 屏幕清单与交互）
 - `docs/brand-identity.md` — 品牌与设计系统（色板、字体、反通用清单）
 - `docs/phase-plan.md` — 实施阶段计划（Phase 定义、范围、验收标准）
+- `docs/prd-wechat-miniapp.md` / `docs/architecture-wechat-miniapp.md` — 小程序 PRD + 架构（AD-12 起）
+- `docs/ux-spec-wechat-miniapp.md` / `docs/phase-plan-wechat-miniapp.md` — 小程序 UX + 实施计划（W1~W4）
 - `contracts/openapi.yaml` — API 契约（前后端实现的唯一标准）
 
 实施阶段所有 `docs/` 为只读。
@@ -95,6 +99,7 @@ bash scripts/dev.sh
 |------|----------|
 | [backend-conventions.md](.claude/rules/backend-conventions.md) | `apps/backend/**`, `infra/**`, `scripts/**` |
 | [frontend-conventions.md](.claude/rules/frontend-conventions.md) | `apps/frontend/**` |
+| [miniapp-conventions.md](.claude/rules/miniapp-conventions.md) | `apps/miniapp/**` |
 | [testing-conventions.md](.claude/rules/testing-conventions.md) | `**/*.test.*`, `**/*.spec.*` |
 | [database-conventions.md](.claude/rules/database-conventions.md) | `**/models/**`, `**/migrations/**` |
 
@@ -110,7 +115,7 @@ bash scripts/dev.sh
 ### 自动化 Hooks（`.claude/settings.json`）
 
 - **PreToolUse**: 写入文件前自动扫描硬编码密钥，命中则阻止写入。
-- **PostToolUse**: [hook-router.py](scripts/hook-router.py) 按文件路径分发检查：后端文件只跑 ruff+pytest，前端文件只跑 tsc+vitest，harness 文件跑 validate-harness.py。
+- **PostToolUse**: [hook-router.py](scripts/hook-router.py) 按文件路径分发检查：后端文件只跑 ruff+pytest，前端文件只跑 tsc+vitest，小程序文件只跑 tsc+test，harness 文件跑 validate-harness.py。
 
 ### 子代理
 
@@ -118,6 +123,7 @@ bash scripts/dev.sh
 
 - [backend-agent](.claude/agents/backend-agent.md) — `apps/backend/`、`infra/`、`scripts/`、`data/`
 - [frontend-agent](.claude/agents/frontend-agent.md) — `apps/frontend/`
+- [miniapp-agent](.claude/agents/miniapp-agent.md) — `apps/miniapp/`
 
 #### 内置子代理（无需配置）
 
@@ -134,7 +140,7 @@ Claude Code 内置三个子代理，适用于不需要领域专有定义的快�
 ## 领域边界
 
 - **后端拥有**: `apps/backend/`、`infra/`、`scripts/`、`data/`
-- **前端拥有**: `apps/frontend/`
+- **前端拥有**: `apps/frontend/`、`apps/miniapp/`（小程序）
 - **共享契约**: `contracts/openapi.yaml`——前后端均以此为准实现，不得单方面偏离
 - **设计文档**: `docs/` 在实施阶段为只读
 
@@ -191,4 +197,4 @@ Agent memory 中记录的 Known Limitations **不得**跨多个 Phase 遗留。�
 
 **包含**: 英语+数学试卷的拍照上传、AI 批改标注、结果图片预览、历史记录浏览、错题集（按时间/题型筛选）、错题试卷生成、一个家长手机号管理并查看自己挂载的多个小孩（跨设备同手机号数据一致）
 
-**明确排除**: 注册/登录系统、图片脱敏、小程序/App、通知提醒、PDF 导出、语文作文、报听写、多家长共享同一小孩（需授权机制，属未来）
+**明确排除**: 注册/登录系统、图片脱敏、原生 App、通知提醒、PDF 导出、语文作文、报听写、多家长共享同一小孩（需授权机制，属未来）

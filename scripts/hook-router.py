@@ -66,6 +66,10 @@ def is_frontend(path: str) -> bool:
     return "/apps/frontend/" in path
 
 
+def is_miniapp(path: str) -> bool:
+    return "/apps/miniapp/" in path
+
+
 def is_harness(path: str) -> bool:
     p = Path(path)
     return ".claude/" in path or p.name in ("CLAUDE.md",)
@@ -88,6 +92,7 @@ def main() -> int:
 
     backend = is_backend(file_path)
     frontend = is_frontend(file_path)
+    miniapp = is_miniapp(file_path)
     harness = is_harness(file_path)
 
     ran = 0
@@ -134,6 +139,30 @@ def main() -> int:
         # vitest
         code, out = run(
             "cd ${CLAUDE_PROJECT_DIR}/apps/frontend && npx vitest run --reporter=verbose 2>&1 | tail -20"
+        )
+        if out:
+            print(out)
+        ran += 1
+        if code != 0:
+            failed += 1
+
+    # ── Miniapp changes ─────────────────────
+    if miniapp:
+        print(f"[hook-router] {rel} → miniapp checks")
+
+        # tsc
+        code, out = run(
+            "cd ${CLAUDE_PROJECT_DIR}/apps/miniapp && npx tsc --noEmit 2>&1"
+        )
+        if out:
+            print(out)
+        ran += 1
+        if code != 0:
+            failed += 1
+
+        # test
+        code, out = run(
+            "cd ${CLAUDE_PROJECT_DIR}/apps/miniapp && npm test 2>&1 | tail -20"
         )
         if out:
             print(out)
