@@ -1,0 +1,5 @@
+# Ruff config shared by local runs (`cd apps/backend && ruff check .`) and the
+# pre-commit hook (run from the repo root). `app` is the backend package; marking
+# it first-party keeps import sorting consistent regardless of working directory.
+[lint.isort]
+known-first-party = ["app"]

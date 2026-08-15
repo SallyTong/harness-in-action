@@ -1,0 +1,12 @@
+{
+  "name": "@homework/api-types",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared API types mirroring contracts/openapi.yaml — single source for both Web and Miniapp frontends.",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": "./index.ts"
+  }
+}

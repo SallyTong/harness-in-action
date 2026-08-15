@@ -1,0 +1,19 @@
+/* 品牌令牌（复用 docs/brand-identity.md §3 色板，1px = 2rpx） */
+page {
+  --color-bg-page: #F8F6F4;
+  --color-bg-card: #FFFFFF;
+  --color-text-primary: #1E1B18;
+  --color-text-secondary: #6B6560;
+  --color-text-tertiary: #A39D97;
+  --color-accent: #6366F1;
+  --color-accent-hover: #4F46E5;
+  --color-accent-subtle: #EEF2FF;
+  --color-success: #22C55E;
+  --color-error: #EF4444;
+  --color-border: #E5E0DA;
+  --color-border-light: #F0EDE8;
+
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}

@@ -17,6 +17,7 @@ class Parent(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     phone: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    openid: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         default=lambda: datetime.now(timezone.utc)
     )

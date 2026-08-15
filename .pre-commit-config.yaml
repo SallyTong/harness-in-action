@@ -10,11 +10,10 @@
 repos:
   # ── Python / Backend ──────────────────────────────
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.8
+    rev: v0.16.1
     hooks:
       - id: ruff
         name: ruff (lint)
-        args: [check]
         files: ^apps/backend/
         types_or: [python, pyi]
 

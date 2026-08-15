@@ -6,4 +6,8 @@
 - [Phase 4: History Records](phase-4-history-records.md) — ✅ Complete. History list, manual correction, error collections, practice sheets
 - [Phase 5: Polish](phase-5-polish.md) — ✅ Complete. Rate limiting, cost logging, error hardening, input validation
 
+## Miniapp W1 — WeChat login increment (2026-08-15)
+
+- Added `POST /api/wechat-login` (`app/routers/wechat.py`) + `app/services/wechat_client.py` (jscode2session) + `Parent.openid` field (migration `a1b2c3d4e5f6`) + `WECHAT_APPID`/`WECHAT_APP_SECRET` env vars. Full detail in [miniapp W1](../miniapp-agent/phase-W1-scaffold-auth.md).
+
 > Cross-cutting rules: [shared/cross-cutting.md](../shared/cross-cutting.md)

@@ -733,6 +733,30 @@ PROXY_BODY=$(curl -s "$FRONTEND_URL/api/health" 2>/dev/null || echo "")
 check_contains "Proxy response contains service name" "$PROXY_BODY" "ai-homework-grader"
 
 # ═══════════════════════════════════════════════════════
+# 9. Miniapp — WeChat Login Endpoint (W1)
+# ═══════════════════════════════════════════════════════
+
+echo ""
+echo "--- 9. Miniapp — WeChat Login Endpoint ---"
+
+# We cannot produce a valid wx.login code in a smoke test, so a fake code will
+# be rejected by the endpoint. Either response proves the endpoint exists and is
+# wired (404 would mean it's missing):
+#   - 401: code invalid/expired (WECHAT_APPID/SECRET configured, WeChat rejected it)
+#   - 502: jscode2session unavailable (WECHAT_APPID/SECRET not configured)
+WECHAT_LOGIN_STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
+    -X POST "$BACKEND_URL/api/wechat-login" \
+    -H "Content-Type: application/json" \
+    -d '{"code": "fake-smoke-code"}' \
+    2>/dev/null || echo "000")
+
+if [ "$WECHAT_LOGIN_STATUS" = "401" ] || [ "$WECHAT_LOGIN_STATUS" = "502" ]; then
+    check "POST /api/wechat-login is wired (401/502)" "$WECHAT_LOGIN_STATUS" "$WECHAT_LOGIN_STATUS"
+else
+    check "POST /api/wechat-login is wired (401/502)" "$WECHAT_LOGIN_STATUS" "401 or 502"
+fi
+
+# ═══════════════════════════════════════════════════════
 # Summary
 # ═══════════════════════════════════════════════════════
 

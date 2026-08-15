@@ -10,7 +10,7 @@ openapi: "3.1.0"
 
 info:
   title: AI Homework Grader API
-  version: "0.1.0"
+  version: "0.1.1"
   description: |
     API for AI-powered homework grading. Upload exam photos, receive annotated
     grading results, and browse error-question collections. MVP covers English
@@ -31,6 +31,8 @@ servers:
 tags:
   - name: System
     description: Health and status endpoints
+  - name: Auth
+    description: WeChat mini-program login and phone binding
   - name: Children
     description: Parent-managed child profiles
   - name: Submissions
@@ -64,7 +66,47 @@ paths:
                     type: string
                   version:
                     type: string
-                    example: "0.1.0"
+                    example: "0.1.1"
+
+  # ═══════════════════════════════════════════════════════
+  # Auth — WeChat mini-program login
+  # ═══════════════════════════════════════════════════════
+
+  /api/wechat-login:
+    post:
+      operationId: wechatLogin
+      tags: [Auth]
+      summary: Exchange wx.login code for a bound parent phone
+      description: |
+        Exchanges a wx.login() code for the WeChat openid via jscode2session.
+        If phone is provided, creates/binds the parent to this openid (first login).
+        If phone is omitted, resolves the already-bound parent and returns its phone.
+        This is a MINI-PROGRAM-only endpoint (not used by the Web client).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WechatLoginRequest"
+      responses:
+        "200":
+          description: Bound parent phone
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WechatLoginResponse"
+        "401":
+          description: Invalid or expired wx.login code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: openid not yet bound to a phone (client should prompt for phone)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   # ═══════════════════════════════════════════════════════
   # Children
@@ -539,6 +581,28 @@ paths:
 
 components:
   schemas:
+    # ── Auth ─────────────────────────────────────────
+
+    WechatLoginRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          description: wx.login() temporary code (single-use, ~5 min TTL)
+        phone:
+          type: string
+          pattern: '^\d{11}$'
+          description: Optional. Parent phone to bind on first login.
+
+    WechatLoginResponse:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          type: string
+          example: "13800138000"
+
     # ── Children ──────────────────────────────────────
 
     Child:

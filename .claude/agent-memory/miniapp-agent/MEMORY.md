@@ -1,6 +1,6 @@
 # Miniapp Agent Memory
 
-- **W1 工程骨架 + 认证登录** — ⏳ 未开始
+- **W1 工程骨架 + 认证登录** — ✅ 完成 → [phase-W1-scaffold-auth.md](phase-W1-scaffold-auth.md)
 - **W2 核心批改闭环** — ⏳ 未开始
 - **W3 历史浏览** — ⏳ 未开始
 - **W4 内测打磨** — ⏳ 未开始
