@@ -118,7 +118,7 @@ export default function HistoryDetail() {
       <View className='detail detail--center'>
         <Text className='detail__emoji'>😞</Text>
         <Text className='detail__error'>{error ?? '加载失败'}</Text>
-        <Button className='detail__primary' onClick={() => setRetryKey((k) => k + 1)}>
+        <Button className='detail__primary' hoverClass='brand-hover' onClick={() => setRetryKey((k) => k + 1)}>
           再试一次
         </Button>
       </View>
@@ -164,6 +164,7 @@ export default function HistoryDetail() {
           <View className='detail__seg'>
             <Button
               className={`detail__seg-item${view === 'annotated' ? ' detail__seg-item--active' : ''}`}
+              hoverClass='brand-hover'
               onClick={() => setView('annotated')}
               disabled={!annotatedUrl}
             >
@@ -171,6 +172,7 @@ export default function HistoryDetail() {
             </Button>
             <Button
               className={`detail__seg-item${view === 'original' ? ' detail__seg-item--active' : ''}`}
+              hoverClass='brand-hover'
               onClick={() => setView('original')}
               disabled={!originalUrl}
             >
@@ -219,6 +221,7 @@ export default function HistoryDetail() {
                       className={`detail__toggle ${
                         q.is_correct ? 'detail__toggle--good' : 'detail__toggle--bad'
                       } ${savingQid === q.id ? 'detail__toggle--saving' : ''}`}
+                      hoverClass='brand-hover'
                       disabled={savingQid === q.id}
                       onClick={() => handleToggleCorrect(q)}
                       aria-label={q.is_correct ? '标记为错' : '标记为对'}
@@ -228,6 +231,7 @@ export default function HistoryDetail() {
                     {q.solution_note && (
                       <Button
                         className='detail__expand'
+                        hoverClass='brand-hover'
                         onClick={() => toggleNote(q.id)}
                         aria-label={expanded ? '收起' : '展开'}
                       >

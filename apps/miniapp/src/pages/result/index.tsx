@@ -3,6 +3,7 @@ import { View, Text, Button, Image } from '@tarojs/components'
 import Taro, { useRouter } from '@tarojs/taro'
 
 import { apiGet, apiPatch } from '../../lib/api'
+import { ERROR_CATEGORY_LABELS, formatRelativeTime, TYPE_LABELS } from '../../lib/display'
 import type {
   FixQuestionResponse,
   GradedQuestion,
@@ -11,37 +12,6 @@ import type {
 } from '@homework/api-types'
 
 import './index.scss'
-
-const TYPE_LABELS: Record<string, string> = {
-  choice: '选择题',
-  fill_blank: '填空题',
-  reading: '阅读理解',
-  composition: '作文',
-  calculation: '计算题',
-  word_problem: '应用题',
-}
-
-const ERROR_CATEGORY_LABELS: Record<string, string> = {
-  grammar: '语法',
-  vocabulary: '词汇',
-  spelling: '拼写',
-  logic: '逻辑',
-  calculation: '计算',
-  careless: '粗心',
-  comprehension: '理解',
-}
-
-function formatRelativeTime(iso: string): string {
-  const date = new Date(iso)
-  const diffMin = Math.floor((Date.now() - date.getTime()) / 60000)
-  if (diffMin < 1) return '刚刚'
-  if (diffMin < 60) return `${diffMin} 分钟前`
-  const diffHours = Math.floor(diffMin / 60)
-  if (diffHours < 24) return `${diffHours} 小时前`
-  const diffDays = Math.floor(diffHours / 24)
-  if (diffDays < 30) return `${diffDays} 天前`
-  return date.toLocaleDateString('zh-CN')
-}
 
 export default function Result() {
   const router = useRouter()
@@ -151,7 +121,7 @@ export default function Result() {
       <View className='result result--center'>
         <Text className='result__emoji'>😞</Text>
         <Text className='result__error'>{error ?? '加载失败'}</Text>
-        <Button className='result__primary' onClick={goHome}>
+        <Button className='result__primary' hoverClass='brand-hover' onClick={goHome}>
           返回首页
         </Button>
       </View>
@@ -223,6 +193,7 @@ export default function Result() {
                       className={`result__toggle ${
                         q.is_correct ? 'result__toggle--good' : 'result__toggle--bad'
                       } ${savingQid === q.id ? 'result__toggle--saving' : ''}`}
+                      hoverClass='brand-hover'
                       disabled={savingQid === q.id}
                       onClick={() => handleToggleCorrect(q)}
                       aria-label={q.is_correct ? '标记为错' : '标记为对'}
@@ -232,6 +203,7 @@ export default function Result() {
                     {q.solution_note && (
                       <Button
                         className='result__expand'
+                        hoverClass='brand-hover'
                         onClick={() => toggleNote(q.id)}
                         aria-label={expanded ? '收起' : '展开'}
                       >
@@ -261,7 +233,7 @@ export default function Result() {
         </View>
       )}
 
-      <Button className='result__primary' onClick={goHome}>
+      <Button className='result__primary' hoverClass='brand-hover' onClick={goHome}>
         返回首页
       </Button>
     </View>

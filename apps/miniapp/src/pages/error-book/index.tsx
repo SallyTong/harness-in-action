@@ -203,6 +203,7 @@ export default function ErrorBook() {
           className={`errorbook__filter-toggle${
             showFilters || hasFilters ? ' errorbook__filter-toggle--active' : ''
           }`}
+          hoverClass='brand-hover'
           onClick={() => setShowFilters((v) => !v)}
         >
           {showFilters ? '收起' : '筛选'}
@@ -287,7 +288,7 @@ export default function ErrorBook() {
         <View className='errorbook__state'>
           <Text className='errorbook__state-emoji'>😞</Text>
           <Text className='errorbook__state-text'>{error}</Text>
-          <Button className='errorbook__primary' onClick={() => setRetryKey((k) => k + 1)}>
+          <Button className='errorbook__primary' hoverClass='brand-hover' onClick={() => setRetryKey((k) => k + 1)}>
             再试一次
           </Button>
         </View>
@@ -303,11 +304,11 @@ export default function ErrorBook() {
             {hasFilters ? '试试调整筛选条件' : '去批改试卷，错题会自动收集到这里'}
           </Text>
           {hasFilters ? (
-            <Button className='errorbook__secondary' onClick={clearFilters}>
+            <Button className='errorbook__secondary' hoverClass='brand-hover' onClick={clearFilters}>
               清除筛选
             </Button>
           ) : (
-            <Button className='errorbook__primary' onClick={goGrade}>
+            <Button className='errorbook__primary' hoverClass='brand-hover' onClick={goGrade}>
               去批改
             </Button>
           )}
@@ -325,6 +326,7 @@ export default function ErrorBook() {
                     className='errorbook__card-img'
                     src={eq.question_image_path}
                     mode='widthFix'
+                    lazyLoad
                     ariaLabel={`第${eq.question_number}题`}
                   />
                 )}
@@ -368,6 +370,7 @@ export default function ErrorBook() {
             <View className='errorbook__more'>
               <Button
                 className='errorbook__more-btn'
+                hoverClass='brand-hover'
                 disabled={loadingMore}
                 loading={loadingMore}
                 onClick={loadMore}
@@ -388,7 +391,7 @@ export default function ErrorBook() {
 
       {errors.length > 0 && (
         <View className='errorbook__bar'>
-          <Button className='errorbook__bar-btn' onClick={goGenerate}>
+          <Button className='errorbook__bar-btn' hoverClass='brand-hover' onClick={goGenerate}>
             ✨ 生成错题试卷
           </Button>
         </View>

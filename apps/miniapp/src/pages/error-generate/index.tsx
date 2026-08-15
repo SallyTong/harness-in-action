@@ -119,12 +119,14 @@ export default function ErrorGenerate() {
           <View className='generate__seg'>
             <Button
               className={`generate__seg-item${subject === 'english' ? ' generate__seg-item--active' : ''}`}
+              hoverClass='brand-hover'
               onClick={() => handleSubjectChange('english')}
             >
               英语
             </Button>
             <Button
               className={`generate__seg-item${subject === 'math' ? ' generate__seg-item--active' : ''}`}
+              hoverClass='brand-hover'
               onClick={() => handleSubjectChange('math')}
             >
               数学
@@ -141,6 +143,7 @@ export default function ErrorGenerate() {
                 className={`generate__chip${
                   selectedTypes.has(t) ? ' generate__chip--active' : ''
                 }`}
+                hoverClass='brand-hover'
                 onClick={() => toggleType(t)}
               >
                 {TYPE_LABELS[t]}
@@ -154,6 +157,7 @@ export default function ErrorGenerate() {
           <View className='generate__count'>
             <Button
               className='generate__count-btn'
+              hoverClass='brand-hover'
               disabled={count <= 1}
               onClick={() => setCount((c) => Math.max(1, c - 1))}
               aria-label='减少题目'
@@ -163,6 +167,7 @@ export default function ErrorGenerate() {
             <Text className='generate__count-value'>{count} 题</Text>
             <Button
               className='generate__count-btn'
+              hoverClass='brand-hover'
               disabled={count >= 50}
               onClick={() => setCount((c) => Math.min(50, c + 1))}
               aria-label='增加题目'
@@ -176,6 +181,7 @@ export default function ErrorGenerate() {
 
       <Button
         className={`generate__submit${generating || childId === null ? ' generate__submit--disabled' : ''}`}
+        hoverClass='brand-hover'
         disabled={generating || childId === null}
         loading={generating}
         onClick={handleGenerate}
@@ -196,6 +202,7 @@ export default function ErrorGenerate() {
           <Text className='generate__result-hint'>点击图片可放大查看</Text>
           <Button
             className='generate__regenerate'
+            hoverClass='brand-hover'
             onClick={() => {
               setResult(null)
               void handleGenerate()

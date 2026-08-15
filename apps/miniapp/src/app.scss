@@ -23,3 +23,9 @@ page {
   color: var(--color-text-primary);
   font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
+
+/* 全局按压反馈（hover-class）：替代微信默认灰蓝，用品牌半透明压暗。
+   各页按钮通过 hoverClass='brand-hover' 引用，见 miniapp-conventions §4。 */
+.brand-hover {
+  opacity: 0.72;
+}

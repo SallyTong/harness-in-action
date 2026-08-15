@@ -83,10 +83,10 @@ export default function Processing() {
         <Text className='processing__emoji'>😞</Text>
         <Text className='processing__status'>{error}</Text>
         <View className='processing__actions'>
-          <Button className='processing__btn processing__btn--ghost' onClick={goHome}>
+          <Button className='processing__btn processing__btn--ghost' hoverClass='brand-hover' onClick={goHome}>
             返回首页
           </Button>
-          <Button className='processing__btn processing__btn--primary' onClick={retry}>
+          <Button className='processing__btn processing__btn--primary' hoverClass='brand-hover' onClick={retry}>
             重新批改
           </Button>
         </View>
@@ -102,10 +102,10 @@ export default function Processing() {
           批改时间较长，请稍候或重试
         </Text>
         <View className='processing__actions'>
-          <Button className='processing__btn processing__btn--ghost' onClick={goHome}>
+          <Button className='processing__btn processing__btn--ghost' hoverClass='brand-hover' onClick={goHome}>
             返回首页
           </Button>
-          <Button className='processing__btn processing__btn--primary' onClick={retry}>
+          <Button className='processing__btn processing__btn--primary' hoverClass='brand-hover' onClick={retry}>
             继续等待
           </Button>
         </View>
@@ -123,7 +123,7 @@ export default function Processing() {
         <View className='processing__bar-fill' />
       </View>
       <Text className='processing__hint'>通常需要 5-15 秒</Text>
-      <Button className='processing__btn processing__btn--ghost' onClick={goHome}>
+      <Button className='processing__btn processing__btn--ghost' hoverClass='brand-hover' onClick={goHome}>
         取消
       </Button>
     </View>

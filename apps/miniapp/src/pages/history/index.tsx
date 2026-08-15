@@ -185,7 +185,7 @@ export default function History() {
         <View className='history__state'>
           <Text className='history__state-emoji'>😞</Text>
           <Text className='history__state-text'>{error}</Text>
-          <Button className='history__primary' onClick={() => setRetryKey((k) => k + 1)}>
+          <Button className='history__primary' hoverClass='brand-hover' onClick={() => setRetryKey((k) => k + 1)}>
             再试一次
           </Button>
         </View>
@@ -196,7 +196,7 @@ export default function History() {
           <Text className='history__state-emoji'>📋</Text>
           <Text className='history__state-title'>还没有批改记录</Text>
           <Text className='history__state-hint'>去批改一张试卷，就能在这里回看</Text>
-          <Button className='history__primary' onClick={goGrade}>
+          <Button className='history__primary' hoverClass='brand-hover' onClick={goGrade}>
             去批改
           </Button>
         </View>
@@ -212,6 +212,7 @@ export default function History() {
                     className='history__thumb-img'
                     src={item.thumbnail_url}
                     mode='aspectFill'
+                    lazyLoad
                     ariaLabel='试卷缩略图'
                   />
                 ) : (
@@ -241,6 +242,7 @@ export default function History() {
             <View className='history__more'>
               <Button
                 className='history__more-btn'
+                hoverClass='brand-hover'
                 disabled={loadingMore}
                 loading={loadingMore}
                 onClick={loadMore}

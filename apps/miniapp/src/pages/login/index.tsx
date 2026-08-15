@@ -90,6 +90,7 @@ export default function Login() {
         {error ? <Text className='login__error'>{error}</Text> : null}
         <Button
           className={`login__button${phoneValid && !loading ? '' : ' login__button--disabled'}`}
+          hoverClass='brand-hover'
           disabled={!phoneValid || loading}
           onClick={handleSubmit}
         >

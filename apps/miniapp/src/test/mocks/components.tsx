@@ -12,14 +12,14 @@ function makeElement(tag: string) {
 export const View = makeElement('div')
 export const Text = makeElement('span')
 
-export const Button = ({ children, loading, disabled, ...props }: Props) =>
+export const Button = ({ children, loading, disabled, hoverClass, ...props }: Props) =>
   createElement(
     'button',
     { ...props, disabled: disabled || loading, 'aria-busy': loading || undefined },
     children,
   )
 
-export const Input = ({ onInput, value, ...props }: Props) =>
+export const Input = ({ onInput, value, maxlength, placeholderClass, ...props }: Props) =>
   createElement('input', {
     ...props,
     value: value ?? '',

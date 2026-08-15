@@ -757,6 +757,47 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════
+# 10. Miniapp — Full Chain (W1-W3)
+# ═══════════════════════════════════════════════════════
+#
+# 小程序全链路：登录 → 拍照上传 → 批改 → 结果 → 历史 → 错题 → 练习表。
+# 小程序与 Web 复用同一批 REST 端点，故前序 section 已覆盖大部分链路：
+#   登录（静默）→ §9  POST /api/wechat-login
+#   拍照上传     → §5  POST /api/submissions（202 + pending）
+#   批改中轮询   → §5b GET /api/submissions/{id}（pending/processing/completed/failed）
+#   结果         → §5b GET /api/submissions/{id}（得分 + 逐题明细）
+#   历史         → §5b GET /api/submissions（列表 + 分页 + 学科筛选）
+#   错题         → §5d GET /api/error-collections（筛选 + 图片 phone= 参数）
+#   练习表       → §5d POST /api/error-collections/generate（合成图 + 越权隔离）
+#
+# 此处补充小程序登录页的「绑定」路径（首次进入携带 phone），静默登录已在 §9 验证。
+
+echo ""
+echo "--- 10. Miniapp — WeChat Login Binding Path ---"
+
+# 绑定路径（首次）：{code, phone}。fake code 会被微信拒绝，返回 401（已配 AppID/Secret）
+# 或 502（未配置）；两者均证明端点 + 绑定 schema 已接好（404 才表示端点缺失）。
+WECHAT_BIND_STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
+    -X POST "$BACKEND_URL/api/wechat-login" \
+    -H "Content-Type: application/json" \
+    -d '{"code": "fake-bind-code", "phone": "13800000001"}' \
+    2>/dev/null || echo "000")
+
+if [ "$WECHAT_BIND_STATUS" = "401" ] || [ "$WECHAT_BIND_STATUS" = "502" ]; then
+    check "POST /api/wechat-login bind path wired (401/502)" "$WECHAT_BIND_STATUS" "$WECHAT_BIND_STATUS"
+else
+    check "POST /api/wechat-login bind path wired (401/502)" "$WECHAT_BIND_STATUS" "401 or 502"
+fi
+
+# 绑定路径手机号格式校验：非 11 位 → 422（契约 WechatLoginRequest.phone 正则 ^\d{11}$）
+WECHAT_BAD_PHONE_STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
+    -X POST "$BACKEND_URL/api/wechat-login" \
+    -H "Content-Type: application/json" \
+    -d '{"code": "fake-bind-code", "phone": "123"}' \
+    2>/dev/null || echo "000")
+check "POST /api/wechat-login invalid phone → 422" "$WECHAT_BAD_PHONE_STATUS" "422"
+
+# ═══════════════════════════════════════════════════════
 # Summary
 # ═══════════════════════════════════════════════════════
 

@@ -154,12 +154,14 @@ export default function Home() {
       <View className='home__subject'>
         <Button
           className={`home__subject-item${subject === 'english' ? ' home__subject-item--active' : ''}`}
+          hoverClass='brand-hover'
           onClick={() => setSubject('english')}
         >
           英语
         </Button>
         <Button
           className={`home__subject-item${subject === 'math' ? ' home__subject-item--active' : ''}`}
+          hoverClass='brand-hover'
           onClick={() => setSubject('math')}
         >
           数学
@@ -177,6 +179,7 @@ export default function Home() {
             />
             <Button
               className='home__preview-remove'
+              hoverClass='brand-hover'
               onClick={handleRemoveImage}
               aria-label='移除图片'
             >
@@ -186,7 +189,7 @@ export default function Home() {
           <Text className='home__preview-hint'>已压缩，点击 ✕ 可移除</Text>
         </View>
       ) : (
-        <Button className='home__upload' onClick={handleUploadTap}>
+        <Button className='home__upload' hoverClass='brand-hover' onClick={handleUploadTap}>
           <Text className='home__upload-icon'>📸</Text>
           <Text className='home__upload-title'>拍照上传试卷</Text>
           <Text className='home__upload-hint'>支持英语 · 数学 · 打印体 + 手写</Text>
@@ -195,6 +198,7 @@ export default function Home() {
 
       <Button
         className={`home__submit${canSubmit ? '' : ' home__submit--disabled'}`}
+        hoverClass='brand-hover'
         disabled={!canSubmit}
         onClick={handleSubmit}
       >
