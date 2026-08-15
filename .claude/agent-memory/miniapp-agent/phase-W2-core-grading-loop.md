@@ -48,8 +48,17 @@ cd apps/miniapp && npm run build:weapp    # Compiled successfully
 - **`handleChildChange` 参数用宽联合类型**（`number | number[] | string | string[]`）而非 `any`，因 Taro `Picker.onChange` 的 `CommonEventFunction` 联合类型无法用窄签名匹配。
 - **轮询用 `paused` 状态驱动 effect**（`useDidHide`→paused=true 清 interval，`useDidShow`→paused=false 立即查一次），避免 onShow 与 mount 双查。error/timedOut 也纳入 effect 依赖以停轮询。
 
+## Docker 构建修复（W1 遗留回归，本阶段修复，人工授权跨领域）
+
+`docker compose build` 的 frontend 镜像原构建失败：W1 把 `apps/frontend/src/types.ts` 改为 `export * from "@homework/api-types"`，但 Docker build context 只有 `apps/frontend/`，`packages/api-types/` 在 context 之外 → `tsc -b` 报 `Cannot find module '@homework/api-types'`。**已修复（用户明确授权触碰 frontend/infra）：**
+
+1. `infra/docker-compose.yml` — frontend 的 `context` 由 `../apps/frontend` 提到仓库根 `..`，`dockerfile` 改为 `apps/frontend/Dockerfile`。
+2. `apps/frontend/Dockerfile` — `COPY apps/frontend/ ./` + `COPY packages/api-types/ /packages/api-types/`（对齐 tsconfig `baseUrl:"."` + `paths:"../../packages/api-types/index.ts"` 与 vite 别名的解析位置），nginx 路径改 `apps/frontend/nginx.conf`。
+3. **新增仓库根 `.dockerignore`** — 排除 `**/node_modules`、`**/dist`、`.git`、`.env*`、`data/images/*` 等，避免宿主机 Windows 的 node_modules 被拷入 Linux 镜像（原生二进制会坏）且大幅缩小 context（实测 299KB）。
+
+验证：`docker compose -f infra/docker-compose.yml build` 全绿（backend 缓存命中，frontend `tsc -b` + `vite build` 通过，产物 `dist/index.html` + assets）。
+
 ## Cross-Agent Requests
 
-- **frontend-agent（高优先级，W1 遗留回归）**：`docker compose build` 的 **frontend 镜像构建失败**——`apps/frontend/Dockerfile` 的 build context 是 `apps/frontend/`，但 `src/types.ts` 已 `export * from "@homework/api-types"`（W1 共享类型抽包），而 `packages/api-types/` 在 context 之外，Docker 内 `tsc -b` 报 `Cannot find module '@homework/api-types'`（及一系列 `'../types' has no exported member`）。**根因：** 前端 Docker 构建未包含共享类型包。**修复方向（择一）：** (a) 把 frontend 的 build context 提到仓库根并在 Dockerfile 里 `COPY packages/api-types`；(b) `apps/frontend/Dockerfile` 多阶段里 COPY 该包并设 `NODE_PATH`/别名。本地（monorepo 相对路径）正常，仅 Docker 断——W1 验收只跑了本地 build 未跑 Docker。
-- **backend-agent**：无（复用现有 submissions/children 端点，零改动）。
+- **frontend-agent / backend-agent**：无待办（Docker 构建回归已由本阶段修复，见上）。若未来 `packages/api-types` 结构变动（如拆分文件、改 exports），需同步核对 `apps/frontend/Dockerfile` 的 `COPY packages/api-types/` 与 `.dockerignore` 不误伤。
 - **（提醒自己）W3 历史浏览** 需复用 `GET /api/submissions`（列表）+ 结果/详情屏复用本阶段 result 页的逐题明细 + 人工修正逻辑，可抽公共组件。

@@ -1,0 +1,31 @@
+# 仓库根作为 frontend 镜像的 build context（见 infra/docker-compose.yml）。
+# 排除宿主机的依赖/产物/密钥/大文件，避免 Windows 的 node_modules 等被拷入 Linux 镜像。
+
+# Node
+**/node_modules
+**/dist
+**/.swc
+
+# Python
+**/__pycache__
+**/.venv
+**/venv
+**/*.pyc
+
+# VCS
+.git
+
+# 密钥 / 环境
+.env
+.env.*
+
+# 运行时数据 / 大文件
+data/images/*
+mysql_data/
+apps/backend/data/
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

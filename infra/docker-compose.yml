@@ -14,8 +14,10 @@ services:
 
   frontend:
     build:
-      context: ../apps/frontend
-      dockerfile: Dockerfile
+      # 上下文须提到仓库根：前端经 tsconfig/vite 别名引用共享类型包
+      # packages/api-types/（在 apps/frontend 之外），必须随上下文一并拷贝。
+      context: ..
+      dockerfile: apps/frontend/Dockerfile
     ports:
       - "3000:80"
     depends_on:
