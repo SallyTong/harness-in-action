@@ -18,6 +18,9 @@ node_modules/
 dist/
 .swc/
 
+# WeChat DevTools — per-developer private config (local settings, not shared)
+project.private.config.json
+
 # Env
 .env
 .env.local

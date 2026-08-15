@@ -1,0 +1,4 @@
+# 行尾统一为 LF：避免 Windows 下 core.autocrlf 的 CRLF 转换在
+# `git add` 时吞掉文件末尾换行（曾导致 pre-commit 的 end-of-file-fixer 反复失败），
+# 也保证 Linux Docker 构建与 Windows 开发的一致性。
+* text=auto eol=lf
