@@ -78,3 +78,34 @@ export function apiPatch<T = unknown>(path: string, body?: unknown): Promise<T> 
 export function apiDelete<T = void>(path: string): Promise<T> {
   return request<T>({ url: path, method: 'DELETE' })
 }
+
+/**
+ * Multipart 上传（图片）。phone 走 URL 查询参数（契约约定），`image` 文件经
+ * `Taro.uploadFile` 的 filePath 传，其余表单字段放 formData。
+ */
+export function apiUpload<T = unknown>(
+  path: string,
+  filePath: string,
+  formData: Record<string, string>,
+): Promise<T> {
+  const url = `${API_BASE}${joinPhone(path)}`
+  return Taro.uploadFile({
+    url,
+    filePath,
+    name: 'image',
+    formData,
+  }).then((res) => {
+    let data: unknown = {}
+    try {
+      data = JSON.parse(res.data)
+    } catch {
+      // 非 JSON 响应体（罕见），保留空对象
+    }
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      return data as T
+    }
+    const detail =
+      (data as { detail?: string } | undefined)?.detail || `HTTP ${res.statusCode}`
+    throw new ApiError(res.statusCode, detail)
+  })
+}

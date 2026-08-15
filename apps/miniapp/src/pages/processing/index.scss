@@ -1,0 +1,121 @@
+.processing {
+  min-height: 100vh;
+  padding: 96rpx 48rpx;
+  background: var(--color-bg-page);
+  box-sizing: border-box;
+
+  &--center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  &__pencil {
+    font-size: 120rpx;
+    line-height: 1;
+    margin-bottom: 48rpx;
+    animation: processing-bob 1.6s ease-in-out infinite;
+  }
+
+  &__text {
+    font-size: 44rpx;
+    line-height: 60rpx;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  &__status {
+    font-size: 30rpx;
+    line-height: 44rpx;
+    color: var(--color-error);
+
+    &--warn {
+      color: var(--color-warning);
+      font-weight: 500;
+    }
+  }
+
+  &__emoji {
+    font-size: 96rpx;
+    line-height: 1;
+    margin-bottom: 32rpx;
+  }
+
+  &__bar {
+    width: 384rpx;
+    height: 8rpx;
+    margin-top: 48rpx;
+    overflow: hidden;
+    background: var(--color-border-light);
+    border-radius: 9999rpx;
+  }
+
+  &__bar-fill {
+    width: 50%;
+    height: 100%;
+    background: var(--color-accent);
+    border-radius: 9999rpx;
+    animation: processing-slide 1.2s ease-in-out infinite;
+  }
+
+  &__hint {
+    margin-top: 32rpx;
+    font-size: 26rpx;
+    color: var(--color-text-tertiary);
+  }
+
+  &__actions {
+    display: flex;
+    gap: 24rpx;
+    margin-top: 48rpx;
+  }
+
+  &__btn {
+    min-width: 240rpx;
+    height: 88rpx;
+    line-height: 88rpx;
+    padding: 0 48rpx;
+    font-size: 30rpx;
+    font-weight: 500;
+    border-radius: 24rpx;
+
+    &::after {
+      border: none;
+    }
+
+    &--ghost {
+      color: var(--color-text-secondary);
+      background: var(--color-bg-card);
+      border: 2rpx solid var(--color-border);
+    }
+
+    &--primary {
+      color: #ffffff;
+      background: var(--color-accent);
+    }
+  }
+}
+
+@keyframes processing-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-16rpx);
+  }
+}
+
+@keyframes processing-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}

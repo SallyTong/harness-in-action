@@ -25,3 +25,16 @@ export const Input = ({ onInput, value, ...props }: Props) =>
     value: value ?? '',
     onChange: (e: any) => onInput && onInput({ detail: { value: e.target.value } }),
   })
+
+// Taro `<Image>` maps to `<img>`; `ariaLabel` becomes `alt` so tests can use
+// `getByAltText`. `mode`/`lazyLoad` are Taro-only props, not valid DOM attrs.
+export const Image = ({ src, mode, lazyLoad, ariaLabel, onClick, ...props }: Props) =>
+  createElement('img', { src, alt: ariaLabel, onClick, ...props })
+
+// Taro `<Picker>` renders its children as the display; a click triggers the
+// first range item (index 0) so selection flows can be exercised in tests.
+export const Picker = ({ children, onChange, ...props }: Props) =>
+  createElement('div', {
+    ...props,
+    onClick: () => onChange && onChange({ detail: { value: 0 } }),
+  }, children)
