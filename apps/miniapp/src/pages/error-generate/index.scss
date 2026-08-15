@@ -1,0 +1,219 @@
+.generate {
+  min-height: 100vh;
+  padding: 32rpx 32rpx 64rpx;
+  background: var(--color-bg-page);
+  box-sizing: border-box;
+
+  &__form {
+    padding: 32rpx 24rpx;
+    background: var(--color-bg-card);
+    border: 2rpx solid var(--color-border-light);
+    border-radius: 28rpx;
+    box-shadow: 0 2rpx 8rpx rgba(30, 27, 24, 0.04);
+  }
+
+  &__block {
+    margin-bottom: 40rpx;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__label {
+    display: block;
+    margin-bottom: 16rpx;
+    font-size: 26rpx;
+    line-height: 36rpx;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+  }
+
+  &__picker {
+    display: flex;
+    align-items: center;
+    height: 88rpx;
+    padding: 0 24rpx;
+    background: var(--color-bg-page);
+    border-radius: 20rpx;
+  }
+
+  &__picker-value {
+    font-size: 30rpx;
+    font-weight: 500;
+    color: var(--color-text-primary);
+
+    &--muted {
+      color: var(--color-text-tertiary);
+      font-weight: 400;
+    }
+  }
+
+  &__seg {
+    display: flex;
+    gap: 12rpx;
+    padding: 6rpx;
+    background: var(--color-bg-page);
+    border-radius: 20rpx;
+  }
+
+  &__seg-item {
+    flex: 1;
+    height: 88rpx;
+    line-height: 88rpx;
+    font-size: 28rpx;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: transparent;
+    border-radius: 16rpx;
+
+    &::after {
+      border: none;
+    }
+
+    &--active {
+      color: #ffffff;
+      background: var(--color-accent);
+    }
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16rpx;
+  }
+
+  &__chip {
+    height: 88rpx;
+    line-height: 88rpx;
+    padding: 0 32rpx;
+    margin: 0;
+    font-size: 26rpx;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-hover);
+    border-radius: 9999rpx;
+
+    &::after {
+      border: none;
+    }
+
+    &--active {
+      color: var(--color-accent);
+      background: var(--color-accent-subtle);
+    }
+  }
+
+  &__count {
+    display: flex;
+    align-items: center;
+    gap: 24rpx;
+  }
+
+  &__count-btn {
+    width: 88rpx;
+    height: 88rpx;
+    line-height: 88rpx;
+    padding: 0;
+    font-size: 40rpx;
+    font-weight: 500;
+    color: var(--color-accent);
+    background: var(--color-accent-subtle);
+    border-radius: 24rpx;
+
+    &::after {
+      border: none;
+    }
+
+    &[disabled] {
+      color: var(--color-text-tertiary);
+      background: var(--color-bg-hover);
+    }
+  }
+
+  &__count-value {
+    flex: 1;
+    text-align: center;
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 44rpx;
+    line-height: 60rpx;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  &__count-hint {
+    display: block;
+    margin-top: 12rpx;
+    font-size: 22rpx;
+    line-height: 30rpx;
+    color: var(--color-text-tertiary);
+    text-align: right;
+  }
+
+  &__submit {
+    height: 96rpx;
+    line-height: 96rpx;
+    margin-top: 32rpx;
+    font-size: 32rpx;
+    font-weight: 500;
+    color: #ffffff;
+    background: var(--color-accent);
+    border-radius: 24rpx;
+    box-shadow: 0 2rpx 8rpx rgba(30, 27, 24, 0.08);
+
+    &::after {
+      border: none;
+    }
+
+    &--disabled {
+      background: var(--color-border);
+      color: var(--color-text-tertiary);
+      box-shadow: none;
+    }
+  }
+
+  &__result {
+    margin-top: 48rpx;
+  }
+
+  &__result-title {
+    display: block;
+    margin-bottom: 20rpx;
+    font-size: 28rpx;
+    line-height: 40rpx;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+  }
+
+  &__result-img {
+    display: block;
+    width: 100%;
+    border-radius: 28rpx;
+    overflow: hidden;
+    box-shadow: 0 2rpx 8rpx rgba(30, 27, 24, 0.04);
+  }
+
+  &__result-hint {
+    display: block;
+    margin-top: 16rpx;
+    font-size: 22rpx;
+    color: var(--color-text-tertiary);
+    text-align: center;
+  }
+
+  &__regenerate {
+    height: 88rpx;
+    line-height: 88rpx;
+    margin-top: 32rpx;
+    font-size: 28rpx;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-card);
+    border: 2rpx solid var(--color-border);
+    border-radius: 24rpx;
+
+    &::after {
+      border: none;
+    }
+  }
+}

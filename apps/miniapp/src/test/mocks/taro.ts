@@ -25,10 +25,12 @@ const Taro = {
   useRouter: vi.fn(() => ({ params: {} })),
   useDidShow: vi.fn(() => {}),
   useDidHide: vi.fn(() => {}),
+  useReachBottom: vi.fn(() => {}),
 }
 
 export const useRouter = Taro.useRouter
 export const useDidShow = Taro.useDidShow
 export const useDidHide = Taro.useDidHide
+export const useReachBottom = Taro.useReachBottom
 
 export default Taro

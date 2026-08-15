@@ -38,3 +38,16 @@ export const Picker = ({ children, onChange, ...props }: Props) =>
     ...props,
     onClick: () => onChange && onChange({ detail: { value: 0 } }),
   }, children)
+
+// Taro `<Slider>` maps to `<input type="range">`; onChange emits the Taro-style
+// `{ detail: { value } }` payload so count sliders can be driven in tests.
+export const Slider = ({ value, min, max, onChange, ...props }: Props) =>
+  createElement('input', {
+    ...props,
+    type: 'range',
+    value: value ?? min,
+    min,
+    max,
+    onChange: (e: any) =>
+      onChange && onChange({ detail: { value: Number(e.target.value) } }),
+  })

@@ -5,6 +5,9 @@ export default defineAppConfig({
     'pages/history/index',
     'pages/processing/index',
     'pages/result/index',
+    'pages/history-detail/index',
+    'pages/error-book/index',
+    'pages/error-generate/index',
   ],
   window: {
     backgroundTextStyle: 'light',
