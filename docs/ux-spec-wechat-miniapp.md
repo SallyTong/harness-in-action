@@ -4,11 +4,11 @@
 
 | 字段     | 值                                                                  |
 | -------- | ------------------------------------------------------------------- |
-| 版本     | v0.1.0                                                              |
-| 日期     | 2026-08-14                                                          |
+| 版本     | v0.1.1                                                              |
+| 日期     | 2026-08-15                                                          |
 | 作者     | sally                                                               |
 | 依据     | `docs/ux-spec.md` v1.1、`docs/prd-wechat-miniapp.md` v0.1.1、`docs/architecture-wechat-miniapp.md` v0.1.0、`docs/brand-identity.md` v1.0 |
-| 变更说明 | 初始版本 — 微信小程序端屏幕规范。仅覆盖小程序【新增或改造】的屏幕，不重复 Web 已定义且无变化的屏幕。 |
+| 变更说明 | v0.1.1：错题集（F-06）与错题试卷生成（F-07）纳入本期，错题集提升为底部第三个 tab；新增 §2.8/§2.9 屏幕规格，屏幕清单 7→9 屏。 |
 
 > **品牌令牌引用约定**：本规范复用 `docs/brand-identity.md` 定义的令牌（如 `--color-accent`、`--color-success`、`--color-error`、字号层级、间距尺度、圆角 12px/14px/16px）。文中"主色"=`--color-accent`（Indigo `#6366F1`），"绿色勾"=`--color-success`，"红色问号"=`--color-error`。
 >
@@ -21,7 +21,7 @@
 ### 全局布局
 
 - **顶部**：小程序原生 `navigationBar`（标题 + 自动返回箭头），不自定义 Web 顶栏。
-- **底部 tabBar**（2 项）：🏠 批改 · 📋 历史（错题集本期不搬入小程序，故不含）。
+- **底部 tabBar**（3 项）：🏠 批改 · 📋 历史 · 📕 错题集。
 - **无侧边栏**：移动端单列，页面级滚动。
 
 ### 响应式策略
@@ -39,6 +39,9 @@
 
 历史（tab）
   └── 历史列表 → 历史详情 →（人工修正）
+
+错题集（tab）
+  └── 错题列表（筛选/统计）→ 生成错题试卷
 ```
 
 ---
@@ -173,6 +176,38 @@
 
 ---
 
+### 2.8 错题集（改造，实现 F-06）
+
+**路由：** `/pages/error-book/index`（tab）
+
+**布局：** 同 Web §2.7（可折叠筛选 + 错题统计 + 错题卡片 + 展开解题思路 + 生成按钮）。
+
+**交互差异：**
+
+- 筛选（小朋友/学科/题型/时间）用 `picker` 组件，可折叠；筛选后统计「共 N 道错题」同步更新
+- 分页用 `onReachBottom`（上拉触底）+ 底部「加载更多」兜底
+- 底部固定「生成错题试卷」按钮 → `Taro.navigateTo` 生成页（携带当前筛选参数）
+- 错题卡片题目截图点击 `wx.previewImage`；解题思路展开/收起
+
+**状态：** 同 Web §2.7（骨架屏、错误重试、空状态「还没有错题，继续保持！」/筛选后「没有符合条件的错题」）。
+
+---
+
+### 2.9 错题试卷生成（改造，实现 F-07）
+
+**路由：** `/pages/error-generate/index`（非 tab）
+
+**布局：** 同 Web §2.8（参数表单 + 生成按钮 + 合成图预览）。
+
+**交互差异：**
+
+- 小朋友用 `picker`（必选）、学科用分段控件、题型多选 chips（按学科过滤）、题数用步进器（1~50）
+- 生成成功后合成图预览，点击 `wx.previewImage` 放大
+
+**状态：** 同 Web §2.8（生成中按钮 spinner、失败 Toast、重新生成）。
+
+---
+
 ## 3. 交互模式（微信习惯适配）
 
 | 能力 | Web（现状） | 小程序（Taro） |
@@ -210,5 +245,7 @@
 | 5 | 批改结果 | `/pages/result/index` | F-09, 人工修正 | `GET /api/submissions/{id}`、`PATCH .../questions/{qid}` |
 | 6 | 历史列表 | `/pages/history/index` | F-11 | `GET /api/submissions` |
 | 7 | 历史详情 | `/pages/history-detail/index` | F-11, 人工修正 | `GET /api/submissions/{id}`、`PATCH .../questions/{qid}` |
+| 8 | 错题集 | `/pages/error-book/index` | F-06 | `GET /api/error-collections` |
+| 9 | 错题试卷生成 | `/pages/error-generate/index` | F-07 | `POST /api/error-collections/generate` |
 
-累计：小程序 7 屏（登录 + 6 功能屏）；错题集、错题试卷两屏本期不搬（见 PRD §2）。
+累计：小程序 9 屏（登录 + 8 功能屏）。

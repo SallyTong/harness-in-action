@@ -23,6 +23,7 @@ export default defineAppConfig({
     list: [
       { pagePath: 'pages/index/index', text: '批改' },
       { pagePath: 'pages/history/index', text: '历史' },
+      { pagePath: 'pages/error-book/index', text: '错题集' },
     ],
   },
 })

@@ -4,10 +4,10 @@
 
 | 字段     | 值                                                                  |
 | -------- | ------------------------------------------------------------------- |
-| 版本     | v0.1.0                                                              |
-| 日期     | 2026-08-14                                                          |
+| 版本     | v0.1.1                                                              |
+| 日期     | 2026-08-15                                                          |
 | 作者     | sally                                                               |
-| 依据     | `docs/prd-wechat-miniapp.md` v0.1.1、`docs/architecture-wechat-miniapp.md` v0.1.0、`docs/ux-spec-wechat-miniapp.md` v0.1.0、`contracts/openapi.yaml` v0.1.0 |
+| 依据     | `docs/prd-wechat-miniapp.md` v0.1.2、`docs/architecture-wechat-miniapp.md` v0.1.0、`docs/ux-spec-wechat-miniapp.md` v0.1.1、`contracts/openapi.yaml` v0.1.0 |
 
 ---
 
@@ -17,7 +17,7 @@
 |------|------|---------|---------|
 | W1 | 工程骨架 + 认证登录 | Taro 工程、共享类型、`wechat-login` 端点、登录/绑定页 | 能登录进入首页 |
 | W2 | 核心批改闭环 | 小朋友管理、拍照上传 → 批改 → 结果 | 🎯 首次可用：能批改试卷 |
-| W3 | 历史浏览 | 历史列表、详情、人工修正 | 批改结果可回溯 |
+| W3 | 历史浏览 + 错题集 | 历史列表、详情、人工修正、错题集、错题试卷生成 | 批改结果可回溯 + 错题闭环 |
 | W4 | 内测打磨 | 真机体验版、状态/性能、品牌合规 | 家人可试用 |
 
 每阶段产出**独立可验证的工作增量**——上一阶段不依赖下一阶段的任何代码。W2/W3 为纯前端工作（复用现有 11 个后端端点）。
@@ -151,9 +151,9 @@ cd apps/miniapp && npm run build:weapp && npm test        # 构建 + 组件测�
 
 ---
 
-## W3: 历史浏览
+## W3: 历史浏览 + 错题集
 
-**目标：** 历史列表 + 历史详情（含人工修正）。结束后家长可回溯查看过往批改。
+**目标：** 历史列表 + 历史详情（含人工修正）+ 错题集 + 错题试卷生成。结束后家长可回溯过往批改并整理错题。
 
 **工期预期：** 1–1.5 天
 
@@ -161,11 +161,11 @@ cd apps/miniapp && npm run build:weapp && npm test        # 构建 + 组件测�
 
 | 维度 | 内容 |
 |------|------|
-| PRD 功能 | F-11（历史记录浏览） |
+| PRD 功能 | F-11（历史记录浏览）、F-06（错题集）、F-07（错题试卷生成） |
 | 数据模型 | 无新增 |
-| API 端点 | 复用 `GET /api/submissions`、`GET /api/submissions/{id}`、`PATCH .../questions/{qid}` |
-| UX 屏幕 | §2.6 历史列表、§2.7 历史详情 |
-| 前端路由 | `/pages/history`、`/pages/history-detail` |
+| API 端点 | 复用 `GET /api/submissions`、`GET /api/submissions/{id}`、`PATCH .../questions/{qid}`、`GET /api/error-collections`、`POST /api/error-collections/generate` |
+| UX 屏幕 | §2.6 历史列表、§2.7 历史详情、§2.8 错题集、§2.9 错题试卷生成 |
+| 前端路由 | `/pages/history`、`/pages/history-detail`、`/pages/error-book`、`/pages/error-generate` |
 
 ### 后端工作
 
@@ -179,7 +179,12 @@ cd apps/miniapp && npm run build:weapp && npm test        # 构建 + 组件测�
    - 点击卡片 → navigateTo 详情
 2. **历史详情页** `/pages/history-detail`
    - 原图 | 批改后 分段切换 + 得分 + 逐题明细 + 人工修正
-3. **组件测试**：列表渲染 + 空状态 + 加载更多、详情切换 + 修正
+3. **错题集页** `/pages/error-book`（底部第三个 tab）
+   - 可折叠筛选（小朋友/学科/题型/时间 `picker`）+ 错题统计 + 错题卡片 + 展开解题思路
+   - 底部固定「生成错题试卷」→ navigateTo 生成页
+4. **错题试卷生成页** `/pages/error-generate`
+   - 参数表单（小朋友/学科/题型多选/题数）+ 生成按钮 + 合成图预览
+5. **组件测试**：列表渲染 + 空状态 + 加载更多、详情切换 + 修正、错题筛选/展开、生成成功/失败
 
 ### 验收标准
 
@@ -188,6 +193,8 @@ cd apps/miniapp && npm run build:weapp && npm test        # 构建 + 组件测�
 - [ ] **AC-W3.3:** 详情页可切换原图/批改后，逐题明细 + 人工修正可用
 - [ ] **AC-W3.4:** 空状态显示"还没有批改记录…"+"去批改"按钮
 - [ ] **AC-W3.5:** 跨手机号数据隔离（列表与详情）
+- [ ] **AC-W3.6:** 错题集可折叠筛选 + 统计 + 展开解题思路，底部「生成错题试卷」跳转生成页
+- [ ] **AC-W3.7:** 错题试卷生成页参数表单可生成并预览合成图
 
 ### 完成标志
 
@@ -269,6 +276,8 @@ W2 与 W3 可部分并行：W2 完成批改链路后，W3 的历史列表/详情
 | F-10 小朋友管理 | | ● | | |
 | F-11 历史浏览 | | | ● | |
 | F-12 身份与跨端一致 | ● | | | ● |
+| F-06 错题集（复用 Web） | | | ● | |
+| F-07 错题试卷生成（复用 Web） | | | ● | |
 
 ## API 端点覆盖矩阵
 
@@ -280,6 +289,8 @@ W2 与 W3 可部分并行：W2 完成批改链路后，W3 的历史列表/详情
 | `GET /api/submissions/{id}` | | ● | ● | |
 | `PATCH .../questions/{qid}` | | ● | ● | |
 | `GET /api/submissions` | | | ● | |
+| `GET /api/error-collections` | | | ● | |
+| `POST /api/error-collections/generate` | | | ● | |
 
 ## UX 屏幕覆盖矩阵
 
@@ -292,5 +303,7 @@ W2 与 W3 可部分并行：W2 完成批改链路后，W3 的历史列表/详情
 | 5. 批改结果 | | ● | | |
 | 6. 历史列表 | | | ● | |
 | 7. 历史详情 | | | ● | |
+| 8. 错题集 | | | ● | |
+| 9. 错题试卷生成 | | | ● | |
 
-累计：W1 (1 屏) → W2 (4 屏) → W3 (6 屏) → W4 (7 屏全量打磨)。
+累计：W1 (1 屏) → W2 (新增 4 屏) → W3 (新增 4 屏) → W4 (9 屏全量打磨)。

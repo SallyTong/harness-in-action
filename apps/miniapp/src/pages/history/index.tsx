@@ -125,7 +125,6 @@ export default function History() {
     loadedCount.current = 0
   }
 
-  const goErrorBook = () => Taro.navigateTo({ url: '/pages/error-book/index' })
   const goDetail = (id: number) => Taro.navigateTo({ url: `/pages/history-detail/index?id=${id}` })
   const goGrade = () => Taro.switchTab({ url: '/pages/index/index' })
 
@@ -137,9 +136,6 @@ export default function History() {
     <View className='history'>
       <View className='history__header'>
         <Text className='history__title'>批改历史</Text>
-        <Button className='history__errors' onClick={goErrorBook}>
-          📕 错题集
-        </Button>
       </View>
 
       <View className='history__filters'>

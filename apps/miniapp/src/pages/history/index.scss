@@ -18,24 +18,6 @@
     color: var(--color-text-primary);
   }
 
-  &__errors {
-    display: flex;
-    align-items: center;
-    height: 88rpx;
-    line-height: 88rpx;
-    padding: 0 32rpx;
-    margin: 0;
-    font-size: 26rpx;
-    font-weight: 500;
-    color: var(--color-accent);
-    background: var(--color-accent-subtle);
-    border-radius: 9999rpx;
-
-    &::after {
-      border: none;
-    }
-  }
-
   &__filters {
     display: flex;
     gap: 16rpx;

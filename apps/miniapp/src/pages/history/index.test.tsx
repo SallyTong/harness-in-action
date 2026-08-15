@@ -51,11 +51,10 @@ describe('History > 历史列表页', () => {
     })
   })
 
-  it('renders header, filters, 错题集 entry and cards', async () => {
+  it('renders header, filters and cards', async () => {
     render(<History />)
 
     await waitFor(() => expect(screen.getByText('批改历史')).toBeInTheDocument())
-    expect(screen.getByText('📕 错题集')).toBeInTheDocument()
     expect(screen.getByText('小明')).toBeInTheDocument()
     expect(screen.getAllByText('3/4').length).toBeGreaterThan(0)
     expect(screen.getAllByText('英语').length).toBeGreaterThan(0)
@@ -103,13 +102,10 @@ describe('History > 历史列表页', () => {
     expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining('offset=20'))
   })
 
-  it('navigates to 错题集 and to a submission detail', async () => {
+  it('navigates to a submission detail', async () => {
     render(<History />)
 
     await waitFor(() => expect(screen.getByText('小明')).toBeInTheDocument())
-    fireEvent.click(screen.getByText('📕 错题集'))
-    expect(Taro.navigateTo).toHaveBeenCalledWith({ url: '/pages/error-book/index' })
-
     fireEvent.click(screen.getByText('小明'))
     expect(Taro.navigateTo).toHaveBeenCalledWith({ url: '/pages/history-detail/index?id=1' })
   })

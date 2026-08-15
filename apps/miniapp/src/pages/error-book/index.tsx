@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { View, Text, Button, Image, Picker } from '@tarojs/components'
-import Taro, { useReachBottom } from '@tarojs/taro'
+import Taro, { useDidShow, useReachBottom } from '@tarojs/taro'
 
 import { apiGet } from '../../lib/api'
 import {
@@ -50,6 +50,7 @@ export default function ErrorBook() {
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set())
 
   const loadedCount = useRef(0)
+  const initialShown = useRef(false)
 
   const buildParams = (offset: number) => {
     const params: string[] = []
@@ -98,6 +99,17 @@ export default function ErrorBook() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [childId, subject, questionType, timeRange, retryKey])
+
+  // 切回错题集 tab 时刷新第一页（批改后返回能见新错题）。
+  useDidShow(() => {
+    if (!initialShown.current) {
+      initialShown.current = true
+      return
+    }
+    setErrors([])
+    loadedCount.current = 0
+    setRetryKey((k) => k + 1)
+  })
 
   const loadMore = async () => {
     if (loading || loadingMore || errors.length >= total) return
