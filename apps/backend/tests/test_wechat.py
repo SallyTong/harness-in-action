@@ -109,6 +109,35 @@ async def test_wechat_login_rebind_openid_to_new_phone(client, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_wechat_login_rebind_conflict_moves_openid_to_existing_phone(
+    client, monkeypatch
+):
+    # openid_A already bound to phone A; phone B already exists as a separate
+    # Web/phone parent (no openid). Rebinding openid_A to phone B hits the
+    # distinct-rows branch: only the login key moves, data does NOT.
+    _mock_code2session(monkeypatch, openid=OPENID_A)
+    await client.post("/api/wechat-login", json={"code": "wx-code", "phone": PHONE_A})
+    await client.get(f"/api/children?phone={PHONE_B}")  # auto-create phone B parent
+
+    resp = await client.post(
+        "/api/wechat-login", json={"code": "wx-code", "phone": PHONE_B}
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"phone": PHONE_B}
+
+    # openid_A now resolves to phone B; phone A lost its WeChat login key.
+    silent = await client.post("/api/wechat-login", json={"code": "wx-code-2"})
+    assert silent.status_code == 200
+    assert silent.json() == {"phone": PHONE_B}
+
+    # phone A keeps its own data (default children still there) — data did not move.
+    a_children = await client.get(f"/api/children?phone={PHONE_A}")
+    assert a_children.status_code == 200
+    names = [c["name"] for c in a_children.json()]
+    assert "小朋友1" in names and "小朋友2" in names
+
+
+@pytest.mark.asyncio
 async def test_wechat_login_missing_code_returns_422(client, monkeypatch):
     _mock_code2session(monkeypatch, openid=OPENID_A)
     resp = await client.post("/api/wechat-login", json={"phone": PHONE_A})

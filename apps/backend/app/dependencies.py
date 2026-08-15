@@ -8,6 +8,28 @@ from app.database import AsyncSessionFactory
 from app.models.child import Child
 from app.models.parent import Parent
 
+DEFAULT_CHILD_NAMES = ["小朋友1", "小朋友2"]
+
+
+async def create_parent_with_default_children(
+    db: AsyncSession,
+    *,
+    phone: str,
+    openid: str | None = None,
+) -> Parent:
+    """Create a Parent row plus the two default children, mirroring first-use.
+
+    Shared by `get_parent` (Web/phone first use) and `wechat_login` (mini-program
+    first bind) so the default-children contract lives in one place.
+    """
+    parent = Parent(phone=phone, openid=openid)
+    db.add(parent)
+    await db.flush()
+    for name in DEFAULT_CHILD_NAMES:
+        db.add(Child(parent_id=parent.id, name=name))
+    await db.flush()
+    return parent
+
 
 async def get_db():
     async with AsyncSessionFactory() as session:
@@ -54,13 +76,4 @@ async def get_parent(
         return parent
 
     # First use: auto-create parent with default children
-    parent = Parent(phone=resolved_phone)
-    db.add(parent)
-    await db.flush()
-
-    default_names = ["小朋友1", "小朋友2"]
-    for name in default_names:
-        db.add(Child(parent_id=parent.id, name=name))
-
-    await db.flush()
-    return parent
+    return await create_parent_with_default_children(db, phone=resolved_phone)

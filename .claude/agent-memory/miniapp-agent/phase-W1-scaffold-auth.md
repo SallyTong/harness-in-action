@@ -14,7 +14,7 @@
 - `app/services/wechat_client.py` — `code2session(code)` 调微信 `jscode2session` 换 openid；`WechatCodeError`（→401）、`WechatServiceError`（→502）。openid 从不落日志/响应。
 - `app/routers/wechat.py` — 绑定（upsert Parent + 默认小朋友1/2，镜像 `get_parent`）/ 静默登录（openid 反查）/ 换绑。
 - `app/schemas/wechat.py` — 请求 `{code, phone?}`（phone 校验 `^\d{11}$`）、响应 `{phone}`。
-- `tests/test_wechat.py` — 9 个用例（绑定、静默、404、401、502、已绑 Web 手机号、换绑、缺 code 422、非法 phone 422）。全部 mock `code2session`。
+- `tests/test_wechat.py` — 10 个用例（绑定、静默、404、401、502、已绑 Web 手机号、换绑到新号、**换绑冲突（openid↔已存在 phone，仅迁移登录键不迁数据）**、缺 code 422、非法 phone 422）。全部 mock `code2session`。
 
 ### 前端（`apps/miniapp/`）
 - Taro 4.2.1 + React 18.3.1 + TypeScript + Webpack5 + Sass 工程（`config/index.ts` 用 `tsconfig-paths-webpack-plugin` 解析 paths 别名）。
@@ -43,6 +43,7 @@ cd apps/miniapp && npx tsc --noEmit && npm test && npm run build:weapp    # tsc 
 
 ## 技术决策偏差（非契约，已记录）
 
+- **换绑数据归属语义已钉死**（审查后补测试 + 注释）：openid 绑定到已存在的不同 phone 时，**仅迁移登录键、不迁数据**（phone A 保留数据但失去微信登录）；openid 绑定到全新 phone 时，**数据跟随**（行 phone 改名）。两条分支语义不同，已在 `wechat.py` 注释与 `test_wechat_login_rebind_conflict_*` 测试中显式固定。默认小朋友创建逻辑已抽为 `dependencies.create_parent_with_default_children`，`get_parent` 与 `wechat_login` 共用。
 - **React 18.3.1（非 miniapp-agent.md 所写 React 19）**：Taro 4.2.1 的 `@tarojs/plugin-framework-react` peer 为 `react ^18`，React 19 会导致 peer 冲突。**必要时可后续升级 Taro 支持 React 19。**
 - **测试用 Vitest（非 miniapp-agent.md 所写 Jest + @tarojs/test-utils-react）**：`@tarojs/test-utils-react` 停在 0.1.1（peer 为 Taro 3.6），与 Taro 4.2.1 不兼容；Vitest + RTL 与 Web 端统一。
 - **npm 用 `legacy-peer-deps`（`.npmrc`）+ 显式 `ajv@8`**：`@tarojs/plugin-framework-react` 的 `peerOptional vite@^4` 与 vitest 的 `vite@^5+` 冲突；`ajv@8` 修复 webpack5-runner 的 `ajv/dist/compile/codegen` 缺失。

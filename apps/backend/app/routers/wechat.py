@@ -4,8 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import get_db
-from app.models.child import Child
+from app.dependencies import create_parent_with_default_children, get_db
 from app.models.parent import Parent
 from app.schemas.wechat import WechatLoginRequest, WechatLoginResponse
 from app.services.wechat_client import (
@@ -15,8 +14,6 @@ from app.services.wechat_client import (
 )
 
 router = APIRouter(prefix="/api", tags=["Auth"])
-
-DEFAULT_CHILD_NAMES = ["小朋友1", "小朋友2"]
 
 
 @router.post("/wechat-login", response_model=WechatLoginResponse)
@@ -52,8 +49,9 @@ async def wechat_login(
             and openid_parent.id != phone_parent.id
         ):
             # openid was bound to phone A, now rebinding to phone B (two distinct
-            # parents). Move the binding to phone B; A keeps its own data but loses
-            # the openid login key (MVP trust model, no multi-device handling).
+            # parent rows). Move only the login key: B gains the openid, A keeps its
+            # own data but loses the openid login key. Data does NOT move between
+            # rows here. (MVP trust model, no multi-device handling.)
             openid_parent.openid = None
             await db.flush()
             phone_parent.openid = openid
@@ -61,7 +59,11 @@ async def wechat_login(
             return WechatLoginResponse(phone=body.phone)
 
         if openid_parent is not None:
-            # Same openid rebinding to a new phone (phone not taken, or same row).
+            # Same openid rebinding to a phone that has no existing parent row
+            # (phone not taken, or same row). We rename the existing row's phone to
+            # body.phone, so this openid's historical data FOLLOWS it to the new
+            # phone number. (Contrast the distinct-rows branch above, where data
+            # stays put — see test_wechat_login_rebind_conflict_moves_openid_*.)
             openid_parent.phone = body.phone
             await db.flush()
             return WechatLoginResponse(phone=body.phone)
@@ -73,12 +75,7 @@ async def wechat_login(
             return WechatLoginResponse(phone=body.phone)
 
         # Brand-new phone: create parent with default children, mirroring get_parent.
-        parent = Parent(phone=body.phone, openid=openid)
-        db.add(parent)
-        await db.flush()
-        for name in DEFAULT_CHILD_NAMES:
-            db.add(Child(parent_id=parent.id, name=name))
-        await db.flush()
+        await create_parent_with_default_children(db, phone=body.phone, openid=openid)
         return WechatLoginResponse(phone=body.phone)
 
     # Silent login: no phone — resolve the already-bound parent by openid.
