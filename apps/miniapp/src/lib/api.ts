@@ -6,7 +6,11 @@ import { getPhone } from './storage'
 
 // 内测阶段后端为本地/IP 部署（HTTP + IP:端口）。正式发布前需配置备案域名 + HTTPS
 // 并改为可配置的 PUBLIC_BASE_URL（见 docs/architecture-wechat-miniapp.md AD-17）。
-export const API_BASE = 'http://localhost:8000'
+//
+// 模拟器：localhost 指向电脑，默认即可。
+// 真机：localhost 指向手机自己，须用电脑局域网 IP（手机与电脑同一 WiFi），构建时注入：
+//   TARO_APP_API_BASE=http://192.168.x.x:8000 npm run dev:weapp
+export const API_BASE = process.env.TARO_APP_API_BASE || 'http://localhost:8000'
 
 export class ApiError extends Error {
   status: number

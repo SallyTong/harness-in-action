@@ -19,7 +19,13 @@ export default defineConfig<'webpack5'>(async (merge) => {
     sourceRoot: 'src',
     outputRoot: 'dist',
     plugins: [],
-    defineConstants: {},
+    defineConstants: {
+      // 真机调试时经构建时环境变量覆盖 API 基址（模拟器默认 localhost）。
+      // 例：TARO_APP_API_BASE=http://192.168.1.12:8000 npm run dev:weapp
+      'process.env.TARO_APP_API_BASE': JSON.stringify(
+        process.env.TARO_APP_API_BASE || 'http://localhost:8000',
+      ),
+    },
     copy: {
       patterns: [],
       options: {},
