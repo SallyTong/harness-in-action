@@ -52,7 +52,7 @@ describe('ErrorBook > 错题集页', () => {
     expect(screen.getByText('第 2 题')).toBeInTheDocument()
     expect(screen.getByText('填空题')).toBeInTheDocument()
     expect(screen.getByText('💡 解题思路')).toBeInTheDocument()
-    expect(screen.getByText('✨ 生成练习表')).toBeInTheDocument()
+    expect(screen.getByText('✨ 生成错题试卷')).toBeInTheDocument()
   })
 
   it('shows a skeleton while loading', () => {
@@ -114,8 +114,8 @@ describe('ErrorBook > 错题集页', () => {
   it('navigates to the generate page with current filters', async () => {
     render(<ErrorBook />)
 
-    await waitFor(() => expect(screen.getByText('✨ 生成练习表')).toBeInTheDocument())
-    fireEvent.click(screen.getByText('✨ 生成练习表'))
+    await waitFor(() => expect(screen.getByText('✨ 生成错题试卷')).toBeInTheDocument())
+    fireEvent.click(screen.getByText('✨ 生成错题试卷'))
 
     expect(Taro.navigateTo).toHaveBeenCalledWith({ url: '/pages/error-generate/index' })
   })

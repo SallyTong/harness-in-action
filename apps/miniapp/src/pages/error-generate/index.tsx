@@ -180,17 +180,17 @@ export default function ErrorGenerate() {
         loading={generating}
         onClick={handleGenerate}
       >
-        {generating ? '正在生成…' : '生成练习表'}
+        {generating ? '正在生成…' : '生成错题试卷'}
       </Button>
 
       {result && (
         <View className='generate__result'>
-          <Text className='generate__result-title'>已生成 {result.question_count} 道练习表</Text>
+          <Text className='generate__result-title'>已生成 {result.question_count} 道错题试卷</Text>
           <Image
             className='generate__result-img'
             src={result.image_url}
             mode='widthFix'
-            ariaLabel='练习表'
+            ariaLabel='错题试卷'
             onClick={previewImage}
           />
           <Text className='generate__result-hint'>点击图片可放大查看</Text>

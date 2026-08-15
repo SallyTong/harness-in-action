@@ -1,3 +1,3 @@
 export default definePageConfig({
-  navigationBarTitleText: '练习表',
+  navigationBarTitleText: '错题试卷',
 })

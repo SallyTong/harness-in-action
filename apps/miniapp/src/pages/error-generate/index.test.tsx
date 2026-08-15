@@ -15,7 +15,7 @@ const CHILDREN = [
   { id: 1, name: '小朋友1', submission_count: 2, created_at: '2026-08-01T00:00:00Z' },
 ]
 
-describe('ErrorGenerate > 练习表生成页', () => {
+describe('ErrorGenerate > 错题试卷生成页', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     vi.mocked(Taro.useRouter).mockReturnValue({ params: {} } as never)
@@ -29,7 +29,7 @@ describe('ErrorGenerate > 练习表生成页', () => {
     expect(screen.getByText('英语')).toBeInTheDocument()
     expect(screen.getByText('数学')).toBeInTheDocument()
     expect(screen.getByText('选择题')).toBeInTheDocument()
-    expect(screen.getByText('生成练习表')).toBeDisabled()
+    expect(screen.getByText('生成错题试卷')).toBeDisabled()
   })
 
   it('generates a sheet and previews the result', async () => {
@@ -43,10 +43,10 @@ describe('ErrorGenerate > 练习表生成页', () => {
     fireEvent.click(screen.getByText(/请选择小朋友/)) // 触发 Picker onChange(value=0)
 
     await waitFor(() => expect(screen.getByText(/小朋友1/)).toBeInTheDocument())
-    fireEvent.click(screen.getByText('生成练习表'))
+    fireEvent.click(screen.getByText('生成错题试卷'))
 
-    await waitFor(() => expect(screen.getByText('已生成 10 道练习表')).toBeInTheDocument())
-    expect(screen.getByAltText('练习表')).toHaveAttribute(
+    await waitFor(() => expect(screen.getByText('已生成 10 道错题试卷')).toBeInTheDocument())
+    expect(screen.getByAltText('错题试卷')).toHaveAttribute(
       'src',
       'http://test/api/images/sheets/uuid.jpg?phone=13800138000',
     )
@@ -65,7 +65,7 @@ describe('ErrorGenerate > 练习表生成页', () => {
     fireEvent.click(screen.getByText(/请选择小朋友/))
     await waitFor(() => expect(screen.getByText(/小朋友1/)).toBeInTheDocument())
 
-    fireEvent.click(screen.getByText('生成练习表'))
+    fireEvent.click(screen.getByText('生成错题试卷'))
 
     await waitFor(() =>
       expect(Taro.showToast).toHaveBeenCalledWith(
@@ -82,7 +82,7 @@ describe('ErrorGenerate > 练习表生成页', () => {
     fireEvent.click(screen.getByText(/请选择小朋友/))
     await waitFor(() => expect(screen.getByText(/小朋友1/)).toBeInTheDocument())
 
-    fireEvent.click(screen.getByText('生成练习表'))
+    fireEvent.click(screen.getByText('生成错题试卷'))
 
     await waitFor(() => expect(screen.getByText('正在生成…')).toBeInTheDocument())
   })
@@ -92,6 +92,6 @@ describe('ErrorGenerate > 练习表生成页', () => {
     render(<ErrorGenerate />)
 
     await waitFor(() => expect(screen.getByText(/请选择小朋友/)).toBeInTheDocument())
-    expect(screen.getByText('生成练习表')).toBeDisabled()
+    expect(screen.getByText('生成错题试卷')).toBeDisabled()
   })
 })

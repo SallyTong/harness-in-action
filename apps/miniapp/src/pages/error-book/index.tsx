@@ -377,7 +377,7 @@ export default function ErrorBook() {
       {errors.length > 0 && (
         <View className='errorbook__bar'>
           <Button className='errorbook__bar-btn' onClick={goGenerate}>
-            ✨ 生成练习表
+            ✨ 生成错题试卷
           </Button>
         </View>
       )}
