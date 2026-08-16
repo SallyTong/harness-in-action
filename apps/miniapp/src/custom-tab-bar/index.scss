@@ -1,0 +1,40 @@
+/* 自定义 tabBar 在微信独立 tabBar 层渲染，`page` 上的 CSS 变量可能不级联，
+   故颜色取品牌令牌同值写死（--color-accent / --color-text-tertiary / --color-border-light）。 */
+.tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  background: #ffffff;
+  border-top: 2rpx solid #f0ede8;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -2rpx 16rpx rgba(30, 27, 24, 0.06);
+
+  &__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6rpx;
+    height: 108rpx;
+  }
+
+  &__icon {
+    font-size: 44rpx;
+    line-height: 1;
+  }
+
+  &__label {
+    font-size: 26rpx;
+    line-height: 34rpx;
+    font-weight: 500;
+    color: #a39d97;
+
+    &--active {
+      color: #6366f1;
+      font-weight: 600;
+    }
+  }
+}

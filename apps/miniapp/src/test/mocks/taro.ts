@@ -22,6 +22,13 @@ const Taro = {
   getImageInfo: vi.fn(),
   uploadFile: vi.fn(),
   previewImage: vi.fn(),
+  getCurrentInstance: vi.fn(() => ({ router: { path: '/pages/index/index' } })),
+  eventCenter: {
+    on: vi.fn(),
+    once: vi.fn(),
+    off: vi.fn(),
+    trigger: vi.fn(),
+  },
   useRouter: vi.fn(() => ({ params: {} })),
   useDidShow: vi.fn(() => {}),
   useDidHide: vi.fn(() => {}),

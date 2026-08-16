@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Button, Image, Picker } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 
 import { apiGet, apiUpload } from '../../lib/api'
 import { compressImage } from '../../lib/image'
+import { notifyTabBarSelected } from '../../lib/tabbar'
 import type { Child, SubmissionAccepted } from '@homework/api-types'
 
 import './index.scss'
@@ -44,6 +45,9 @@ export default function Home() {
       active = false
     }
   }, [])
+
+  // 切回批改 tab 时同步自定义 tabBar 选中态。
+  useDidShow(() => notifyTabBarSelected(0))
 
   const chooseImage = async (sourceType: 'camera' | 'album') => {
     try {

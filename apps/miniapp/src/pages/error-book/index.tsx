@@ -9,6 +9,7 @@ import {
   SUBJECT_LABELS,
   TYPE_LABELS,
 } from '../../lib/display'
+import { notifyTabBarSelected } from '../../lib/tabbar'
 import type { Child, ErrorCollectionListResponse, ErrorQuestionItem } from '@homework/api-types'
 
 import './index.scss'
@@ -100,8 +101,9 @@ export default function ErrorBook() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [childId, subject, questionType, timeRange, retryKey])
 
-  // 切回错题集 tab 时刷新第一页（批改后返回能见新错题）。
+  // 切回错题集 tab 时刷新第一页（批改后返回能见新错题）+ 同步 tabBar。
   useDidShow(() => {
+    notifyTabBarSelected(2)
     if (!initialShown.current) {
       initialShown.current = true
       return

@@ -4,6 +4,7 @@ import Taro, { useDidShow, useReachBottom } from '@tarojs/taro'
 
 import { apiGet } from '../../lib/api'
 import { formatRelativeTime, SUBJECT_LABELS } from '../../lib/display'
+import { notifyTabBarSelected } from '../../lib/tabbar'
 import type { Child, SubmissionListResponse, SubmissionSummary } from '@homework/api-types'
 
 import './index.scss'
@@ -76,8 +77,9 @@ export default function History() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [childFilter, subjectFilter, retryKey])
 
-  // 切回历史 tab 时刷新第一页（批改/修正后返回能见最新记录与分数）。
+  // 切回历史 tab 时刷新第一页（批改/修正后返回能见最新记录与分数）+ 同步 tabBar。
   useDidShow(() => {
+    notifyTabBarSelected(1)
     if (!initialShown.current) {
       initialShown.current = true
       return
