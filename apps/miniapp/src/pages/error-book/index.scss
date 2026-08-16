@@ -1,6 +1,7 @@
 .errorbook {
   min-height: 100vh;
-  padding: 32rpx 32rpx 240rpx;
+  /* 底部预留「生成错题试卷」固定栏 + 自定义 tabBar（108rpx）+ 安全区 */
+  padding: 32rpx 32rpx calc(260rpx + env(safe-area-inset-bottom));
   background: var(--color-bg-page);
   box-sizing: border-box;
 
@@ -318,8 +319,9 @@
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 0;
-    padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+    /* 抬高到自定义 tabBar 之上（tabBar 高 108rpx + 安全区） */
+    bottom: calc(108rpx + env(safe-area-inset-bottom));
+    padding: 20rpx 32rpx 20rpx;
     background: rgba(255, 255, 255, 0.96);
     box-shadow: 0 -2rpx 16rpx rgba(30, 27, 24, 0.06);
   }

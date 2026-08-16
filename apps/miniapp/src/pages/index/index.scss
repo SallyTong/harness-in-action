@@ -1,6 +1,7 @@
 .home {
   min-height: 100vh;
-  padding: 32rpx 32rpx 64rpx;
+  /* 底部预留自定义 tabBar 高度（108rpx）+ 安全区 + 呼吸空间 */
+  padding: 32rpx 32rpx calc(148rpx + env(safe-area-inset-bottom));
   background: var(--color-bg-page);
   box-sizing: border-box;
 
