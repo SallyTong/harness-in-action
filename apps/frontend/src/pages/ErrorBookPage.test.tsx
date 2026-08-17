@@ -11,7 +11,7 @@ vi.mock("../lib/api", () => ({
 describe("ErrorBookPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.setItem("parent_phone", "13800138000");
+    localStorage.clear();
   });
 
   it("shows congratulations when no errors", async () => {
@@ -23,7 +23,11 @@ describe("ErrorBookPage", () => {
       return Promise.resolve(null);
     });
 
-    render(<MemoryRouter><ErrorBookPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ErrorBookPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("还没有错题。继续保持！")).toBeInTheDocument();

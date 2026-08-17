@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { usePhone } from "../hooks/usePhone";
 import { apiGet, apiPost, apiPut, apiDelete } from "../lib/api";
+import { clearToken } from "../lib/auth";
 import Toast, { type ToastType } from "../components/ui/Toast";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 
@@ -14,7 +14,6 @@ interface Child {
 
 export default function ChildrenPage() {
   const navigate = useNavigate();
-  const { phone, isReady } = usePhone();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +28,6 @@ export default function ChildrenPage() {
   } | null>(null);
 
   const fetchChildren = useCallback(async () => {
-    if (!isReady) return;
     setLoading(true);
     setError(null);
     try {
@@ -40,7 +38,7 @@ export default function ChildrenPage() {
     } finally {
       setLoading(false);
     }
-  }, [isReady]);
+  }, []);
 
   useEffect(() => {
     fetchChildren();
@@ -97,6 +95,11 @@ export default function ChildrenPage() {
     }
   };
 
+  const handleLogout = () => {
+    clearToken();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <div className="mx-auto min-h-dvh max-w-lg px-4 pb-16">
       <header className="flex items-center gap-3 py-4">
@@ -107,18 +110,13 @@ export default function ChildrenPage() {
         >
           <ArrowLeft size={22} strokeWidth={1.5} />
         </button>
-        <h1 className="text-[22px] font-semibold leading-[30px] text-text-primary">
-          小朋友管理
-        </h1>
+        <h1 className="text-[22px] font-semibold leading-[30px] text-text-primary">小朋友管理</h1>
       </header>
-      <p className="mb-4 text-[13px] text-text-tertiary">手机号：{phone}</p>
+
       {loading && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="animate-pulse rounded-[14px] bg-white p-4 shadow-sm"
-            >
+            <div key={i} className="animate-pulse rounded-[14px] bg-white p-4 shadow-sm">
               <div className="mb-2 h-5 w-24 rounded bg-brand-hover" />
               <div className="h-3 w-16 rounded bg-brand-hover" />
             </div>
@@ -253,6 +251,17 @@ export default function ChildrenPage() {
           )}
         </div>
       )}
+
+      {/* Logout */}
+      <div className="mt-8 pb-4">
+        <button
+          onClick={handleLogout}
+          className="w-full min-h-11 rounded-xl border border-border bg-white py-3 text-[15px] font-medium text-error transition-colors hover:bg-error-bg"
+        >
+          登出
+        </button>
+      </div>
+
       <ConfirmDialog
         open={deleteTarget !== null}
         title="确认删除"
@@ -262,11 +271,7 @@ export default function ChildrenPage() {
         onCancel={() => setDeleteTarget(null)}
       />
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onDismiss={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
       )}
     </div>
   );

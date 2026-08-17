@@ -1,14 +1,16 @@
 """Simple in-memory rate limiter for the AI Homework Grader MVP.
 
-Uses a sliding-window approach per client (phone number). No external
-dependencies — pure Python with FastAPI middleware integration.
+Uses a sliding-window approach per identity. Identity is the hashed Bearer
+token when present (authenticated requests), falling back to the client IP for
+unauthenticated requests (e.g. auth endpoints). No external dependencies — pure
+Python with FastAPI middleware integration.
 
 Exemptions:
   - /api/health — no auth needed
-  - /api/images/* — static file serving from disk, no external API cost,
-    inherently bursty (one page load = N thumbnails)
+  - /api/images/* — signed-URL file serving, inherently bursty (one page load = N thumbnails)
 """
 
+import hashlib
 import logging
 import time
 from collections import defaultdict
@@ -23,20 +25,31 @@ logger = logging.getLogger(__name__)
 DEFAULT_WINDOW_SECONDS = 60
 MAX_REQUESTS_PER_WINDOW = 120  # reads + mutations combined
 
-# Store: {phone: [timestamp, ...]}
+# Store: {identity: [timestamp, ...]}
 _hits: dict[str, list[float]] = defaultdict(list)
 
 # Paths exempt from rate limiting
 EXEMPT_PATHS = (
     "/api/health",
-    "/api/images/",  # static file serving — bursty by nature (thumbnails, annotated)
+    "/api/images/",  # signed-URL file serving — bursty by nature (thumbnails, annotated)
 )
 
 
-class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Rate-limit requests by phone identity.
+def _extract_identity(request: Request) -> str:
+    """Return a rate-limit identity: hashed Bearer token, else client IP."""
+    auth = request.headers.get("Authorization", "")
+    if auth.startswith("Bearer ") and len(auth) > 7:
+        token = auth[7:]
+        digest = hashlib.sha256(token.encode("utf-8")).hexdigest()[:16]
+        return f"token:{digest}"
+    client_ip = request.client.host if request.client else "unknown"
+    return f"ip:{client_ip}"
 
-    Exempts health check and image serving (static files from disk).
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Rate-limit requests by identity (Bearer token or client IP).
+
+    Exempts health check and signed-URL image serving.
     """
 
     async def dispatch(self, request: Request, call_next):
@@ -46,24 +59,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if path == "/api/health" or path.startswith("/api/images/"):
             return await call_next(request)
 
-        # Extract identity: phone query param or X-Parent-Phone header
-        phone = request.query_params.get("phone") or request.headers.get(
-            "X-Parent-Phone"
-        )
-
-        if not phone:
-            # No identity — let the endpoint's dependency handle the error
-            return await call_next(request)
+        identity = _extract_identity(request)
 
         now = time.time()
         cutoff = now - DEFAULT_WINDOW_SECONDS
 
-        # Clean stale entries for this phone
-        window_hits = [t for t in _hits[phone] if t > cutoff]
-        _hits[phone] = window_hits
+        # Clean stale entries for this identity
+        window_hits = [t for t in _hits[identity] if t > cutoff]
+        _hits[identity] = window_hits
 
         if len(window_hits) >= MAX_REQUESTS_PER_WINDOW:
-            logger.warning("Rate limit hit for phone=%s", phone[:4] + "*****")
+            logger.warning("Rate limit hit for identity=%s", identity)
             retry_after = int(window_hits[0] + DEFAULT_WINDOW_SECONDS - now) + 1
             return JSONResponse(
                 status_code=429,
@@ -71,7 +77,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 headers={"Retry-After": str(retry_after)},
             )
 
-        _hits[phone].append(now)
+        _hits[identity].append(now)
 
         response = await call_next(request)
         return response

@@ -23,7 +23,7 @@ const ERRORS = {
       subject: 'english',
       question_number: '2',
       question_type: 'fill_blank',
-      question_image_path: 'http://test/api/images/questions/1_2.jpg?phone=13800138000',
+      question_image_path: 'http://test/api/images/questions/1_2.jpg?token=test-signed&expires=1893456000',
       solution_note: "正确答案应为 'have gone'。",
       error_category: 'grammar',
       error_count: 1,

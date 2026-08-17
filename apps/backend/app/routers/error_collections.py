@@ -8,10 +8,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import get_db, get_parent
+from app.dependencies import get_db
+from app.deps.auth import get_current_parent_id
 from app.models.child import Child
 from app.models.error_question import ErrorQuestion
-from app.models.parent import Parent
 from app.schemas.error_collections import (
     ErrorCollectionListResponse,
     ErrorQuestionResponse,
@@ -19,6 +19,7 @@ from app.schemas.error_collections import (
     GenerateSheetResponse,
 )
 from app.services.annotation import compose_sheet
+from app.services.image_signing import build_signed_url
 
 logger = logging.getLogger(__name__)
 
@@ -30,28 +31,10 @@ VALID_QUESTION_TYPES = frozenset(
 )
 
 
-def _build_image_url(
-    request: Request, rel_path: str | None, phone: str = ""
-) -> str | None:
-    if not rel_path:
-        return None
-    base = str(request.base_url).rstrip("/")
-    # Normalize Windows backslash paths and strip the data/images/ prefix
-    normalized = rel_path.replace("\\", "/")
-    if normalized.startswith("data/images/"):
-        kind_and_file = normalized[len("data/images/") :]
-    else:
-        kind_and_file = normalized.replace("data/images/", "", 1)
-    url = f"{base}/api/images/{kind_and_file}"
-    if phone:
-        url += f"?phone={phone}"
-    return url
-
-
 @router.get("/error-collections", response_model=ErrorCollectionListResponse)
 async def list_error_questions(
     request: Request,
-    parent: Annotated[Parent, Depends(get_parent)],
+    parent_id: Annotated[int, Depends(get_current_parent_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
     child_id: int | None = None,
     subject: str | None = None,
@@ -70,13 +53,13 @@ async def list_error_questions(
     base_query = (
         select(ErrorQuestion)
         .join(Child, ErrorQuestion.child_id == Child.id)
-        .where(Child.parent_id == parent.id)
+        .where(Child.parent_id == parent_id)
     )
     count_query = (
         select(func.count())
         .select_from(ErrorQuestion)
         .join(Child, ErrorQuestion.child_id == Child.id)
-        .where(Child.parent_id == parent.id)
+        .where(Child.parent_id == parent_id)
     )
 
     if child_id is not None:
@@ -143,8 +126,8 @@ async def list_error_questions(
             subject=e.subject,
             question_number=e.question_number,
             question_type=e.question_type,
-            question_image_path=_build_image_url(
-                request, e.question_image_path, parent.phone
+            question_image_path=build_signed_url(
+                str(request.base_url), e.question_image_path
             )
             or "",
             solution_note=e.solution_note,
@@ -171,7 +154,7 @@ async def list_error_questions(
 async def generate_error_sheet(
     body: GenerateSheetRequest,
     request: Request,
-    parent: Annotated[Parent, Depends(get_parent)],
+    parent_id: Annotated[int, Depends(get_current_parent_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Generate a practice sheet from error questions.
@@ -197,7 +180,7 @@ async def generate_error_sheet(
 
     # Verify child ownership
     child_result = await db.execute(
-        select(Child).where(Child.id == body.child_id, Child.parent_id == parent.id)
+        select(Child).where(Child.id == body.child_id, Child.parent_id == parent_id)
     )
     child = child_result.scalar_one_or_none()
     if child is None:
@@ -263,10 +246,8 @@ async def generate_error_sheet(
             detail="Failed to generate practice sheet. Please try again later.",
         )
 
-    # Build image URL
-    image_url = _build_image_url(request, sheet_path, parent.phone)
-    if image_url is None:
-        image_url = ""
+    # Build signed image URL
+    image_url = build_signed_url(str(request.base_url), sheet_path) or ""
 
     return GenerateSheetResponse(
         image_url=image_url,

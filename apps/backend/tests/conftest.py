@@ -1,4 +1,13 @@
 import os
+
+# Set test secrets BEFORE importing app modules so JWT/image signing read them.
+os.environ.setdefault("JWT_SECRET", "test-jwt-secret-0123456789abcdef")
+os.environ.setdefault("IMAGE_SIGNING_SECRET", "test-image-signing-secret")
+os.environ.setdefault("SMS_ACCESS_KEY_ID", "test-access-key-id")
+os.environ.setdefault("SMS_ACCESS_KEY_SECRET", "test-access-key-secret")
+os.environ.setdefault("SMS_SIGN_NAME", "test-sign")
+os.environ.setdefault("SMS_TEMPLATE_CODE", "test-template")
+
 import tempfile
 
 import httpx
@@ -42,12 +51,14 @@ async def create_test_db():
     import app.services.grading as grading_mod
 
     _orig_router_originals = sub_router.IMAGE_ORIGINALS
+    _orig_router_image_root = sub_router.IMAGE_ROOT
     _orig_grading_originals = grading_mod.IMAGE_ORIGINALS
     _orig_grading_annotated = grading_mod.IMAGE_ANNOTATED
     _orig_grading_thumbnails = grading_mod.IMAGE_THUMBNAILS
     _orig_grading_questions = grading_mod.IMAGE_QUESTIONS
 
     sub_router.IMAGE_ORIGINALS = f"{test_img_dir}/originals"
+    sub_router.IMAGE_ROOT = test_img_dir
     grading_mod.IMAGE_ORIGINALS = f"{test_img_dir}/originals"
     grading_mod.IMAGE_ANNOTATED = f"{test_img_dir}/annotated"
     grading_mod.IMAGE_THUMBNAILS = f"{test_img_dir}/thumbnails"
@@ -59,6 +70,7 @@ async def create_test_db():
 
     # Restore original paths
     sub_router.IMAGE_ORIGINALS = _orig_router_originals
+    sub_router.IMAGE_ROOT = _orig_router_image_root
     grading_mod.IMAGE_ORIGINALS = _orig_grading_originals
     grading_mod.IMAGE_ANNOTATED = _orig_grading_annotated
     grading_mod.IMAGE_THUMBNAILS = _orig_grading_thumbnails
@@ -84,6 +96,12 @@ async def db_session():
 
 @pytest_asyncio.fixture
 async def client(db_session: AsyncSession):
+    # Reset in-memory state between tests so codes / rate limits don't leak.
+    from app.services import rate_limiter, sms
+
+    rate_limiter._hits.clear()
+    sms._codes.clear()
+
     async def override_get_db():
         yield db_session
 

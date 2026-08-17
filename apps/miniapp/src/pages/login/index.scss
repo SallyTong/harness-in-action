@@ -27,7 +27,20 @@
   &__form {
     display: flex;
     flex-direction: column;
-    gap: 24rpx;
+    gap: 32rpx;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 12rpx;
+  }
+
+  &__label {
+    font-size: 26rpx;
+    line-height: 36rpx;
+    font-weight: 500;
+    color: var(--color-text-secondary);
   }
 
   &__input {
@@ -45,6 +58,38 @@
     color: var(--color-text-tertiary);
   }
 
+  &__code-row {
+    display: flex;
+    gap: 16rpx;
+  }
+
+  &__input--code {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__code-btn {
+    flex-shrink: 0;
+    height: 96rpx;
+    line-height: 96rpx;
+    padding: 0 32rpx;
+    margin: 0;
+    font-size: 28rpx;
+    font-weight: 500;
+    color: var(--color-accent);
+    background: var(--color-accent-subtle);
+    border-radius: 24rpx;
+
+    &::after {
+      border: none;
+    }
+
+    &--disabled {
+      color: var(--color-text-tertiary);
+      background: var(--color-bg-hover);
+    }
+  }
+
   &__error {
     font-size: 26rpx;
     line-height: 36rpx;
@@ -54,6 +99,7 @@
   &__button {
     height: 96rpx;
     line-height: 96rpx;
+    margin-top: 16rpx;
     font-size: 32rpx;
     font-weight: 500;
     color: #ffffff;
@@ -71,7 +117,7 @@
   }
 
   &__hint {
-    margin-top: 16rpx;
+    margin-top: 8rpx;
     font-size: 26rpx;
     line-height: 36rpx;
     color: var(--color-text-tertiary);

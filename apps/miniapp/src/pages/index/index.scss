@@ -12,11 +12,24 @@
     margin-bottom: 40rpx;
   }
 
+  &__header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   &__title {
     font-size: 44rpx;
     line-height: 60rpx;
     font-weight: 600;
     color: var(--color-text-primary);
+  }
+
+  &__logout {
+    padding: 24rpx 28rpx;
+    font-size: 26rpx;
+    line-height: 40rpx;
+    color: var(--color-text-tertiary);
   }
 
   &__subtitle {

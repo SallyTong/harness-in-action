@@ -4,6 +4,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 
 import { apiGet, apiUpload } from '../../lib/api'
 import { compressImage } from '../../lib/image'
+import { clearToken } from '../../lib/storage'
 import { notifyTabBarSelected } from '../../lib/tabbar'
 import type { Child, SubmissionAccepted } from '@homework/api-types'
 
@@ -83,6 +84,12 @@ export default function Home() {
 
   const handleRemoveImage = () => setSelectedImage(null)
 
+  // 登出：清 token 回登录页（服务端无登出端点）。
+  const handleLogout = () => {
+    clearToken()
+    Taro.reLaunch({ url: '/pages/login/index' })
+  }
+
   // Picker onChange 的 value 类型随 mode 变化（number | number[] | string | …），
   // Taro 的 CommonEventFunction 联合类型无法用窄类型签名匹配，这里取首个值转数字作下标。
   const handleChildChange = (e: { detail: { value: number | number[] | string | string[] } }) => {
@@ -123,7 +130,12 @@ export default function Home() {
   return (
     <View className='home'>
       <View className='home__header'>
-        <Text className='home__title'>作业批改</Text>
+        <View className='home__header-top'>
+          <Text className='home__title'>作业批改</Text>
+          <Text className='home__logout' onClick={handleLogout}>
+            登出
+          </Text>
+        </View>
         <Text className='home__subtitle'>拍照上传试卷，几分钟检查完作业</Text>
       </View>
 

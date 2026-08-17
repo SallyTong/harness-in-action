@@ -4,45 +4,108 @@ import Taro from '@tarojs/taro'
 
 import Login from './index'
 
-describe('Login > 登录/绑定页', () => {
+const mockApiPostPublic = vi.fn()
+const mockIsAuthenticated = vi.fn(() => false)
+const mockSetToken = vi.fn()
+
+vi.mock('../../lib/api', () => ({
+  apiPostPublic: (...args: unknown[]) => mockApiPostPublic(...args),
+}))
+vi.mock('../../lib/storage', () => ({
+  isAuthenticated: () => mockIsAuthenticated(),
+  setToken: (token: string) => mockSetToken(token),
+}))
+
+describe('Login > 登录页', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    vi.mocked(Taro.getStorageSync).mockReturnValue('')
-    vi.mocked(Taro.login).mockResolvedValue({ code: 'wx-code' })
-    vi.mocked(Taro.request).mockResolvedValue({
-      statusCode: 200,
-      data: { phone: '13800138000' },
+    mockIsAuthenticated.mockReturnValue(false)
+    mockApiPostPublic.mockResolvedValue({
+      token: 'jwt-token',
+      token_type: 'Bearer',
+      expires_at: '2026-09-16T00:00:00Z',
+      user_id: 1,
     })
   })
 
-  it('renders brand, input, button and hint', () => {
+  it('renders brand, phone/code inputs and actions', () => {
     render(<Login />)
-    expect(screen.getByText('AI 作业批改')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('请输入家长手机号')).toBeInTheDocument()
-    expect(screen.getByText('进入批改')).toBeInTheDocument()
-    expect(screen.getByText('与网页版同一手机号，数据自动同步')).toBeInTheDocument()
+    expect(screen.getByText('欢迎使用')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('请输入 11 位手机号')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('6 位验证码')).toBeInTheDocument()
+    expect(screen.getByText('获取验证码')).toBeInTheDocument()
+    expect(screen.getByText('登录')).toBeInTheDocument()
   })
 
-  it('disables submit until phone reaches 11 digits', () => {
+  it('disables login until phone and code are both valid', () => {
     render(<Login />)
-    expect(screen.getByRole('button')).toBeDisabled()
+    expect(screen.getByRole('button', { name: '登录' })).toBeDisabled()
   })
 
-  it('binds on submit: logs in, caches phone and re-launches home', async () => {
+  it('sends code and starts the resend countdown', async () => {
+    mockApiPostPublic.mockResolvedValue({ retry_after: 60 })
     render(<Login />)
-    fireEvent.change(screen.getByPlaceholderText('请输入家长手机号'), {
+
+    fireEvent.change(screen.getByPlaceholderText('请输入 11 位手机号'), {
       target: { value: '13800138000' },
     })
-    expect(screen.getByRole('button')).toBeEnabled()
-
-    fireEvent.click(screen.getByRole('button'))
+    fireEvent.click(screen.getByText('获取验证码'))
 
     await waitFor(() => {
-      expect(Taro.request).toHaveBeenCalledWith(
-        expect.objectContaining({ url: 'http://localhost:8000/api/wechat-login' }),
+      expect(mockApiPostPublic).toHaveBeenCalledWith('/api/auth/send-code', {
+        phone: '13800138000',
+      })
+      expect(Taro.showToast).toHaveBeenCalledWith(
+        expect.objectContaining({ title: '验证码已发送' }),
       )
-      expect(Taro.setStorageSync).toHaveBeenCalledWith('parent_phone', '13800138000')
+    })
+    await waitFor(() => expect(screen.getByText(/后重发/)).toBeInTheDocument())
+  })
+
+  it('logs in, caches token and re-launches home', async () => {
+    render(<Login />)
+
+    fireEvent.change(screen.getByPlaceholderText('请输入 11 位手机号'), {
+      target: { value: '13800138000' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('6 位验证码'), {
+      target: { value: '123456' },
+    })
+    fireEvent.click(screen.getByText('登录'))
+
+    await waitFor(() => {
+      expect(mockApiPostPublic).toHaveBeenCalledWith('/api/auth/login', {
+        phone: '13800138000',
+        code: '123456',
+      })
+      expect(mockSetToken).toHaveBeenCalledWith('jwt-token')
       expect(Taro.reLaunch).toHaveBeenCalledWith({ url: '/pages/index/index' })
     })
+  })
+
+  it('shows an error when login fails (wrong code)', async () => {
+    mockApiPostPublic.mockRejectedValue(new Error('Invalid or expired code'))
+    render(<Login />)
+
+    fireEvent.change(screen.getByPlaceholderText('请输入 11 位手机号'), {
+      target: { value: '13800138000' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('6 位验证码'), {
+      target: { value: '000000' },
+    })
+    fireEvent.click(screen.getByText('登录'))
+
+    await waitFor(() =>
+      expect(screen.getByText('Invalid or expired code')).toBeInTheDocument(),
+    )
+  })
+
+  it('skips to home when already authenticated', async () => {
+    mockIsAuthenticated.mockReturnValue(true)
+    render(<Login />)
+
+    await waitFor(() =>
+      expect(Taro.reLaunch).toHaveBeenCalledWith({ url: '/pages/index/index' }),
+    )
   })
 })

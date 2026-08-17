@@ -1,7 +1,5 @@
-from typing import Annotated
+"""Shared dependency-injection helpers: DB session + first-use parent creation."""
 
-from fastapi import Depends, Header, Query
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionFactory
@@ -15,14 +13,13 @@ async def create_parent_with_default_children(
     db: AsyncSession,
     *,
     phone: str,
-    openid: str | None = None,
 ) -> Parent:
-    """Create a Parent row plus the two default children, mirroring first-use.
+    """Create a Parent row plus the two default children, mirroring first use.
 
-    Shared by `get_parent` (Web/phone first use) and `wechat_login` (mini-program
-    first bind) so the default-children contract lives in one place.
+    Shared by the auth login flow so the default-children contract lives in one
+    place. `openid` is no longer written (retained as a column only).
     """
-    parent = Parent(phone=phone, openid=openid)
+    parent = Parent(phone=phone)
     db.add(parent)
     await db.flush()
     for name in DEFAULT_CHILD_NAMES:
@@ -39,41 +36,3 @@ async def get_db():
         except Exception:
             await session.rollback()
             raise
-
-
-async def get_parent(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    phone: Annotated[
-        str | None,
-        Query(
-            pattern=r"^\d{11}$",
-            description="Parent phone number (identity)",
-        ),
-    ] = None,
-    x_parent_phone: Annotated[
-        str | None,
-        Header(
-            alias="X-Parent-Phone",
-            description="Alternative to phone query parameter",
-        ),
-    ] = None,
-) -> Parent:
-    # Resolve phone: query param takes priority, fall back to header
-    resolved_phone = phone or x_parent_phone or ""
-
-    if not resolved_phone or len(resolved_phone) != 11 or not resolved_phone.isdigit():
-        from fastapi import HTTPException
-
-        raise HTTPException(
-            status_code=422,
-            detail="Phone number is required (11 digits) via 'phone' query parameter or 'X-Parent-Phone' header.",
-        )
-
-    result = await db.execute(select(Parent).where(Parent.phone == resolved_phone))
-    parent = result.scalar_one_or_none()
-
-    if parent is not None:
-        return parent
-
-    # First use: auto-create parent with default children
-    return await create_parent_with_default_children(db, phone=resolved_phone)

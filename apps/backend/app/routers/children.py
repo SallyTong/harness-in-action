@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import get_db, get_parent
+from app.dependencies import get_db
+from app.deps.auth import get_current_parent_id
 from app.models.child import Child
-from app.models.parent import Parent
 from app.models.submission import Submission
 from app.schemas.children import ChildResponse, CreateChildRequest, UpdateChildRequest
 
@@ -40,11 +40,11 @@ async def _get_submission_counts(
 
 @router.get("/children", response_model=list[ChildResponse])
 async def list_children(
-    parent: Annotated[Parent, Depends(get_parent)],
+    parent_id: Annotated[int, Depends(get_current_parent_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     result = await db.execute(
-        select(Child).where(Child.parent_id == parent.id).order_by(Child.id)
+        select(Child).where(Child.parent_id == parent_id).order_by(Child.id)
     )
     children = result.scalars().all()
     counts = await _get_submission_counts([c.id for c in children], db)
@@ -64,19 +64,19 @@ async def list_children(
 )
 async def create_child(
     body: CreateChildRequest,
-    parent: Annotated[Parent, Depends(get_parent)],
+    parent_id: Annotated[int, Depends(get_current_parent_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     # Check for duplicate name
     existing = await db.execute(
-        select(Child).where(Child.parent_id == parent.id, Child.name == body.name)
+        select(Child).where(Child.parent_id == parent_id, Child.name == body.name)
     )
     if existing.scalar_one_or_none() is not None:
         raise HTTPException(
             status_code=409, detail="Child with this name already exists"
         )
 
-    child = Child(parent_id=parent.id, name=body.name)
+    child = Child(parent_id=parent_id, name=body.name)
     db.add(child)
     await db.flush()
     await db.refresh(child)
@@ -93,15 +93,15 @@ async def create_child(
 async def update_child(
     child_id: int,
     body: UpdateChildRequest,
-    parent: Annotated[Parent, Depends(get_parent)],
+    parent_id: Annotated[int, Depends(get_current_parent_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    child = await _get_owned_child(child_id, parent.id, db)
+    child = await _get_owned_child(child_id, parent_id, db)
 
     # Check for duplicate name (exclude current child)
     existing = await db.execute(
         select(Child).where(
-            Child.parent_id == parent.id,
+            Child.parent_id == parent_id,
             Child.name == body.name,
             Child.id != child_id,
         )
@@ -127,8 +127,8 @@ async def update_child(
 @router.delete("/children/{child_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_child(
     child_id: int,
-    parent: Annotated[Parent, Depends(get_parent)],
+    parent_id: Annotated[int, Depends(get_current_parent_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    child = await _get_owned_child(child_id, parent.id, db)
+    child = await _get_owned_child(child_id, parent_id, db)
     await db.delete(child)

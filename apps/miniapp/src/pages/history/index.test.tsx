@@ -21,7 +21,7 @@ const PAGE1 = Array.from({ length: 20 }, (_, i) => ({
   subject: i % 2 === 0 ? 'english' : 'math',
   status: 'completed',
   score: { correct: 3, total: 4 },
-  thumbnail_url: `http://test/api/images/thumbnails/${i + 1}.jpg?phone=13800138000`,
+  thumbnail_url: `http://test/api/images/thumbnails/${i + 1}.jpg?token=test-signed&expires=1893456000`,
   created_at: '2026-08-15T10:00:00Z',
 }))
 

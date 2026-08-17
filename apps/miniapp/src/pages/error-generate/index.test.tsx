@@ -34,7 +34,7 @@ describe('ErrorGenerate > 错题试卷生成页', () => {
 
   it('generates a sheet and previews the result', async () => {
     mockApiPost.mockResolvedValue({
-      image_url: 'http://test/api/images/sheets/uuid.jpg?phone=13800138000',
+      image_url: 'http://test/api/images/sheets/uuid.jpg?token=test-signed&expires=1893456000',
       question_count: 10,
     })
     render(<ErrorGenerate />)
@@ -48,7 +48,7 @@ describe('ErrorGenerate > 错题试卷生成页', () => {
     await waitFor(() => expect(screen.getByText('已生成 10 道错题试卷')).toBeInTheDocument())
     expect(screen.getByAltText('错题试卷')).toHaveAttribute(
       'src',
-      'http://test/api/images/sheets/uuid.jpg?phone=13800138000',
+      'http://test/api/images/sheets/uuid.jpg?token=test-signed&expires=1893456000',
     )
     expect(mockApiPost).toHaveBeenCalledWith('/api/error-collections/generate', {
       child_id: 1,

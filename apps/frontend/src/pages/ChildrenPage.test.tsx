@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, waitFor, fireEvent, cleanup } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import ChildrenPage from "./ChildrenPage";
+import { setToken } from "../lib/auth";
 
 const mockApiGet = vi.fn();
 const mockApiPost = vi.fn();
@@ -15,20 +16,18 @@ vi.mock("../lib/api", () => ({
   apiDelete: (...args: unknown[]) => mockApiDelete(...args),
 }));
 
-const mockUsePhone = vi.fn();
-vi.mock("../hooks/usePhone", () => ({
-  usePhone: () => mockUsePhone(),
-}));
-
 describe("ChildrenPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    mockUsePhone.mockReturnValue({ phone: "13800138000", isReady: true });
     mockApiGet.mockResolvedValue([]);
     mockApiPost.mockResolvedValue({ id: 99, name: "new", submission_count: 0 });
     mockApiPut.mockResolvedValue({});
     mockApiDelete.mockResolvedValue({});
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("renders children list", async () => {
@@ -36,7 +35,11 @@ describe("ChildrenPage", () => {
       { id: 1, name: "小明", submission_count: 5 },
       { id: 2, name: "小红", submission_count: 3 },
     ]);
-    render(<MemoryRouter><ChildrenPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ChildrenPage />
+      </MemoryRouter>,
+    );
     await waitFor(() => {
       expect(screen.getByText("小明")).toBeInTheDocument();
       expect(screen.getByText("小红")).toBeInTheDocument();
@@ -45,9 +48,37 @@ describe("ChildrenPage", () => {
 
   it("shows empty prompt when no children", async () => {
     mockApiGet.mockResolvedValue([]);
-    render(<MemoryRouter><ChildrenPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ChildrenPage />
+      </MemoryRouter>,
+    );
     await waitFor(() => {
       expect(screen.getByText("请先添加小朋友")).toBeInTheDocument();
     });
+  });
+
+  it("logs out, clears token, and navigates to login", async () => {
+    setToken("test-token");
+    mockApiGet.mockResolvedValue([]);
+    render(
+      <MemoryRouter initialEntries={["/children"]}>
+        <Routes>
+          <Route path="/children" element={<ChildrenPage />} />
+          <Route path="/login" element={<div>登录页</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("登出")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("登出"));
+
+    await waitFor(() => {
+      expect(screen.getByText("登录页")).toBeInTheDocument();
+    });
+    expect(localStorage.getItem("auth_token")).toBeNull();
   });
 });

@@ -81,4 +81,14 @@ describe('Home > 拍照上传页', () => {
       expect(screen.getByText('请先在网页版添加小朋友')).toBeInTheDocument(),
     )
   })
+
+  it('logs out: clears token and returns to login', async () => {
+    render(<Home />)
+
+    await waitFor(() => expect(screen.getByText(/小朋友1/)).toBeInTheDocument())
+    fireEvent.click(screen.getByText('登出'))
+
+    expect(Taro.removeStorageSync).toHaveBeenCalledWith('auth_token')
+    expect(Taro.reLaunch).toHaveBeenCalledWith({ url: '/pages/login/index' })
+  })
 })

@@ -9,6 +9,7 @@ from sqlalchemy import select
 
 from app.models.graded_question import GradedQuestion
 from app.models.submission import Submission
+from tests.helpers import login
 
 PHONE_A = "13800138000"
 PHONE_B = "13900139000"
@@ -64,9 +65,13 @@ def _make_jpeg_buf() -> io.BytesIO:
     return buf
 
 
-async def _get_first_child_id(client, phone: str) -> int:
-    """Get the first child ID for a given phone, triggering auto-create if needed."""
-    resp = await client.get(f"/api/children?phone={phone}")
+def _auth(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
+
+
+async def _get_first_child_id(client, token: str) -> int:
+    """Get the first child ID for an authenticated parent."""
+    resp = await client.get("/api/children", headers=_auth(token))
     assert resp.status_code == 200
     children = resp.json()
     assert len(children) > 0
@@ -75,12 +80,14 @@ async def _get_first_child_id(client, phone: str) -> int:
 
 @pytest.mark.asyncio
 async def test_upload_ok(client, db_session):
-    child_id = await _get_first_child_id(client, PHONE_A)
+    token = await login(client, PHONE_A)
+    child_id = await _get_first_child_id(client, token)
     buf = _make_jpeg_buf()
     response = await client.post(
-        f"/api/submissions?phone={PHONE_A}",
+        "/api/submissions",
         files={"image": ("test.jpg", buf, "image/jpeg")},
         data={"subject": "english", "child_id": str(child_id)},
+        headers=_auth(token),
     )
     assert response.status_code == 202
     data = response.json()
@@ -90,35 +97,41 @@ async def test_upload_ok(client, db_session):
 
 @pytest.mark.asyncio
 async def test_upload_missing_image(client):
-    child_id = await _get_first_child_id(client, PHONE_A)
+    token = await login(client, PHONE_A)
+    child_id = await _get_first_child_id(client, token)
     response = await client.post(
-        f"/api/submissions?phone={PHONE_A}",
+        "/api/submissions",
         data={"subject": "english", "child_id": str(child_id)},
+        headers=_auth(token),
     )
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
 async def test_upload_invalid_subject(client):
-    child_id = await _get_first_child_id(client, PHONE_A)
+    token = await login(client, PHONE_A)
+    child_id = await _get_first_child_id(client, token)
     buf = _make_jpeg_buf()
     response = await client.post(
-        f"/api/submissions?phone={PHONE_A}",
+        "/api/submissions",
         files={"image": ("test.jpg", buf, "image/jpeg")},
         data={"subject": "invalid_subject", "child_id": str(child_id)},
+        headers=_auth(token),
     )
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
 async def test_upload_invalid_file_type(client):
-    child_id = await _get_first_child_id(client, PHONE_A)
+    token = await login(client, PHONE_A)
+    child_id = await _get_first_child_id(client, token)
     buf = io.BytesIO(b"This is not an image file")
     buf.seek(0)
     response = await client.post(
-        f"/api/submissions?phone={PHONE_A}",
+        "/api/submissions",
         files={"image": ("test.txt", buf, "text/plain")},
         data={"subject": "english", "child_id": str(child_id)},
+        headers=_auth(token),
     )
     assert response.status_code == 400
     assert "detail" in response.json()
@@ -126,34 +139,40 @@ async def test_upload_invalid_file_type(client):
 
 @pytest.mark.asyncio
 async def test_upload_child_not_owned(client):
-    # Phone A creates a child
+    token_a = await login(client, PHONE_A)
+    token_b = await login(client, PHONE_B)
     create_resp = await client.post(
-        f"/api/children?phone={PHONE_A}", json={"name": "A_child"}
+        "/api/children", json={"name": "A_child"}, headers=_auth(token_a)
     )
     child_id = create_resp.json()["id"]
 
     buf = _make_jpeg_buf()
-    # Phone B tries to use Phone A's child
+    # Parent B tries to use Parent A's child
     response = await client.post(
-        f"/api/submissions?phone={PHONE_B}",
+        "/api/submissions",
         files={"image": ("test.jpg", buf, "image/jpeg")},
         data={"subject": "english", "child_id": str(child_id)},
+        headers=_auth(token_b),
     )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_get_submission_pending(client, db_session):
-    child_id = await _get_first_child_id(client, PHONE_A)
+    token = await login(client, PHONE_A)
+    child_id = await _get_first_child_id(client, token)
     buf = _make_jpeg_buf()
     resp = await client.post(
-        f"/api/submissions?phone={PHONE_A}",
+        "/api/submissions",
         files={"image": ("test.jpg", buf, "image/jpeg")},
         data={"subject": "english", "child_id": str(child_id)},
+        headers=_auth(token),
     )
     submission_id = resp.json()["submission_id"]
 
-    response = await client.get(f"/api/submissions/{submission_id}?phone={PHONE_A}")
+    response = await client.get(
+        f"/api/submissions/{submission_id}", headers=_auth(token)
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == submission_id
@@ -165,33 +184,41 @@ async def test_get_submission_pending(client, db_session):
 
 @pytest.mark.asyncio
 async def test_get_submission_not_found(client):
-    response = await client.get(f"/api/submissions/99999?phone={PHONE_A}")
+    token = await login(client, PHONE_A)
+    response = await client.get("/api/submissions/99999", headers=_auth(token))
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_get_submission_not_owned(client, db_session):
-    child_id = await _get_first_child_id(client, PHONE_A)
+    token_a = await login(client, PHONE_A)
+    token_b = await login(client, PHONE_B)
+    child_id = await _get_first_child_id(client, token_a)
     buf = _make_jpeg_buf()
     resp = await client.post(
-        f"/api/submissions?phone={PHONE_A}",
+        "/api/submissions",
         files={"image": ("test.jpg", buf, "image/jpeg")},
         data={"subject": "english", "child_id": str(child_id)},
+        headers=_auth(token_a),
     )
     submission_id = resp.json()["submission_id"]
 
-    response = await client.get(f"/api/submissions/{submission_id}?phone={PHONE_B}")
+    response = await client.get(
+        f"/api/submissions/{submission_id}", headers=_auth(token_b)
+    )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_get_submission_completed(client, db_session):
-    child_id = await _get_first_child_id(client, PHONE_A)
+    token = await login(client, PHONE_A)
+    child_id = await _get_first_child_id(client, token)
     buf = _make_jpeg_buf()
     resp = await client.post(
-        f"/api/submissions?phone={PHONE_A}",
+        "/api/submissions",
         files={"image": ("test.jpg", buf, "image/jpeg")},
         data={"subject": "english", "child_id": str(child_id)},
+        headers=_auth(token),
     )
     submission_id = resp.json()["submission_id"]
 
@@ -221,7 +248,9 @@ async def test_get_submission_completed(client, db_session):
 
     await db_session.commit()
 
-    response = await client.get(f"/api/submissions/{submission_id}?phone={PHONE_A}")
+    response = await client.get(
+        f"/api/submissions/{submission_id}", headers=_auth(token)
+    )
     assert response.status_code == 200
     data = response.json()
 

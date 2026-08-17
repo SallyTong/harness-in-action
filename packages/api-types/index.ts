@@ -106,13 +106,15 @@ export interface GenerateSheetResponse {
   question_count: number;
 }
 
-// ── Auth (mini-program) ─────────────────────────────
+// ── Auth (SMS verification-code login) ─────────────
 
-export interface WechatLoginRequest {
-  code: string;
-  phone?: string;
+export interface SendCodeResponse {
+  retry_after: number;
 }
 
-export interface WechatLoginResponse {
-  phone: string;
+export interface LoginResponse {
+  token: string;
+  token_type: string;
+  expires_at: string;
+  user_id: number;
 }

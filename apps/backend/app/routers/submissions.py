@@ -1,6 +1,7 @@
 """Submission endpoints: upload exam images and query grading results."""
 
 import os
+import re
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -20,11 +21,11 @@ from fastapi.responses import FileResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import get_db, get_parent
+from app.dependencies import get_db
+from app.deps.auth import get_current_parent_id
 from app.models.child import Child
 from app.models.error_question import ErrorQuestion
 from app.models.graded_question import GradedQuestion
-from app.models.parent import Parent
 from app.models.submission import Submission
 from app.schemas.submissions import (
     FixQuestionRequest,
@@ -37,10 +38,18 @@ from app.schemas.submissions import (
     SubmissionSummary,
 )
 from app.services.grading import process_submission
+from app.services.image_signing import (
+    IMAGE_KINDS,
+    build_signed_url,
+)
+from app.services.image_signing import (
+    verify as verify_image_signature,
+)
 
 router = APIRouter(prefix="/api", tags=["Submissions"])
 
 IMAGE_ORIGINALS = "data/images/originals"
+IMAGE_ROOT = "data/images"
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 MB
 ALLOWED_SUBJECTS = {"english", "math"}
 
@@ -49,27 +58,9 @@ JPEG_MAGIC = b"\xff\xd8\xff"
 # PNG magic bytes: 89 50 4E 47
 PNG_MAGIC = b"\x89PNG"
 
-
-def _build_image_url(
-    request: Request, rel_path: str | None, phone: str = ""
-) -> str | None:
-    """Convert a relative image path to the serve-image API URL.
-
-    Normalizes Windows backslash paths and strips the data/images/ prefix.
-    The serve_image route is at GET /api/images/{kind}/{filename}.
-    """
-    if not rel_path:
-        return None
-    base = str(request.base_url).rstrip("/")
-    normalized = rel_path.replace("\\", "/")
-    if normalized.startswith("data/images/"):
-        kind_and_file = normalized[len("data/images/") :]
-    else:
-        kind_and_file = normalized.replace("data/images/", "", 1)
-    url = f"{base}/api/images/{kind_and_file}"
-    if phone:
-        url += f"?phone={phone}"
-    return url
+# Signed URLs only ever cover server-generated filenames ({id}.jpg, {id}_{n}.jpg,
+# {uuid}.jpg); this guard is defense-in-depth against path traversal.
+SAFE_FILENAME = re.compile(r"^[A-Za-z0-9._-]+$")
 
 
 async def _get_owned_submission(
@@ -94,8 +85,7 @@ async def _get_owned_submission(
 )
 async def create_submission(
     background_tasks: BackgroundTasks,
-    request: Request,
-    parent: Annotated[Parent, Depends(get_parent)],
+    parent_id: Annotated[int, Depends(get_current_parent_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
     image: Annotated[UploadFile, File()],
     subject: Annotated[str, Form()],
@@ -116,7 +106,7 @@ async def create_submission(
 
     # Validate child ownership
     child_result = await db.execute(
-        select(Child).where(Child.id == child_id, Child.parent_id == parent.id)
+        select(Child).where(Child.id == child_id, Child.parent_id == parent_id)
     )
     child = child_result.scalar_one_or_none()
     if child is None:
@@ -167,7 +157,7 @@ async def create_submission(
 @router.get("/submissions", response_model=SubmissionListResponse)
 async def list_submissions(
     request: Request,
-    parent: Annotated[Parent, Depends(get_parent)],
+    parent_id: Annotated[int, Depends(get_current_parent_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
     child_id: int | None = None,
     subject: str | None = None,
@@ -178,19 +168,17 @@ async def list_submissions(
 
     Filters: child_id, subject. Sorted by created_at descending.
     """
-    phone = parent.phone
-
     # Base query: only submissions owned by this parent
     base_query = (
         select(Submission)
         .join(Child, Submission.child_id == Child.id)
-        .where(Child.parent_id == parent.id)
+        .where(Child.parent_id == parent_id)
     )
     count_query = (
         select(func.count())
         .select_from(Submission)
         .join(Child, Submission.child_id == Child.id)
-        .where(Child.parent_id == parent.id)
+        .where(Child.parent_id == parent_id)
     )
 
     if child_id is not None:
@@ -236,7 +224,7 @@ async def list_submissions(
                 subject=s.subject,
                 status=s.status,
                 score=score,
-                thumbnail_url=_build_image_url(request, s.thumbnail_path, phone),
+                thumbnail_url=build_signed_url(str(request.base_url), s.thumbnail_path),
                 created_at=s.created_at,
             )
         )
@@ -248,7 +236,7 @@ async def list_submissions(
 async def get_submission(
     submission_id: int,
     request: Request,
-    parent: Annotated[Parent, Depends(get_parent)],
+    parent_id: Annotated[int, Depends(get_current_parent_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Get submission detail — used for polling and history viewing.
@@ -259,13 +247,11 @@ async def get_submission(
     result = await db.execute(
         select(Submission)
         .join(Child, Submission.child_id == Child.id)
-        .where(Submission.id == submission_id, Child.parent_id == parent.id)
+        .where(Submission.id == submission_id, Child.parent_id == parent_id)
     )
     submission = result.scalar_one_or_none()
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
-
-    phone = parent.phone  # for image URLs
 
     # Build base response
     child_name = ""
@@ -296,8 +282,8 @@ async def get_submission(
                 id=gq.id,
                 question_number=gq.question_number,
                 question_position=gq.question_position,
-                question_image_path=_build_image_url(
-                    request, gq.question_image_path, phone
+                question_image_path=build_signed_url(
+                    str(request.base_url), gq.question_image_path
                 ),
                 question_type=gq.question_type,
                 is_correct=gq.is_correct,
@@ -315,14 +301,16 @@ async def get_submission(
         subject=submission.subject,
         status=submission.status,
         score=score,
-        thumbnail_url=_build_image_url(request, submission.thumbnail_path, phone),
+        thumbnail_url=build_signed_url(
+            str(request.base_url), submission.thumbnail_path
+        ),
         created_at=submission.created_at,
-        original_image_url=_build_image_url(
-            request, submission.original_image_path, phone
+        original_image_url=build_signed_url(
+            str(request.base_url), submission.original_image_path
         )
         or "",
-        annotated_image_url=_build_image_url(
-            request, submission.annotated_image_path, phone
+        annotated_image_url=build_signed_url(
+            str(request.base_url), submission.annotated_image_path
         ),
         total_questions=submission.total_questions,
         correct_count=submission.correct_count,
@@ -341,7 +329,7 @@ async def fix_question_grade(
     question_id: int,
     body: FixQuestionRequest,
     request: Request,
-    parent: Annotated[Parent, Depends(get_parent)],
+    parent_id: Annotated[int, Depends(get_current_parent_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Manually override a question's grading result.
@@ -350,13 +338,11 @@ async def fix_question_grade(
     recalculates Submission.correct_count, and syncs ErrorQuestion.
     All in one transaction.
     """
-    phone = parent.phone
-
     # 1. Verify ownership: Submission → Child → Parent
     sub_result = await db.execute(
         select(Submission)
         .join(Child, Submission.child_id == Child.id)
-        .where(Submission.id == submission_id, Child.parent_id == parent.id)
+        .where(Submission.id == submission_id, Child.parent_id == parent_id)
     )
     submission = sub_result.scalar_one_or_none()
     if submission is None:
@@ -383,22 +369,25 @@ async def fix_question_grade(
     old_is_correct = gq.is_correct
     new_is_correct = body.is_correct
 
+    def _question_response() -> GradedQuestionResponse:
+        return GradedQuestionResponse(
+            id=gq.id,
+            question_number=gq.question_number,
+            question_position=gq.question_position,
+            question_image_path=build_signed_url(
+                str(request.base_url), gq.question_image_path
+            ),
+            question_type=gq.question_type,
+            is_correct=gq.is_correct,
+            solution_note=gq.solution_note,
+            error_category=gq.error_category,
+            is_manually_fixed=gq.is_manually_fixed,
+        )
+
     # No change — return current state
     if old_is_correct == new_is_correct:
         return FixQuestionResponse(
-            question=GradedQuestionResponse(
-                id=gq.id,
-                question_number=gq.question_number,
-                question_position=gq.question_position,
-                question_image_path=_build_image_url(
-                    request, gq.question_image_path, phone
-                ),
-                question_type=gq.question_type,
-                is_correct=gq.is_correct,
-                solution_note=gq.solution_note,
-                error_category=gq.error_category,
-                is_manually_fixed=gq.is_manually_fixed,
-            ),
+            question=_question_response(),
             new_score=ScoreSummary(
                 correct=submission.correct_count or 0,
                 total=submission.total_questions or 0,
@@ -473,19 +462,7 @@ async def fix_question_grade(
     await db.flush()
 
     return FixQuestionResponse(
-        question=GradedQuestionResponse(
-            id=gq.id,
-            question_number=gq.question_number,
-            question_position=gq.question_position,
-            question_image_path=_build_image_url(
-                request, gq.question_image_path, phone
-            ),
-            question_type=gq.question_type,
-            is_correct=gq.is_correct,
-            solution_note=gq.solution_note,
-            error_category=gq.error_category,
-            is_manually_fixed=gq.is_manually_fixed,
-        ),
+        question=_question_response(),
         new_score=ScoreSummary(
             correct=new_correct,
             total=submission.total_questions or 0,
@@ -497,42 +474,28 @@ async def fix_question_grade(
 async def serve_image(
     kind: str,
     filename: str,
-    request: Request,
-    parent: Annotated[Parent, Depends(get_parent)],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    token: str = Query(..., description="HMAC signature (base64url)"),
+    expires: int = Query(..., description="Expiry as a Unix timestamp"),
 ):
-    """Serve an image file with ownership verification.
+    """Serve an image file via a signed URL.
 
-    For submission-based images (originals/annotated/thumbnails/questions),
-    the filename is '{submission_id}.jpg' or '{submission_id}_{qnum}.jpg'.
-    Ownership is verified through the submission → child → parent chain.
-
-    For sheets, the filename is a UUID (generated at request time for a
-    parent whose child ownership was already verified).
+    Authentication is via an HMAC token + expiry in the query string (not the
+    Authorization header, since <img>/<image> tags cannot send headers). The
+    token is bound to kind+filename+expires, so it cannot be reused for another
+    file. Ownership was verified when the URL was issued.
     """
-    allowed_kinds = {"originals", "annotated", "thumbnails", "questions", "sheets"}
-    if kind not in allowed_kinds:
+    if kind not in IMAGE_KINDS:
         raise HTTPException(status_code=404, detail="Image kind not found")
 
-    if kind == "sheets":
-        # Sheet images have UUID filenames — ownership was verified at generation time
-        file_path = f"data/images/sheets/{filename}"
-        if not os.path.isfile(file_path):
-            raise HTTPException(status_code=404, detail="Image file not found")
-        return FileResponse(file_path, media_type="image/jpeg")
-
-    # Extract submission_id from filename
-    submission_id_str = filename.split("_")[0]
-    submission_id_str = submission_id_str.replace(".jpg", "")
-    try:
-        submission_id = int(submission_id_str)
-    except ValueError:
+    if not SAFE_FILENAME.match(filename) or ".." in filename:
         raise HTTPException(status_code=404, detail="Invalid image filename")
 
-    # Verify ownership
-    await _get_owned_submission(submission_id, parent.id, db)
+    if not verify_image_signature(kind, filename, token, expires):
+        raise HTTPException(
+            status_code=403, detail="Invalid or expired image signature"
+        )
 
-    file_path = f"data/images/{kind}/{filename}"
+    file_path = os.path.join(IMAGE_ROOT, kind, filename)
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail="Image file not found")
 

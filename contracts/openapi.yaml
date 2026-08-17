@@ -3,36 +3,49 @@
 # This is the authoritative specification for all API endpoints. Both backend and
 # frontend implement against this file. Neither modifies it unilaterally.
 #
-# Updated to reflect PRD v1.0 and Architecture v1.0 (async flow, phone identity,
-# coordinate-based annotation, children management).
+# v0.2.0 — SMS verification-code login + JWT (Bearer) auth; phone removed from
+# business endpoints; signed-URL image auth; Child grade/note/avatar; question
+# text/latex on GradedQuestion/ErrorQuestion; text sheet + docx generation.
+# wechat-login endpoint removed — mini-program login unified with Web (SMS + JWT).
 
 openapi: "3.1.0"
 
 info:
   title: AI Homework Grader API
-  version: "0.1.1"
+  version: "0.2.0"
   description: |
     API for AI-powered homework grading. Upload exam photos, receive annotated
     grading results, and browse error-question collections. MVP covers English
-    and Math. Phone number serves as lightweight parent identity (no auth in MVP).
+    and Math.
 
-    ## Authentication (MVP temporary scheme)
-    MVP has no real authentication. Parent identity is passed as a `phone` query
-    parameter (or `X-Parent-Phone` header) on every endpoint except `/api/health`.
-    The phone is trusted without verification. This is a TEMPORARY scheme — when
-    the product opens up, it will switch to cookie-based session auth
-    (`cookieAuth` securityScheme) and the `phone` parameter will be removed.
-    Do not assume phone is permanent; do not expose phone in client-side logs.
+    ## Authentication (v0.2.0)
+    Parent identity is established via SMS verification-code login
+    (`POST /api/auth/send-code` + `POST /api/auth/login`), which issues a JWT.
+    All business endpoints require `Authorization: Bearer <token>`; the JWT
+    `sub` claim is the parent id (userId). Phone appears ONLY in the auth
+    endpoints — never in business URLs, query params, or logs.
+
+    Image endpoints use signed URLs (HMAC token + expiry in the query string)
+    because `<img>`/`<image>` tags cannot send an Authorization header.
+
+    The WeChat mini-program uses the SAME SMS login flow as the Web client
+    (`POST /api/auth/send-code` + `POST /api/auth/login`); there is no
+    mini-program-specific login endpoint. The issued JWT is cached client-side
+    and reused until it expires.
 
 servers:
   - url: http://localhost:8000
     description: Local development (FastAPI backend)
 
+# Global security: all business endpoints require a Bearer JWT unless overridden.
+security:
+  - bearerAuth: []
+
 tags:
   - name: System
     description: Health and status endpoints
   - name: Auth
-    description: WeChat mini-program login and phone binding
+    description: SMS login, JWT issuance, and WeChat device binding
   - name: Children
     description: Parent-managed child profiles
   - name: Submissions
@@ -49,7 +62,8 @@ paths:
     get:
       operationId: getHealth
       tags: [System]
-      summary: Health check (no phone required)
+      security: []
+      summary: Health check (no auth required)
       responses:
         "200":
           description: Service is healthy
@@ -66,43 +80,86 @@ paths:
                     type: string
                   version:
                     type: string
-                    example: "0.1.1"
+                    example: "0.2.0"
 
   # ═══════════════════════════════════════════════════════
-  # Auth — WeChat mini-program login
+  # Auth — SMS verification-code login + WeChat device binding
   # ═══════════════════════════════════════════════════════
 
-  /api/wechat-login:
+  /api/auth/send-code:
     post:
-      operationId: wechatLogin
+      operationId: sendVerificationCode
       tags: [Auth]
-      summary: Exchange wx.login code for a bound parent phone
+      security: []
+      summary: Send an SMS verification code
       description: |
-        Exchanges a wx.login() code for the WeChat openid via jscode2session.
-        If phone is provided, creates/binds the parent to this openid (first login).
-        If phone is omitted, resolves the already-bound parent and returns its phone.
-        This is a MINI-PROGRAM-only endpoint (not used by the Web client).
+        Sends a 6-digit code via Aliyun SMS. Rate-limited: 60s between sends per
+        phone. The code is valid for 5 minutes. The code itself is never
+        returned in the response.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/WechatLoginRequest"
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+                  pattern: '^\d{11}$'
       responses:
         "200":
-          description: Bound parent phone
+          description: Code sent
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WechatLoginResponse"
-        "401":
-          description: Invalid or expired wx.login code
+                type: object
+                required: [retry_after]
+                properties:
+                  retry_after:
+                    type: integer
+                    example: 60
+                    description: Seconds before a new code may be requested
+        "429":
+          description: Too many requests (rate limited)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        "404":
-          description: openid not yet bound to a phone (client should prompt for phone)
+
+  /api/auth/login:
+    post:
+      operationId: login
+      tags: [Auth]
+      security: []
+      summary: Verify code and issue a JWT
+      description: |
+        Verifies the SMS code and issues a JWT whose `sub` claim is the parent
+        id (userId). First login auto-creates the Parent (phone UNIQUE). This is
+        the primary login path for both Web and mini-program.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code]
+              properties:
+                phone:
+                  type: string
+                  pattern: '^\d{11}$'
+                code:
+                  type: string
+                  pattern: '^\d{6}$'
+      responses:
+        "200":
+          description: JWT issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid or expired code
           content:
             application/json:
               schema:
@@ -116,15 +173,7 @@ paths:
     get:
       operationId: listChildren
       tags: [Children]
-      summary: List children for a parent
-      parameters:
-        - name: phone
-          in: query
-          required: true
-          schema:
-            type: string
-            pattern: '^\d{11}$'
-          description: Parent phone number (identity)
+      summary: List children for the authenticated parent
       responses:
         "200":
           description: List of children
@@ -139,12 +188,6 @@ paths:
       operationId: createChild
       tags: [Children]
       summary: Add a child
-      parameters:
-        - name: phone
-          in: query
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
@@ -157,6 +200,14 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 50
+                grade:
+                  type: string
+                  enum: [一年级, 二年级, 三年级, 四年级, 五年级, 六年级]
+                  default: 五年级
+                  description: Required on the data model; defaults to 五年级 when omitted.
+                note:
+                  type: string
+                  maxLength: 200
       responses:
         "201":
           description: Child created
@@ -175,18 +226,13 @@ paths:
     put:
       operationId: updateChild
       tags: [Children]
-      summary: Rename a child
+      summary: Update a child (name / grade / note)
       parameters:
         - name: child_id
           in: path
           required: true
           schema:
             type: integer
-        - name: phone
-          in: query
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
@@ -199,6 +245,12 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 50
+                grade:
+                  type: string
+                  enum: [一年级, 二年级, 三年级, 四年级, 五年级, 六年级]
+                note:
+                  type: string
+                  maxLength: 200
       responses:
         "200":
           description: Child updated
@@ -219,11 +271,6 @@ paths:
           required: true
           schema:
             type: integer
-        - name: phone
-          in: query
-          required: true
-          schema:
-            type: string
       responses:
         "204":
           description: Child deleted, submissions preserved
@@ -241,16 +288,11 @@ paths:
       summary: Upload an exam image for async grading
       description: |
         Returns immediately with 202 Accepted + submission_id. Backend processes
-        asynchronously: validates image, calls GLM-4V for recognition and grading,
-        annotates the original image, and updates the submission status. Frontend
-        polls GET /api/submissions/{id} every 2s until status is completed/failed.
-      parameters:
-        - name: phone
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Parent phone number
+        asynchronously: validates image, calls the configured vision model
+        (GLM-4V or Qwen-VL) for recognition and grading, annotates the original
+        image, transcribes question text (English text / Math LaTeX), and updates
+        the submission status. Frontend polls GET /api/submissions/{id} every 2s
+        until status is completed/failed.
       requestBody:
         required: true
         content:
@@ -284,13 +326,8 @@ paths:
     get:
       operationId: listSubmissions
       tags: [Submissions]
-      summary: List past submissions for a parent
+      summary: List past submissions for the authenticated parent
       parameters:
-        - name: phone
-          in: query
-          required: true
-          schema:
-            type: string
         - name: child_id
           in: query
           required: false
@@ -344,11 +381,6 @@ paths:
           required: true
           schema:
             type: integer
-        - name: phone
-          in: query
-          required: true
-          schema:
-            type: string
       responses:
         "200":
           description: Submission detail (status may be pending/processing/completed/failed)
@@ -379,11 +411,6 @@ paths:
           required: true
           schema:
             type: integer
-        - name: phone
-          in: query
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
@@ -408,13 +435,15 @@ paths:
     get:
       operationId: serveImage
       tags: [Submissions]
-      summary: Serve an image file with ownership verification
+      security: []
+      summary: Serve an image file via a signed URL
       description: |
-        Serves image files from the local filesystem. For submission-based
-        images (originals/annotated/thumbnails/questions), ownership is
-        verified through the submission -> child -> parent chain via the
-        submission_id embedded in the filename. For sheets, the filename
-        is a UUID and ownership was verified at generation time.
+        Serves image files from the local filesystem. Authentication is via a
+        signed URL (HMAC token + expiry in the query string), NOT the
+        Authorization header, because <img>/<image> tags cannot send headers.
+        Ownership is still verified through the submission_id embedded in the
+        filename. Signed URLs are produced server-side and returned in API
+        responses (image_url, thumbnail_url, etc.).
       parameters:
         - name: kind
           in: path
@@ -428,11 +457,18 @@ paths:
           schema:
             type: string
           description: "{submission_id}.jpg or {submission_id}_{qnum}.jpg or {uuid}.jpg"
-        - name: phone
+        - name: token
           in: query
           required: true
           schema:
             type: string
+          description: HMAC signature token (base64url)
+        - name: expires
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Expiry as a Unix timestamp (default TTL 1 hour)
       responses:
         "200":
           description: Image file (JPEG binary)
@@ -441,6 +477,8 @@ paths:
               schema:
                 type: string
                 format: binary
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -454,11 +492,6 @@ paths:
       tags: [Error Collections]
       summary: List error questions with filters
       parameters:
-        - name: phone
-          in: query
-          required: true
-          schema:
-            type: string
         - name: child_id
           in: query
           required: false
@@ -524,12 +557,20 @@ paths:
       operationId: generateErrorSheet
       tags: [Error Collections]
       summary: Generate a practice sheet from error questions
-      parameters:
-        - name: phone
-          in: query
-          required: true
-          schema:
-            type: string
+      description: |
+        Generates a practice sheet from the parent's error questions. Two
+        formats:
+
+        - `image` (default, backward compatible): composes cropped question
+          images into a single sheet image (existing behavior).
+        - `text`: assembles transcribed question text (English text / Math
+          LaTeX) into a text sheet and produces a downloadable .docx. Math
+          LaTeX is rendered to PNG and embedded in the .docx. Sheets do NOT
+          include answer keys.
+
+        The frontend sheet-generation page defaults to "text" and sends
+        `format=text` explicitly; the API default remains `image` for backward
+        compatibility.
       requestBody:
         required: true
         content:
@@ -559,21 +600,17 @@ paths:
                   default: 10
                   minimum: 1
                   maximum: 50
+                format:
+                  type: string
+                  enum: [text, image]
+                  default: image
       responses:
         "200":
           description: Generated practice sheet
           content:
             application/json:
               schema:
-                type: object
-                required: [image_url, question_count]
-                properties:
-                  image_url:
-                    type: string
-                    format: uri
-                    description: URL to the generated practice sheet image
-                  question_count:
-                    type: integer
+                $ref: "#/components/schemas/GeneratedSheet"
 
 # ═══════════════════════════════════════════════════════
 # Components
@@ -583,37 +620,46 @@ components:
   schemas:
     # ── Auth ─────────────────────────────────────────
 
-    WechatLoginRequest:
+    LoginResponse:
       type: object
-      required: [code]
+      required: [token, token_type, expires_at, user_id]
       properties:
-        code:
+        token:
           type: string
-          description: wx.login() temporary code (single-use, ~5 min TTL)
-        phone:
+          description: JWT (sub = parent id, exp = 30 days, HS256)
+        token_type:
           type: string
-          pattern: '^\d{11}$'
-          description: Optional. Parent phone to bind on first login.
-
-    WechatLoginResponse:
-      type: object
-      required: [phone]
-      properties:
-        phone:
+          enum: [Bearer]
+        expires_at:
           type: string
-          example: "13800138000"
+          format: date-time
+        user_id:
+          type: integer
+          description: Parent id (userId)
 
     # ── Children ──────────────────────────────────────
 
     Child:
       type: object
-      required: [id, name, submission_count, created_at]
+      required: [id, name, grade, submission_count, created_at]
       properties:
         id:
           type: integer
         name:
           type: string
           example: "小明"
+        grade:
+          type: string
+          enum: [一年级, 二年级, 三年级, 四年级, 五年级, 六年级]
+          description: Required; defaults to 五年级 on create.
+        note:
+          type: string
+          nullable: true
+          maxLength: 200
+        avatar:
+          type: string
+          nullable: true
+          description: Reserved field; not implemented in v2 (no upload/edit/display).
         submission_count:
           type: integer
           description: Total submissions for this child
@@ -662,7 +708,7 @@ components:
         thumbnail_url:
           type: string
           format: uri
-          description: Small preview of the annotated image (null until completed)
+          description: Signed URL to a small preview of the annotated image (null until completed)
         created_at:
           type: string
           format: date-time
@@ -676,10 +722,11 @@ components:
             original_image_url:
               type: string
               format: uri
+              description: Signed URL
             annotated_image_url:
               type: string
               format: uri
-              description: Present only when status is "completed"
+              description: Signed URL; present only when status is "completed"
             total_questions:
               type: integer
               description: Present only when status is "completed"
@@ -689,13 +736,20 @@ components:
             token_usage:
               type: object
               properties:
+                provider:
+                  type: string
+                  example: qwen
+                  description: Vision model provider (glm | qwen)
+                model:
+                  type: string
+                  example: qwen-vl-max
                 prompt_tokens:
                   type: integer
                 completion_tokens:
                   type: integer
                 total_tokens:
                   type: integer
-              description: GLM-4V token consumption (present when completed)
+              description: Vision model token consumption (present when completed). Legacy records may omit provider/model.
             questions:
               type: array
               items:
@@ -744,12 +798,20 @@ components:
         question_image_path:
           type: string
           nullable: true
-          description: Path to cropped question region image
+          description: Signed URL to the cropped question region image
         question_type:
           type: string
           enum: [choice, fill_blank, reading, composition, calculation, word_problem]
         is_correct:
           type: boolean
+        question_text:
+          type: string
+          nullable: true
+          description: Transcribed full question text (English questions).
+        question_latex:
+          type: string
+          nullable: true
+          description: Transcribed question in LaTeX (Math questions). Empty for English.
         solution_note:
           type: string
           nullable: true
@@ -815,7 +877,15 @@ components:
           enum: [choice, fill_blank, reading, composition, calculation, word_problem]
         question_image_path:
           type: string
-          description: Cropped image of the error question region
+          description: Signed URL to the cropped error question region image
+        question_text:
+          type: string
+          nullable: true
+          description: Transcribed full question text (English). Redundant from GradedQuestion.
+        question_latex:
+          type: string
+          nullable: true
+          description: Transcribed question in LaTeX (Math). Redundant from GradedQuestion.
         solution_note:
           type: string
           nullable: true
@@ -841,6 +911,59 @@ components:
           type: string
           format: date-time
 
+    # ── Sheet Generation ──────────────────────────────
+
+    GeneratedSheet:
+      type: object
+      required: [format, question_count]
+      properties:
+        format:
+          type: string
+          enum: [text, image]
+        question_count:
+          type: integer
+        image_url:
+          type: string
+          format: uri
+          description: Present when format=image. Signed URL to the generated sheet image.
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SheetQuestion"
+          description: Present when format=text. Randomly selected error questions.
+        docx_url:
+          type: string
+          format: uri
+          description: Present when format=text. Signed URL to download the .docx sheet.
+
+    SheetQuestion:
+      type: object
+      required: [question_number, question_type, subject]
+      properties:
+        question_number:
+          type: string
+        question_type:
+          type: string
+          enum: [choice, fill_blank, reading, composition, calculation, word_problem]
+        subject:
+          type: string
+          enum: [english, math]
+        question_text:
+          type: string
+          nullable: true
+          description: Transcribed text (English); rendered directly.
+        question_latex:
+          type: string
+          nullable: true
+          description: Transcribed LaTeX (Math); rendered client-side (KaTeX) or as PNG in .docx.
+        question_image_path:
+          type: string
+          nullable: true
+          description: Signed URL to a fallback cropped image for questions without usable text.
+        source_submission_id:
+          type: integer
+          description: Origin submission (for traceability).
+
     # ── Generic ───────────────────────────────────────
 
     Error:
@@ -853,26 +976,20 @@ components:
   # ── Security Schemes ──────────────────────────────
 
   securitySchemes:
-    parentPhone:
-      type: apiKey
-      in: query
-      name: phone
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
       description: |
-        MVP temporary identity scheme. Parent phone number passed as a query
-        parameter. Not verified. Will be replaced by cookieAuth when real
-        authentication is introduced.
-    parentPhoneHeader:
-      type: apiKey
-      in: header
-      name: X-Parent-Phone
-      description: Alternative to the `phone` query parameter (header form).
+        JWT issued by POST /api/auth/login. The `sub` claim is the parent id
+        (userId). Applies to all business endpoints.
     cookieAuth:
       type: apiKey
       in: cookie
       name: session
       description: |
-        Future scheme — session cookie after phone+verification-code login.
-        NOT implemented in MVP; defined here so the migration path is explicit.
+        Future scheme — retained for migration reference only. NOT implemented
+        in v2.
 
   # ── Responses ───────────────────────────────────────
 
@@ -903,10 +1020,21 @@ components:
             detail: "Field 'subject' must be one of: english, math."
 
     NotFound:
-      description: Resource not found
+      description: Resource not found (also used for cross-owner access to avoid existence probing)
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
           example:
             detail: "Submission not found."
+
+    Forbidden:
+      description: |
+        Forbidden — invalid or expired signature (signed image URL), or
+        otherwise not permitted.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            detail: "Invalid or expired image signature."

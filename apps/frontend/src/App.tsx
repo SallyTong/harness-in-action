@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Outlet } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import ChildrenPage from "./pages/ChildrenPage";
 import ProcessingPage from "./pages/ProcessingPage";
@@ -7,7 +7,18 @@ import HistoryPage from "./pages/HistoryPage";
 import HistoryDetailPage from "./pages/HistoryDetailPage";
 import ErrorBookPage from "./pages/ErrorBookPage";
 import ErrorGeneratePage from "./pages/ErrorGeneratePage";
+import LoginPage from "./pages/LoginPage";
+import RequireAuth from "./components/auth/RequireAuth";
 import BottomNav from "./components/layout/BottomNav";
+
+function AppLayout() {
+  return (
+    <>
+      <Outlet />
+      <BottomNav />
+    </>
+  );
+}
 
 function NotFoundPage() {
   return (
@@ -22,25 +33,21 @@ function NotFoundPage() {
 
 export default function App() {
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/children" element={<ChildrenPage />} />
-        <Route
-          path="/submissions/:id/processing"
-          element={<ProcessingPage />}
-        />
-        <Route
-          path="/submissions/:id/result"
-          element={<ResultPage />}
-        />
-        <Route path="/history" element={<HistoryPage />} />
-        <Route path="/submissions/:id" element={<HistoryDetailPage />} />
-        <Route path="/errors" element={<ErrorBookPage />} />
-        <Route path="/errors/generate" element={<ErrorGeneratePage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-      <BottomNav />
-    </>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<RequireAuth />}>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/children" element={<ChildrenPage />} />
+          <Route path="/submissions/:id/processing" element={<ProcessingPage />} />
+          <Route path="/submissions/:id/result" element={<ResultPage />} />
+          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/submissions/:id" element={<HistoryDetailPage />} />
+          <Route path="/errors" element={<ErrorBookPage />} />
+          <Route path="/errors/generate" element={<ErrorGeneratePage />} />
+        </Route>
+      </Route>
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   );
 }

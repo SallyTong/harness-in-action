@@ -11,21 +11,40 @@ vi.mock("../lib/api", () => ({
 }));
 
 const COMPLETED = {
-  id: 1, child_id: 1, child_name: "小明", subject: "english",
+  id: 1,
+  child_id: 1,
+  child_name: "小明",
+  subject: "english",
   status: "completed",
   score: { correct: 3, total: 4 },
   thumbnail_url: null,
-  original_image_url: "http://test/api/images/originals/1.jpg?phone=13800138000",
-  annotated_image_url: "http://test/api/images/annotated/1.jpg?phone=13800138000",
-  total_questions: 4, correct_count: 3,
+  original_image_url: "http://test/api/images/originals/1.jpg?token=signed&expires=9999999999",
+  annotated_image_url: "http://test/api/images/annotated/1.jpg?token=signed&expires=9999999999",
+  total_questions: 4,
+  correct_count: 3,
   token_usage: { prompt_tokens: 100, completion_tokens: 200, total_tokens: 300 },
   questions: [
-    { id: 1, question_number: "1", question_type: "choice", is_correct: true,
-      solution_note: null, error_category: null, is_manually_fixed: false },
-    { id: 2, question_number: "2", question_type: "fill_blank", is_correct: false,
-      solution_note: "正确答案应为 'have gone'。", error_category: "grammar", is_manually_fixed: false },
+    {
+      id: 1,
+      question_number: "1",
+      question_type: "choice",
+      is_correct: true,
+      solution_note: null,
+      error_category: null,
+      is_manually_fixed: false,
+    },
+    {
+      id: 2,
+      question_number: "2",
+      question_type: "fill_blank",
+      is_correct: false,
+      solution_note: "正确答案应为 'have gone'。",
+      error_category: "grammar",
+      is_manually_fixed: false,
+    },
   ],
-  created_at: "2026-08-09T10:00:00Z", updated_at: "2026-08-09T10:05:00Z",
+  created_at: "2026-08-09T10:00:00Z",
+  updated_at: "2026-08-09T10:05:00Z",
 };
 
 function renderRoute(submissionId = "1") {
@@ -41,7 +60,7 @@ function renderRoute(submissionId = "1") {
 describe("ResultPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.setItem("parent_phone", "13800138000");
+    localStorage.clear();
   });
 
   it("renders score and questions when completed", async () => {

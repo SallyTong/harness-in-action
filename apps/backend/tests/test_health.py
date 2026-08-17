@@ -1,7 +1,5 @@
 import pytest
 
-PHONE = "13800138000"
-
 
 @pytest.mark.asyncio
 async def test_health_ok(client):
@@ -10,4 +8,4 @@ async def test_health_ok(client):
     data = response.json()
     assert data["status"] == "ok"
     assert data["service"] == "ai-homework-grader"
-    assert data["version"] == "0.1.0"
+    assert data["version"] == "0.2.0"

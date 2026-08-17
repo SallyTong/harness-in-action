@@ -19,12 +19,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.routers import children, error_collections, health, submissions, wechat
+from app.routers import auth, children, error_collections, health, submissions
 from app.services.rate_limiter import RateLimitMiddleware
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="AI Homework Grader", version="0.1.0")
+app = FastAPI(title="AI Homework Grader", version="0.2.0")
 
 # Rate limiting must be added before CORS and routers
 app.add_middleware(RateLimitMiddleware)
@@ -38,7 +38,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
-app.include_router(wechat.router)
+app.include_router(auth.router)
 app.include_router(children.router)
 app.include_router(submissions.router)
 app.include_router(error_collections.router)
