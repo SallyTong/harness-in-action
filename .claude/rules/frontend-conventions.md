@@ -25,7 +25,7 @@ Rules that would cause real bugs or brand violations if forgotten. Full design s
 - Every API call handles **loading + success + error** states.
 - Loading states: skeleton screens matching content layout, not full-page spinners.
 - Empty states: specific message + clear action button per UX spec.
-- `fetch` only, no Axios. Phone from `localStorage`, sent as `?phone=` on every request. Never log phone.
+- `fetch` only, no Axios. Auth via `Authorization: Bearer <token>` from `localStorage`; image URLs use the API-returned signed URL (never hand-assemble `?phone=`). Never log the phone or token.
 
 ### Image Upload
 - Client-side compression: max 2048px longest edge, JPEG Q80%.

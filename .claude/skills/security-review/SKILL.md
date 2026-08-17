@@ -19,7 +19,7 @@ and a concrete fix.**
 | Aspect              | MVP Reality                                      | Review Posture                       |
 |---------------------|--------------------------------------------------|--------------------------------------|
 | Network             | Local IP + port, no public exposure               | Review as if internet-facing (future-proof) |
-| Authentication      | Phone number, unverified, trusted input           | Flag auth bypass risks; note what breaks without real auth |
+| Authentication      | SMS verification code + JWT (Bearer), 30-day expiry | Flag JWT/signing weaknesses; note revocation gap before public exposure |
 | Data sensitivity    | Children's names, exam photos, phone numbers      | Treat as PII — flag leaks, logs, exposures |
 | External dependency | GLM-4V API only                                   | Review API key handling, token logging |
 | Deployment          | Docker Compose, local filesystem                  | Flag hardcoded credentials, insecure defaults |
@@ -116,25 +116,26 @@ await db.execute(text("SELECT * FROM children WHERE name = :name"), {"name": nam
 
 ## 4. Authentication & Authorization
 
-### 4.1 Phone-Based Identity (MVP Temporary)
+### 4.1 SMS Login + JWT (Bearer)
 
-- [ ] Every endpoint except `/api/health` requires `phone` parameter or `X-Parent-Phone` header.
-- [ ] `phone` is validated (11-digit pattern) before database lookup.
-- [ ] `phone` is NOT logged in application logs, error messages, or API responses.
-- [ ] No fallback to a default or empty phone — missing phone → 422 error immediately.
+- [ ] Every business endpoint (except `/api/health`, `/api/auth/*`, `/api/images/*`) requires `Authorization: Bearer <jwt>`.
+- [ ] JWT `sub` = parent id; signature + `exp` verified server-side (HS256, `JWT_SECRET` env).
+- [ ] `phone` appears ONLY in `POST /api/auth/send-code` + `POST /api/auth/login` request bodies, validated `^\d{11}$`.
+- [ ] Missing/invalid/expired token → 401 (never 422). No fallback to a default identity.
+- [ ] No server-side revocation (pure JWT) — flag as a pre-public-exposure gap.
 
 ### 4.2 Data Ownership Verification
 
 This is the **most critical check** for this project. Per architecture §8:
 
-- [ ] **Every query that returns user data filters by `parent_id`** (resolved from `phone` once per request via `Depends()`).
+- [ ] **Every query that returns user data filters by `parent_id`** (resolved from the JWT `sub` claim once per request via `Depends(get_current_parent_id)`).
 - [ ] **Every endpoint that accepts `child_id`, `submission_id`, or `question_id`** verifies the resource belongs to the current parent by tracing the FK chain up to Parent.
 - [ ] **Ownership check failures return 404**, not 403 (per architecture §8: avoid resource-existence probing).
-- [ ] **`parent_id` is NEVER accepted as a direct request parameter** — always resolved from `phone` server-side.
+- [ ] **`parent_id` is NEVER accepted as a direct request parameter** — always resolved from the JWT server-side.
 
 ```python
 # Pattern to verify everywhere:
-# 1. Resolve parent from phone (once per request)
+# 1. Resolve parent from the JWT sub claim (once per request)
 # 2. For child_id in path/body: verify child.parent_id == parent.id → else 404
 # 3. For submission_id: verify submission.child.parent_id == parent.id → else 404
 # 4. For question_id: verify question.submission.child.parent_id == parent.id → else 404
@@ -143,10 +144,10 @@ This is the **most critical check** for this project. Per architecture §8:
 ### 4.3 Future Auth Considerations
 
 Flag these as MEDIUM severity (not blocking MVP, but must be fixed before going public):
-- [ ] No session management. Phone sent in plaintext as query parameter on every request.
-- [ ] No rate limiting on any endpoint. Brute-force possible on phone lookup.
+- [ ] No JWT revocation — a token is valid until `exp` (30 days) even after phone rebinding or account compromise.
+- [ ] Image signed URLs are bearer-able for their TTL (default 1h) — anyone with the URL can fetch the image during that window.
 - [ ] No CSRF protection. State-changing requests (POST/PUT/PATCH/DELETE) have no CSRF tokens.
-- [ ] Phone numbers visible in browser history and server access logs (query parameter).
+- [ ] SMS verification codes stored in-memory (single-node) — lost on restart; no distributed store.
 
 ---
 
@@ -201,7 +202,7 @@ Flag these as MEDIUM severity (not blocking MVP, but must be fixed before going 
 - [ ] No known vulnerabilities in pinned versions (note: requires `pip-audit` or `npm audit` — flag if not run recently).
 
 ### A07: Auth Failures
-- [ ] MVP phone auth is weak by design. Flag all limitations for pre-launch hardening.
+- [ ] SMS-code auth is single-factor; no account lockout on repeated wrong-code attempts beyond the 60s resend throttle. Flag for pre-launch hardening.
 - [ ] No password storage (no passwords in MVP).
 
 ### A08: Software & Data Integrity

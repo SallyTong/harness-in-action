@@ -186,7 +186,8 @@ def check_deprecated_patterns() -> None:
 
     found = 0
     for py_file in BACKEND_DIR.rglob("*.py"):
-        if "tests" in str(py_file) or "__pycache__" in str(py_file):
+        p = str(py_file)
+        if ".venv" in p or "site-packages" in p or "tests" in p or "__pycache__" in p:
             continue
         try:
             content = py_file.read_text(encoding="utf-8")

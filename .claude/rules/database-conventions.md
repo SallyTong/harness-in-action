@@ -17,7 +17,7 @@ Rules that would corrupt data or leak it across parents if forgotten. Full data 
 - ENUMs must have explicit names. Required indexes per architecture section 3 must exist.
 
 ### Data Isolation (CRITICAL)
-- **Every query returning user data MUST filter by `parent_id`** (resolved from `phone` once per request).
+- **Every query returning user data MUST filter by `parent_id`** (resolved from the JWT `sub` claim once per request).
 - Never accept `parent_id` as a direct request parameter.
 - Cross-resource checks: trace FK chain to Parent. Fail → 404.
 

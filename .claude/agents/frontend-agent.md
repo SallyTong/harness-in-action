@@ -100,7 +100,7 @@ cd apps/frontend && npx vite --host 0.0.0.0
 
 Verify in browser at `http://localhost:5173`:
 - Page loads without console errors
-- Phone setup card appears (enter phone to enable features)
+- Login page appears (phone + verification code)
 - Mobile viewport renders correctly (use DevTools device emulation)
 
 ## Agent Memory (MANDATORY — AFTER EVERY SESSION)
@@ -143,3 +143,6 @@ You MUST update `[[MEMORY]].md` after every implementation session. This is NOT 
 
 ### Phase 5: Collaboration & Polish ✅ Complete
 **Scope:** Multi-viewer support, responsive desktop layout, loading skeletons, error boundaries.
+
+### Phase X1: Auth Login ✅ Complete
+**Scope:** Login page (phone + SMS code), transport layer Bearer auth + 401 redirect, logout, signed-URL image rendering.

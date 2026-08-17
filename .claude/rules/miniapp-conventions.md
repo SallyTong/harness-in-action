@@ -25,8 +25,8 @@ Rules that would cause real bugs or brand violations if forgotten. Full design s
 - Every API call handles **loading + success + error** states.
 - Loading states: skeleton screens matching content layout, not full-page spinners.
 - Empty states: specific message + clear action button per `docs/ux-spec-wechat-miniapp.md`.
-- `Taro.request` / `Taro.uploadFile` only, no axios. Phone from `Taro.getStorageSync`, sent as `?phone=` (or `X-Parent-Phone` header). Never log phone.
-- Login: `wx.login()` → `POST /api/wechat-login` (bind on first use, silent login after). Cache phone via `Taro.setStorageSync`. Never cache `code`; never log `openid`.
+- `Taro.request` / `Taro.uploadFile` only, no axios. Auth via `Authorization: Bearer <token>` from `Taro.getStorageSync`; image URLs use the API-returned signed URL. Never log the phone or token.
+- Login: SMS verification-code login (`POST /api/auth/send-code` + `POST /api/auth/login`), identical to Web. Cache the JWT via `Taro.setStorageSync`; no `wechat-login` / openid path.
 
 ### Image Upload
 - Client-side compression: max 2048px longest edge, JPEG Q80% (`Taro.compressImage` or canvas).

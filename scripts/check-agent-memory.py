@@ -15,24 +15,24 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = PROJECT_ROOT / ".claude" / "agents"
 MEMORY_BASE = PROJECT_ROOT / ".claude" / "agent-memory"
 
-# Phase pattern: "### Phase N: Name" or "### Phase N: Name <status>"
-PHASE_RE = re.compile(r"^### Phase (\d+):", re.MULTILINE)
-# Memory file pattern: "phase-N-slug.md"
-MEMORY_RE = re.compile(r"^phase-(\d+)-.+")
+# Phase pattern: "### Phase N: Name" — N may carry a letter prefix (e.g. W1, X1)
+PHASE_RE = re.compile(r"^### Phase ([A-Za-z]*\d+):", re.MULTILINE)
+# Memory file pattern: "phase-<token>-slug.md" (token = e.g. "1", "W1", "X1")
+MEMORY_RE = re.compile(r"^phase-([A-Za-z]*\d+)-.+")
 
 
-def count_phases(filepath: Path) -> set[int]:
-    """Extract phase numbers from an agent definition file."""
+def count_phases(filepath: Path) -> set[str]:
+    """Extract phase tokens from an agent definition file."""
     content = filepath.read_text(encoding="utf-8")
-    return {int(m) for m in PHASE_RE.findall(content)}
+    return set(PHASE_RE.findall(content))
 
 
-def count_memory_files(directory: Path) -> set[int]:
-    """Extract phase numbers from memory file names."""
+def count_memory_files(directory: Path) -> set[str]:
+    """Extract phase tokens from memory file names."""
     if not directory.exists():
         return set()
     return {
-        int(m.group(1))
+        m.group(1)
         for f in directory.iterdir()
         if f.suffix == ".md" and f.name != "MEMORY.md"
         and (m := MEMORY_RE.match(f.name))

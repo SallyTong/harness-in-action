@@ -63,8 +63,8 @@ Do not introduce component libraries. Do not upgrade major versions without expl
 
 - `contracts/openapi.yaml` is the source of truth. Implement exactly; never modify.
 - All calls via `Taro.request` / `Taro.uploadFile`. No axios.
-- Identity: phone from `Taro.getStorageSync`, sent as `?phone=` (or `X-Parent-Phone` header).
-- Login flow: `wx.login()` → `POST /api/wechat-login` (bind first use, silent after). Never cache `code`; never log `openid`.
+- Identity: JWT from `Taro.getStorageSync`, sent as `Authorization: Bearer <token>`.
+- Login flow: SMS code (`POST /api/auth/send-code` + `POST /api/auth/login`), identical to Web. Cache the JWT; 401 → clear token → back to login. No `wechat-login` / openid.
 - Handle loading + error + success for every call. Never leave a promise dangling.
 
 ## Testing Requirements
@@ -97,9 +97,10 @@ Record **what you built**, **what you changed**, **known issues**, **Contract De
 
 ## Implementation Phases
 
-See `docs/phase-plan-wechat-miniapp.md` (authoritative). Summary:
+See `docs/phase-plan-wechat-miniapp.md` (authoritative) for W1~W4; X1 in `docs/phase-plan-v2.md`.
 
-- **W1 工程骨架 + 认证登录** — ⏳ 未开始
-- **W2 核心批改闭环** — ⏳ 未开始
-- **W3 历史浏览** — ⏳ 未开始
-- **W4 内测打磨** — ⏳ 未开始
+### Phase W1: 工程骨架 + 认证登录 ✅ Complete
+### Phase W2: 核心批改闭环（上传/处理中/结果） ✅ Complete
+### Phase W3: 次要页面（历史/详情/错题集/错题试卷） ✅ Complete
+### Phase W4: 内测打磨 + 集成验证 + 收尾 ✅ Complete
+### Phase X1: 认证登录（SMS + JWT，去 phone 化，移除 wechat-login） ✅ Complete

@@ -5,9 +5,10 @@
 - [Phase 3: Grading Engine](phase-3-grading-engine.md) — ✅ Complete. GLM-4V prompts, annotation overlay, grading pipeline
 - [Phase 4: History Records](phase-4-history-records.md) — ✅ Complete. History list, manual correction, error collections, practice sheets
 - [Phase 5: Polish](phase-5-polish.md) — ✅ Complete. Rate limiting, cost logging, error hardening, input validation
+- [Phase X1: Auth Login](phase-X1-auth-jwt.md) — ✅ Complete. SMS + JWT, de-phone, signed URLs, wechat-login removed
 
-## Miniapp W1 — WeChat login increment (2026-08-15)
+## Miniapp W1 — WeChat login increment (2026-08-15, removed in X1)
 
-- Added `POST /api/wechat-login` (`app/routers/wechat.py`) + `app/services/wechat_client.py` (jscode2session) + `Parent.openid` field (migration `a1b2c3d4e5f6`) + `WECHAT_APPID`/`WECHAT_APP_SECRET` env vars. Full detail in [miniapp W1](../miniapp-agent/phase-W1-scaffold-auth.md).
+- ~~Added `POST /api/wechat-login` + `wechat_client.py` + `Parent.openid`~~ — **removed in X1 (2026-08-16)**: endpoint, client, and `WECHAT_APPID`/`WECHAT_APP_SECRET` are gone; mini-program login unified with Web (SMS + JWT). `Parent.openid` column retained but unread. See [X1](phase-X1-auth-jwt.md).
 
 > Cross-cutting rules: [shared/cross-cutting.md](../shared/cross-cutting.md)

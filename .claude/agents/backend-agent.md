@@ -147,3 +147,8 @@ This script checks that every phase defined above has a matching `phase-N-*.md` 
 ### Phase 5: Polish ✅ Complete
 **Scope:** Error handling, input validation, rate limiting, cost logging.
 **Done when:** All error responses match spec, no unhandled exceptions.
+
+### Phase X1: Auth Login ✅ Complete
+**Scope:** SMS verification-code login + JWT (Bearer); phone removed from all
+business endpoints; signed-URL image auth; `POST /api/wechat-login` removed.
+**Done when:** AC-X1.1~X1.8 pass; `ruff check` + `pytest` green.
