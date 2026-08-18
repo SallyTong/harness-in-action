@@ -21,7 +21,7 @@ and a concrete fix.**
 | Network             | Local IP + port, no public exposure               | Review as if internet-facing (future-proof) |
 | Authentication      | SMS verification code + JWT (Bearer), 30-day expiry | Flag JWT/signing weaknesses; note revocation gap before public exposure |
 | Data sensitivity    | Children's names, exam photos, phone numbers      | Treat as PII — flag leaks, logs, exposures |
-| External dependency | GLM-4V API only                                   | Review API key handling, token logging |
+| External dependency | GLM-4V / Qwen-VL APIs (via `VisionModel`)         | Review API key handling, token logging |
 | Deployment          | Docker Compose, local filesystem                  | Flag hardcoded credentials, insecure defaults |
 
 ---
@@ -167,7 +167,7 @@ Flag these as MEDIUM severity (not blocking MVP, but must be fixed before going 
 ### 5.2 Secret Exposure Risks
 
 - [ ] Secrets are NOT logged. Flag any `print()`, `logging.info()`, or `loguru` calls that might leak env vars or API responses containing keys.
-- [ ] GLM-4V API key is NOT included in error messages returned to the client.
+- [ ] Vision provider API keys are NOT included in error messages returned to the client.
 - [ ] Database connection errors do NOT include the connection string or password.
 
 ---
@@ -207,7 +207,7 @@ Flag these as MEDIUM severity (not blocking MVP, but must be fixed before going 
 
 ### A08: Software & Data Integrity
 - [ ] No deserialization of untrusted data (no `pickle.load()` on user input).
-- [ ] GLM-4V API response is parsed with `json.loads()` — handle malformed JSON gracefully.
+- [ ] Vision provider API response is parsed with `json.loads()` — handle malformed JSON gracefully.
 
 ### A09: Logging & Monitoring
 - [ ] Token usage logged per API call (for cost monitoring, not security).
@@ -215,7 +215,7 @@ Flag these as MEDIUM severity (not blocking MVP, but must be fixed before going 
 - [ ] No PII in logs (phone numbers, child names, image contents).
 
 ### A10: SSRF
-- [ ] GLM-4V API URL is configured via environment variable, not user input.
+- [ ] Vision provider API URLs are configured via environment variable, not user input.
 - [ ] No user-controlled URLs that the backend will fetch.
 - [ ] If image URL fetching is added later: must validate URL is to allowed origins.
 

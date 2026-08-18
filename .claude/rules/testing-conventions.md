@@ -19,7 +19,7 @@ Rules that would let bugs slip through if forgotten. Detailed patterns are in su
 
 ### Backend (pytest)
 - Use `httpx.AsyncClient` for endpoint tests (async, matches FastAPI).
-- **GLM-4V must be mocked** in all tests. Never call real API (cost + latency + flaky).
+- **Vision provider calls must be mocked** in all tests (both GLM and Qwen). Never call real API (cost + latency + flaky).
 - Test database isolated per test (transaction rollback or fixture teardown).
 - Naming: `test_<function>_<scenario>_<expected>`.
 - Use `pytest-asyncio` for async tests. Shared fixtures in `tests/conftest.py`.
