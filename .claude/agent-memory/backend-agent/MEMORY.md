@@ -6,6 +6,7 @@
 - [Phase 4: History Records](phase-4-history-records.md) — ✅ Complete. History list, manual correction, error collections, practice sheets
 - [Phase 5: Polish](phase-5-polish.md) — ✅ Complete. Rate limiting, cost logging, error hardening, input validation
 - [Phase X1: Auth Login](phase-X1-auth-jwt.md) — ✅ Complete. SMS + JWT, de-phone, signed URLs, wechat-login removed
+- [Phase X2: Vision Model Abstraction](phase-X2-vision-model-abstraction.md) — ✅ Complete. VisionModel GLM/Qwen providers, factory, multi-provider cost log
 
 ## Miniapp W1 — WeChat login increment (2026-08-15, removed in X1)
 

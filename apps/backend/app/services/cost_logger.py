@@ -1,4 +1,4 @@
-"""Cost tracking and budget monitoring for GLM-4V API calls.
+"""Cost tracking and budget monitoring for vision model API calls.
 
 Logs token consumption per grading attempt (including failed ones) and
 provides aggregation for budget monitoring. MVP budget: 50 CNY/month.
@@ -8,12 +8,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# GLM-4V pricing (CNY per million tokens) — Flash (free) model
-# https://open.bigmodel.cn/pricing
+# Pricing (CNY per million tokens).
+# GLM-4V: https://open.bigmodel.cn/pricing
+# Qwen-VL (DashScope): https://help.aliyun.com/zh/model-studio/qwen-vl-model-billing-notice
 PRICING_CNY_PER_1M = {
     "glm-4v-flash": {"prompt": 0, "completion": 0},  # Free
-    "glm-4v-plus": {"prompt": 10, "completion": 10},  # 10 CNY/1M tokens
-    "glm-4v": {"prompt": 50, "completion": 50},  # 50 CNY/1M tokens
+    "glm-4v-plus": {"prompt": 10, "completion": 10},
+    "glm-4v": {"prompt": 50, "completion": 50},
+    "qwen-vl-plus": {"prompt": 1.5, "completion": 4.5},
+    "qwen-vl-max": {"prompt": 3, "completion": 9},
 }
 
 # Monthly budget cap (CNY) — from PRD
@@ -43,6 +46,7 @@ def calculate_cost(
 
 
 def log_token_usage(
+    provider: str,
     model: str,
     token_usage: dict,
     subject: str,
@@ -51,7 +55,7 @@ def log_token_usage(
 ) -> None:
     """Log token consumption for a single grading attempt.
 
-    Called after every GLM-4V API call, whether successful or not.
+    Called after every vision-model call, whether successful or not.
     This ensures we track wasted tokens from failed grading attempts.
     """
     prompt = token_usage.get("prompt_tokens", 0)
@@ -61,10 +65,11 @@ def log_token_usage(
 
     status = "success" if success else "failed"
     logger.info(
-        "GLM-4V cost | submission=%d subject=%s model=%s status=%s "
+        "Vision cost | submission=%d subject=%s provider=%s model=%s status=%s "
         "prompt=%d completion=%d total=%d cost=%.6f CNY",
         submission_id,
         subject,
+        provider,
         model,
         status,
         prompt,

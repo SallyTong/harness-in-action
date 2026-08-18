@@ -5,6 +5,7 @@ independently of the request lifecycle in its own DB session.
 """
 
 import logging
+from dataclasses import asdict
 from datetime import datetime, timezone
 
 from sqlalchemy import select
@@ -15,7 +16,7 @@ from app.models.graded_question import GradedQuestion
 from app.models.submission import Submission
 from app.services.annotation import annotate_image, create_thumbnail, crop_question
 from app.services.cost_logger import log_token_usage
-from app.services.glm_client import GLM_MODEL, grade_image
+from app.services.vision import get_vision_model
 
 logger = logging.getLogger(__name__)
 
@@ -164,22 +165,27 @@ async def process_submission(submission_id: int) -> None:
             submission.status = "processing"
             await db.commit()
 
-            # Step 2: Call GLM-4V
+            # Step 2: Grade via the configured vision provider (AD-21)
             image_path = submission.original_image_path
-            glm_result = await grade_image(image_path, submission.subject)
+            with open(image_path, "rb") as f:  # noqa: ASYNC230
+                image_bytes = f.read()
+
+            model = get_vision_model()
+            grading_result = await model.grade(image_bytes, submission.subject)
 
             # Step 3: Store token usage + raw response + log cost
-            submission.token_usage = glm_result["token_usage"]
-            submission.grading_raw_json = glm_result["raw_response"]
+            submission.token_usage = grading_result.token_usage.to_dict()
+            submission.grading_raw_json = grading_result.raw_json
             log_token_usage(
-                model=GLM_MODEL,
-                token_usage=glm_result["token_usage"],
+                provider=grading_result.token_usage.provider,
+                model=grading_result.token_usage.model,
+                token_usage=grading_result.token_usage.to_dict(),
                 subject=submission.subject,
                 submission_id=submission_id,
                 success=True,
             )
 
-            questions_data = glm_result["questions"]
+            questions_data = [asdict(q) for q in grading_result.questions]
             submission.total_questions = len(questions_data)
 
             correct = 0
