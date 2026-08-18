@@ -20,6 +20,8 @@ class GradedQuestionResponse(BaseModel):
     question_image_path: str | None = None
     question_type: str
     is_correct: bool
+    question_text: str | None = None
+    question_latex: str | None = None
     solution_note: str | None = None
     error_category: str | None = None
     is_manually_fixed: bool = False

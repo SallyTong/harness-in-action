@@ -130,6 +130,8 @@ async def list_error_questions(
                 str(request.base_url), e.question_image_path
             )
             or "",
+            question_text=e.question_text,
+            question_latex=e.question_latex,
             solution_note=e.solution_note,
             error_category=e.error_category,
             error_count=e.error_count,

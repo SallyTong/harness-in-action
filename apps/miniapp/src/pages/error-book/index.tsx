@@ -32,6 +32,11 @@ function daysAgo(n: number): string {
   return `${d.getFullYear()}-${mm}-${dd}`
 }
 
+/** 无题干文字时，用原生全屏预览兜底查看题目截图（可双指缩放）。 */
+function previewQuestion(url: string): void {
+  Taro.previewImage({ current: url, urls: [url] })
+}
+
 export default function ErrorBook() {
   const [children, setChildren] = useState<Child[]>([])
   const [childId, setChildId] = useState<number | null>(null)
@@ -346,6 +351,24 @@ export default function ErrorBook() {
                     {eq.child_name} · {SUBJECT_LABELS[eq.subject] ?? eq.subject}
                   </Text>
                 </View>
+                {(eq.question_text || eq.question_image_path) && (
+                  <View className='errorbook__stem'>
+                    {eq.question_text ? (
+                      <>
+                        <Text className='errorbook__stem-label'>题干</Text>
+                        <Text className='errorbook__stem-text'>{eq.question_text}</Text>
+                      </>
+                    ) : (
+                      <View
+                        className='errorbook__stem-fallback'
+                        hoverClass='brand-hover'
+                        onClick={() => previewQuestion(eq.question_image_path)}
+                      >
+                        <Text className='errorbook__stem-fallback-text'>查看截图 ›</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
                 {eq.solution_note && (
                   <View className='errorbook__note'>
                     <View className='errorbook__note-head' onClick={() => toggleNote(eq.id)}>

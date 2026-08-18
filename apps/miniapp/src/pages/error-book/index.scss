@@ -159,6 +159,42 @@
     color: var(--color-text-tertiary);
   }
 
+  &__stem {
+    border-top: 2rpx solid var(--color-border-light);
+    padding: 20rpx 24rpx;
+  }
+
+  &__stem-label {
+    display: block;
+    font-size: 22rpx;
+    line-height: 30rpx;
+    font-weight: 500;
+    color: var(--color-text-tertiary);
+  }
+
+  &__stem-text {
+    display: block;
+    margin-top: 8rpx;
+    font-size: 26rpx;
+    line-height: 40rpx;
+    color: var(--color-text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  &__stem-fallback {
+    display: flex;
+    align-items: center;
+    min-height: 88rpx;
+  }
+
+  &__stem-fallback-text {
+    font-size: 26rpx;
+    line-height: 36rpx;
+    font-weight: 500;
+    color: var(--color-accent);
+  }
+
   &__note {
     border-top: 2rpx solid var(--color-border-light);
     padding: 20rpx 24rpx;

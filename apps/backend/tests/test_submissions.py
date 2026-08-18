@@ -29,6 +29,8 @@ MOCK_GLM_RESULT = {
             "is_correct": True,
             "solution_note": None,
             "error_category": None,
+            "question_text": "What is your name?",
+            "question_latex": None,
         },
         {
             "question_number": "2",
@@ -243,6 +245,8 @@ async def test_get_submission_completed(client, db_session):
             is_correct=q["is_correct"],
             solution_note=q.get("solution_note"),
             error_category=q.get("error_category"),
+            question_text=q.get("question_text"),
+            question_latex=q.get("question_latex"),
         )
         db_session.add(gq)
 
@@ -264,5 +268,7 @@ async def test_get_submission_completed(client, db_session):
     assert len(data["questions"]) == 3
     assert data["questions"][0]["question_number"] == "1"
     assert data["questions"][0]["is_correct"] is True
+    assert data["questions"][0]["question_text"] == "What is your name?"
+    assert data["questions"][0]["question_latex"] is None
     assert data["questions"][1]["is_correct"] is False
     assert data["questions"][1]["solution_note"] is not None

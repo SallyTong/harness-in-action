@@ -9,7 +9,7 @@ function makeElement(tag: string) {
   return ({ children, ...props }: Props) => createElement(tag, props, children)
 }
 
-export const View = makeElement('div')
+export const View = ({ hoverClass, ...props }: Props) => createElement('div', props)
 export const Text = makeElement('span')
 
 export const Button = ({ children, loading, disabled, hoverClass, ...props }: Props) =>

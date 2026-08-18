@@ -1,20 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  ChevronDown,
-  ChevronUp,
-  Filter,
-  Wand2,
-  RotateCcw,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, Filter, Wand2, RotateCcw } from "lucide-react";
 import { apiGet } from "../lib/api";
 import Skeleton from "../components/ui/Skeleton";
+import QuestionText from "../components/ui/QuestionText";
 import Toast, { type ToastType } from "../components/ui/Toast";
-import type {
-  Child,
-  ErrorQuestionItem,
-  ErrorCollectionListResponse,
-} from "../types";
+import type { Child, ErrorQuestionItem, ErrorCollectionListResponse } from "../types";
 
 const TYPE_LABELS: Record<string, string> = {
   choice: "选择题",
@@ -67,18 +58,10 @@ export default function ErrorBookPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Filter state from URL params
-  const [childId, setChildId] = useState<string>(
-    searchParams.get("child_id") || "",
-  );
-  const [subject, setSubject] = useState<string>(
-    searchParams.get("subject") || "",
-  );
-  const [questionType, setQuestionType] = useState<string>(
-    searchParams.get("question_type") || "",
-  );
-  const [timeRange, setTimeRange] = useState<string>(
-    searchParams.get("time_range") || "",
-  );
+  const [childId, setChildId] = useState<string>(searchParams.get("child_id") || "");
+  const [subject, setSubject] = useState<string>(searchParams.get("subject") || "");
+  const [questionType, setQuestionType] = useState<string>(searchParams.get("question_type") || "");
+  const [timeRange, setTimeRange] = useState<string>(searchParams.get("time_range") || "");
   const [offset, setOffset] = useState(0);
   const PAGE_SIZE = 20;
 
@@ -129,9 +112,7 @@ export default function ErrorBookPage() {
         }
         setTotal(data.total);
       } catch (err) {
-        setFetchError(
-          err instanceof Error ? err.message : "加载失败",
-        );
+        setFetchError(err instanceof Error ? err.message : "加载失败");
       } finally {
         setLoading(false);
       }
@@ -173,9 +154,7 @@ export default function ErrorBookPage() {
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4 pb-24">
       {/* Top bar */}
       <header className="flex items-center justify-between py-4">
-        <h1 className="text-[22px] font-semibold leading-[30px] text-text-primary">
-          错题集
-        </h1>
+        <h1 className="text-[22px] font-semibold leading-[30px] text-text-primary">错题集</h1>
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`flex min-h-11 min-w-11 items-center justify-center rounded-xl transition-colors ${
@@ -254,9 +233,7 @@ export default function ErrorBookPage() {
 
       {/* Stats summary */}
       {!loading && (
-        <p className="mb-4 text-[13px] font-medium text-text-secondary">
-          共 {total} 道错题
-        </p>
+        <p className="mb-4 text-[13px] font-medium text-text-secondary">共 {total} 道错题</p>
       )}
 
       {/* Error list */}
@@ -279,18 +256,12 @@ export default function ErrorBookPage() {
         </div>
       ) : errors.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center py-16">
-          <span className="text-5xl">
-            {hasFilters ? "🔍" : "🎉"}
-          </span>
+          <span className="text-5xl">{hasFilters ? "🔍" : "🎉"}</span>
           <p className="mt-4 text-[15px] font-medium text-text-secondary">
-            {hasFilters
-              ? "没有符合条件的错题"
-              : "还没有错题。继续保持！"}
+            {hasFilters ? "没有符合条件的错题" : "还没有错题。继续保持！"}
           </p>
           <p className="mt-1 text-[13px] text-text-tertiary">
-            {hasFilters
-              ? "试试调整筛选条件"
-              : "去批改试卷，错题会自动收集到这里"}
+            {hasFilters ? "试试调整筛选条件" : "去批改试卷，错题会自动收集到这里"}
           </p>
           {hasFilters ? (
             <button
@@ -334,14 +305,19 @@ export default function ErrorBookPage() {
                     {TYPE_LABELS[eq.question_type] || eq.question_type}
                   </span>
                   <span className="text-[12px] text-text-tertiary">
-                    {eq.child_name} ·{" "}
-                    {SUBJECT_LABELS[eq.subject] || eq.subject}
+                    {eq.child_name} · {SUBJECT_LABELS[eq.subject] || eq.subject}
                   </span>
                 </div>
                 <span className="text-[11px] text-text-tertiary">
                   {formatDate(eq.last_error_at)}
                 </span>
               </div>
+              {/* Transcribed stem text (English plain / Math KaTeX) */}
+              <QuestionText
+                subject={eq.subject}
+                questionText={eq.question_text}
+                questionLatex={eq.question_latex}
+              />
               {/* Solution note */}
               {eq.solution_note && (
                 <div className="border-t border-border-light px-4 py-2">
@@ -349,21 +325,11 @@ export default function ErrorBookPage() {
                     onClick={() => toggleNote(eq.id)}
                     className="flex w-full items-center justify-between text-left"
                   >
-                    <span className="text-[12px] font-medium text-text-secondary">
-                      💡 解题思路
-                    </span>
+                    <span className="text-[12px] font-medium text-text-secondary">💡 解题思路</span>
                     {expandedNotes.has(eq.id) ? (
-                      <ChevronUp
-                        size={14}
-                        strokeWidth={1.5}
-                        className="text-text-tertiary"
-                      />
+                      <ChevronUp size={14} strokeWidth={1.5} className="text-text-tertiary" />
                     ) : (
-                      <ChevronDown
-                        size={14}
-                        strokeWidth={1.5}
-                        className="text-text-tertiary"
-                      />
+                      <ChevronDown size={14} strokeWidth={1.5} className="text-text-tertiary" />
                     )}
                   </button>
                   {expandedNotes.has(eq.id) && (
@@ -373,8 +339,7 @@ export default function ErrorBookPage() {
                       </p>
                       {eq.error_category && (
                         <span className="mt-1 inline-block rounded-full bg-error-bg px-2 py-0.5 text-[11px] font-medium text-error">
-                          {ERROR_LABELS[eq.error_category] ||
-                            eq.error_category}
+                          {ERROR_LABELS[eq.error_category] || eq.error_category}
                         </span>
                       )}
                     </div>
@@ -396,9 +361,7 @@ export default function ErrorBookPage() {
           )}
 
           {!hasMore && errors.length > 0 && (
-            <p className="py-4 text-center text-[12px] text-text-tertiary">
-              —— 已显示全部错题 ——
-            </p>
+            <p className="py-4 text-center text-[12px] text-text-tertiary">—— 已显示全部错题 ——</p>
           )}
         </div>
       )}
@@ -412,8 +375,7 @@ export default function ErrorBookPage() {
                 const params = new URLSearchParams();
                 if (childId) params.set("child_id", childId);
                 if (subject) params.set("subject", subject);
-                if (questionType)
-                  params.set("question_type", questionType);
+                if (questionType) params.set("question_type", questionType);
                 navigate(`/errors/generate?${params.toString()}`);
               }}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 text-[15px] font-medium text-white shadow-sm transition-colors hover:bg-accent-hover"
@@ -427,11 +389,7 @@ export default function ErrorBookPage() {
 
       {/* Toast */}
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onDismiss={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
       )}
     </div>
   );

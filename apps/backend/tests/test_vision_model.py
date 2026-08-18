@@ -33,8 +33,10 @@ from app.services.vision import (
     GradingResult,
     TokenUsage,
     VisionModelError,
+    VisionModelExtractor,
     get_vision_model,
 )
+from app.services.vision.base import question_from_dict
 from app.services.vision.factory import _resolve_model
 from app.services.vision.glm import GLMVisionModel
 from app.services.vision.qwen import QwenVisionModel
@@ -47,6 +49,8 @@ QUESTIONS = [
         "is_correct": True,
         "solution_note": None,
         "error_category": None,
+        "question_text": "What is your name?",
+        "question_latex": None,
     },
     {
         "question_number": "2",
@@ -55,6 +59,8 @@ QUESTIONS = [
         "is_correct": False,
         "solution_note": "正确答案应为 'have gone'。",
         "error_category": "grammar",
+        "question_text": "Fill in the blank: have ___ gone.",
+        "question_latex": None,
     },
 ]
 
@@ -104,6 +110,8 @@ async def test_glm_grade_returns_grading_result(monkeypatch):
     assert result.questions[1].is_correct is False
     assert result.questions[1].solution_note == "正确答案应为 'have gone'。"
     assert result.questions[1].error_category == "grammar"
+    assert result.questions[0].question_text == "What is your name?"
+    assert result.questions[0].question_latex is None
 
     assert result.token_usage.provider == "glm"
     assert result.token_usage.model == "glm-4v-flash"
@@ -291,9 +299,47 @@ def test_graded_result_conversion_shape():
         "question_text",
         "question_latex",
     }
-    # X3 placeholders are present but inert in X2.
+    # question_text/question_latex are optional; None when the model omits them.
     assert question["question_text"] is None
     assert question["question_latex"] is None
+
+
+def test_question_from_dict_parses_question_text():
+    q = question_from_dict(
+        {
+            "question_number": "3",
+            "question_type": "word_problem",
+            "is_correct": False,
+            "question_text": "Tom has 5 apples.",
+            "question_latex": "x^2 + y = 3",
+        }
+    )
+    assert q.question_text == "Tom has 5 apples."
+    assert q.question_latex == "x^2 + y = 3"
+
+    # Handwriting / graphic questions may omit the fields → None, not an error.
+    q2 = question_from_dict(
+        {"question_number": "4", "question_type": "choice", "is_correct": True}
+    )
+    assert q2.question_text is None
+    assert q2.question_latex is None
+
+
+@pytest.mark.asyncio
+async def test_vision_model_extractor_returns_question_text():
+    q = GradedQuestionData(
+        question_number="1",
+        question_position=None,
+        question_type="choice",
+        is_correct=True,
+        solution_note=None,
+        error_category=None,
+        question_text="What is your name?",
+        question_latex=None,
+    )
+    text = await VisionModelExtractor(q).extract(b"img", "english")
+    assert text.question_text == "What is your name?"
+    assert text.question_latex is None
 
 
 @pytest.mark.asyncio
@@ -325,6 +371,8 @@ async def test_process_submission_pipeline_agnostic_to_provider(monkeypatch):
             is_correct=False,
             solution_note="正确答案应为 'have gone'。",
             error_category="grammar",
+            question_text="Fill in the blank: have ___ gone.",
+            question_latex="x^2 + y = 3",
         ),
     ]
 
@@ -396,9 +444,9 @@ async def test_process_submission_pipeline_agnostic_to_provider(monkeypatch):
                     graded = (
                         (
                             await session.execute(
-                                select(GradedQuestion).where(
-                                    GradedQuestion.submission_id == sid
-                                )
+                                select(GradedQuestion)
+                                .where(GradedQuestion.submission_id == sid)
+                                .order_by(GradedQuestion.id)
                             )
                         )
                         .scalars()
@@ -423,6 +471,11 @@ async def test_process_submission_pipeline_agnostic_to_provider(monkeypatch):
                 assert len(errors) == 1  # only the wrong question is synced
                 assert errors[0].question_number == "2"
                 assert errors[0].error_category == "grammar"
+                # X3 (AD-23): question text lands in both tables, consistently.
+                assert graded[1].question_text == "Fill in the blank: have ___ gone."
+                assert graded[1].question_latex == "x^2 + y = 3"
+                assert errors[0].question_text == graded[1].question_text
+                assert errors[0].question_latex == graded[1].question_latex
                 assert sub.token_usage["provider"] == provider
                 assert sub.token_usage["model"] == f"{provider}-model"
                 assert os.path.isfile(sub.annotated_image_path)

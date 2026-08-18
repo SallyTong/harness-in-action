@@ -17,6 +17,8 @@ class ErrorQuestionResponse(BaseModel):
     question_number: str
     question_type: str
     question_image_path: str
+    question_text: str | None = None
+    question_latex: str | None = None
     solution_note: str | None = None
     error_category: str | None = None
     error_count: int

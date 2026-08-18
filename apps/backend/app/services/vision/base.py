@@ -46,8 +46,9 @@ class TokenUsage:
 class GradedQuestionData:
     """One graded question, normalized from the provider's raw output.
 
-    ``question_text`` / ``question_latex`` are placeholders for X3 (AD-23/AD-24);
-    providers leave them ``None`` until that phase activates them.
+    ``question_text`` (English, plain text) / ``question_latex`` (Math, LaTeX) are
+    emitted by the vision model alongside the grade (X3, AD-23/AD-24). Both are
+    optional — hand-written or graphic questions may not transcribe.
     """
 
     question_number: str
@@ -126,4 +127,6 @@ def question_from_dict(q: dict) -> GradedQuestionData:
         is_correct=q.get("is_correct", False),
         solution_note=q.get("solution_note"),
         error_category=q.get("error_category"),
+        question_text=q.get("question_text"),
+        question_latex=q.get("question_latex"),
     )

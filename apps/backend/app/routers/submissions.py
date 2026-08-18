@@ -287,6 +287,8 @@ async def get_submission(
                 ),
                 question_type=gq.question_type,
                 is_correct=gq.is_correct,
+                question_text=gq.question_text,
+                question_latex=gq.question_latex,
                 solution_note=gq.solution_note,
                 error_category=gq.error_category,
                 is_manually_fixed=gq.is_manually_fixed,
@@ -379,6 +381,8 @@ async def fix_question_grade(
             ),
             question_type=gq.question_type,
             is_correct=gq.is_correct,
+            question_text=gq.question_text,
+            question_latex=gq.question_latex,
             solution_note=gq.solution_note,
             error_category=gq.error_category,
             is_manually_fixed=gq.is_manually_fixed,
@@ -429,6 +433,8 @@ async def fix_question_grade(
             eq.last_error_at = now
             eq.solution_note = gq.solution_note
             eq.error_category = gq.error_category
+            eq.question_text = gq.question_text
+            eq.question_latex = gq.question_latex
             eq.is_manually_fixed = True
         else:
             eq = ErrorQuestion(
@@ -440,6 +446,8 @@ async def fix_question_grade(
                 question_image_path=gq.question_image_path or "",
                 solution_note=gq.solution_note,
                 error_category=gq.error_category,
+                question_text=gq.question_text,
+                question_latex=gq.question_latex,
                 is_manually_fixed=True,
                 error_count=1,
                 error_timestamps=[now.isoformat()],

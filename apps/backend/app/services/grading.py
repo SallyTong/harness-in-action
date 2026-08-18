@@ -16,7 +16,7 @@ from app.models.graded_question import GradedQuestion
 from app.models.submission import Submission
 from app.services.annotation import annotate_image, create_thumbnail, crop_question
 from app.services.cost_logger import log_token_usage
-from app.services.vision import get_vision_model
+from app.services.vision import VisionModelExtractor, get_vision_model
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +117,8 @@ async def _sync_error_questions(
             eq.last_error_at = now
             eq.solution_note = gq.solution_note
             eq.error_category = gq.error_category
+            eq.question_text = gq.question_text
+            eq.question_latex = gq.question_latex
             eq.is_manually_fixed = gq.is_manually_fixed
             if gq.question_image_path:
                 eq.question_image_path = gq.question_image_path
@@ -131,6 +133,8 @@ async def _sync_error_questions(
                 question_image_path=gq.question_image_path or "",
                 solution_note=gq.solution_note,
                 error_category=gq.error_category,
+                question_text=gq.question_text,
+                question_latex=gq.question_latex,
                 is_manually_fixed=gq.is_manually_fixed,
                 error_count=1,
                 error_timestamps=[now.isoformat()],
@@ -191,44 +195,47 @@ async def process_submission(submission_id: int) -> None:
             correct = 0
             graded_qs: list[GradedQuestion] = []
 
-            for qdata in questions_data:
-                is_correct = qdata.get("is_correct", False)
+            for q in grading_result.questions:
+                is_correct = q.is_correct
                 if is_correct:
                     correct += 1
 
+                # AD-24: surface the question text through the extractor seam
+                # (vision-model output today; a standalone OCR impl can slot in
+                # later without touching the rest of the pipeline).
+                text = await VisionModelExtractor(q).extract(
+                    image_bytes, submission.subject
+                )
+
                 gq = GradedQuestion(
                     submission_id=submission.id,
-                    question_number=_sanitize_question_number(
-                        str(qdata.get("question_number", ""))
-                    ),
-                    question_position=qdata.get("question_position"),
-                    question_type=_sanitize_question_type(
-                        str(qdata.get("question_type", ""))
-                    ),
+                    question_number=_sanitize_question_number(str(q.question_number)),
+                    question_position=q.question_position,
+                    question_type=_sanitize_question_type(str(q.question_type)),
                     is_correct=is_correct,
-                    solution_note=qdata.get("solution_note"),
-                    error_category=_sanitize_error_category(
-                        qdata.get("error_category")
-                    ),
+                    solution_note=q.solution_note,
+                    error_category=_sanitize_error_category(q.error_category),
+                    question_text=text.question_text,
+                    question_latex=text.question_latex,
                 )
                 db.add(gq)
                 await db.flush()  # Get gq.id
 
                 # Step 4: Crop question image if position is known
-                if qdata.get("question_position"):
+                if q.question_position:
                     try:
-                        safe_qnum = str(qdata["question_number"]).replace("/", "_")
+                        safe_qnum = str(q.question_number).replace("/", "_")
                         crop_path = f"{IMAGE_QUESTIONS}/{submission.id}_{safe_qnum}.jpg"
                         crop_question(
                             image_path,
                             crop_path,
-                            qdata["question_position"],
+                            q.question_position,
                         )
                         gq.question_image_path = crop_path
                     except Exception as e:  # noqa: BLE001
                         logger.warning(
                             "Failed to crop question %s: %s",
-                            qdata.get("question_number"),
+                            q.question_number,
                             e,
                         )
 

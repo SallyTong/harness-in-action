@@ -37,6 +37,8 @@ class GradedQuestion(Base):
     is_correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
     solution_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     error_category: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    question_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    question_latex: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_manually_fixed: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         default=lambda: datetime.now(timezone.utc)

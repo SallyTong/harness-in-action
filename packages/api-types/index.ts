@@ -34,6 +34,8 @@ export interface GradedQuestion {
   question_image_path: string | null;
   question_type: string;
   is_correct: boolean;
+  question_text: string | null;
+  question_latex: string | null;
   solution_note: string | null;
   error_category: string | null;
   is_manually_fixed: boolean;
@@ -82,6 +84,8 @@ export interface ErrorQuestionItem {
   question_number: string;
   question_type: string;
   question_image_path: string;
+  question_text: string | null;
+  question_latex: string | null;
   solution_note: string | null;
   error_category: string | null;
   error_count: number;
