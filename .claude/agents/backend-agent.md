@@ -157,3 +157,9 @@ business endpoints; signed-URL image auth; `POST /api/wechat-login` removed.
 **Scope:** `VisionModel` provider abstraction (GLM-4V / Qwen-VL), factory by
 `VISION_PROVIDER`, multi-provider cost log (`provider` + `model`).
 **Done when:** AC-X2.1~X2.5 pass; `ruff check` + `pytest` green.
+
+### Phase X3: Question Text ✅ Complete
+**Scope:** Vision prompt outputs `question_text` (English) / `question_latex`
+(Math); `GradedQuestion` + redundant `ErrorQuestion` persist both fields;
+`QuestionTextExtractor` abstraction (AD-24) with `VisionModelExtractor` impl.
+**Done when:** AC-X3.1~X3.6 pass; `ruff check` + `pytest` green.

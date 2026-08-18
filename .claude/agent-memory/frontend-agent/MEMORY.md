@@ -6,5 +6,6 @@
 - [Phase 4: History & Errors](phase-4-history-errors.md) — ✅ Complete. History list/detail, error book, practice sheet generation
 - [Phase 5: Polish](phase-5-collaboration-polish.md) — ✅ Complete. Skeletons, error boundaries, responsive layout, cross-device
 - [Phase X1: Auth Login](phase-X1-auth-jwt.md) — ✅ Complete. Login page, Bearer transport + 401 redirect, signed-URL rendering
+- [Phase X3: Question Text](phase-X3-question-text.md) — ✅ Complete. Error-card stem text (English plain / Math KaTeX, XSS-safe)
 
 > Cross-cutting rules: [shared/cross-cutting.md](../shared/cross-cutting.md)

@@ -32,5 +32,12 @@ Rules that would cause real bugs or brand violations if forgotten. Full design s
 - Use `capture="environment"` for camera. HEIC detected and rejected with guidance message (conversion not yet implemented).
 - Show preview before upload. Display progress.
 
+### Math Rendering (KaTeX)
+- Math stems (`question_latex`) render via KaTeX with `trust: false` + `throwOnError: false`. `trust: false` disables HTML-bearing macros so untrusted model output cannot inject markup.
+- English stems (`question_text`) render as React text nodes (auto-escaped). Never `dangerouslySetInnerHTML` with model output.
+- Stem text is untrusted (model output) — never relax `trust` or switch to raw HTML injection.
+- Null/empty stem → render nothing, fall back to the question screenshot (no empty shell).
+- Reference: `src/components/ui/QuestionText.tsx`.
+
 ### Routing (React Router v7)
 `/`, `/children`, `/submissions/:id/processing`, `/submissions/:id/result`, `/submissions/:id`, `/history`, `/errors`, `/errors/generate`.

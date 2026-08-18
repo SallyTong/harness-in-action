@@ -146,3 +146,6 @@ You MUST update `[[MEMORY]].md` after every implementation session. This is NOT 
 
 ### Phase X1: Auth Login ✅ Complete
 **Scope:** Login page (phone + SMS code), transport layer Bearer auth + 401 redirect, logout, signed-URL image rendering.
+
+### Phase X3: Question Text ✅ Complete
+**Scope:** Error-card stem text — English plain text (`question_text`), Math KaTeX rendering (`question_latex`, `trust:false` XSS-safe). Empty stem falls back to the question screenshot; `QuestionText` returns `null` (no empty shell).

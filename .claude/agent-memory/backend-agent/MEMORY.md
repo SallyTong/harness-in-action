@@ -7,6 +7,7 @@
 - [Phase 5: Polish](phase-5-polish.md) — ✅ Complete. Rate limiting, cost logging, error hardening, input validation
 - [Phase X1: Auth Login](phase-X1-auth-jwt.md) — ✅ Complete. SMS + JWT, de-phone, signed URLs, wechat-login removed
 - [Phase X2: Vision Model Abstraction](phase-X2-vision-model-abstraction.md) — ✅ Complete. VisionModel GLM/Qwen providers, factory, multi-provider cost log
+- [Phase X3: Question Text](phase-X3-question-text.md) — ✅ Complete. Vision model emits question_text/question_latex, persisted + redundant to ErrorQuestion
 
 ## Miniapp W1 — WeChat login increment (2026-08-15, removed in X1)
 
