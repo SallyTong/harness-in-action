@@ -6,6 +6,7 @@ VALID_SUBJECTS = {"english", "math"}
 VALID_QUESTION_TYPES = frozenset(
     {"choice", "fill_blank", "reading", "composition", "calculation", "word_problem"}
 )
+VALID_FORMATS = {"text", "image"}
 
 
 class ErrorQuestionResponse(BaseModel):
@@ -42,6 +43,7 @@ class GenerateSheetRequest(BaseModel):
     from_date: str | None = None
     to_date: str | None = None
     count: int = Field(default=10, ge=1, le=50)
+    format: str = "image"
 
     @field_validator("subject")
     @classmethod
@@ -73,7 +75,29 @@ class GenerateSheetRequest(BaseModel):
                 raise ValueError("Date must be YYYY-MM-DD format")
         return v
 
+    @field_validator("format")
+    @classmethod
+    def validate_format(cls, v: str) -> str:
+        if v not in VALID_FORMATS:
+            raise ValueError(
+                f"Field 'format' must be one of: {', '.join(sorted(VALID_FORMATS))}."
+            )
+        return v
+
+
+class SheetQuestionResponse(BaseModel):
+    question_number: str
+    question_type: str
+    subject: str
+    question_text: str | None = None
+    question_latex: str | None = None
+    question_image_path: str | None = None
+    source_submission_id: int
+
 
 class GenerateSheetResponse(BaseModel):
-    image_url: str
+    format: str
     question_count: int
+    image_url: str | None = None
+    questions: list[SheetQuestionResponse] | None = None
+    docx_url: str | None = None

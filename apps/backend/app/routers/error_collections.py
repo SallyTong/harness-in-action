@@ -1,10 +1,13 @@
 """Error collection endpoints: browse wrong answers and generate practice sheets."""
 
 import logging
+import os
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.responses import FileResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,9 +20,12 @@ from app.schemas.error_collections import (
     ErrorQuestionResponse,
     GenerateSheetRequest,
     GenerateSheetResponse,
+    SheetQuestionResponse,
 )
 from app.services.annotation import compose_sheet
-from app.services.image_signing import build_signed_url
+from app.services.image_signing import build_signed_docx_url, build_signed_url, verify
+from app.services.sheet_docx import DOCX_MEDIA_TYPE, build_sheet_docx
+from app.services.sheet_text import assemble_sheet_questions
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +35,14 @@ VALID_SUBJECTS = {"english", "math"}
 VALID_QUESTION_TYPES = frozenset(
     {"choice", "fill_blank", "reading", "composition", "calculation", "word_problem"}
 )
+
+# Generated .docx sheets live alongside image sheets; the download endpoint
+# resolves filenames strictly within this directory.
+SHEET_DOCX_DIR = "data/images/sheets"
+
+# Signed URLs only ever cover server-generated filenames ({uuid}.docx); this
+# guard is defense-in-depth against path traversal.
+SAFE_FILENAME = re.compile(r"^[A-Za-z0-9._-]+$")
 
 
 @router.get("/error-collections", response_model=ErrorCollectionListResponse)
@@ -221,6 +235,58 @@ async def generate_error_sheet(
                 status_code=422, detail="to_date must be YYYY-MM-DD format"
             )
 
+    if body.format == "text":
+        # Random sample of transcribed question text (AD-25). Random order so
+        # repeated sheets differ; `.limit` returns the actual count available.
+        query = query.order_by(func.random()).limit(body.count)
+        result = await db.execute(query)
+        errors = result.scalars().all()
+
+        if not errors:
+            raise HTTPException(
+                status_code=400,
+                detail="No error questions match the given filters.",
+            )
+
+        entries = assemble_sheet_questions(errors)
+        try:
+            docx_path = build_sheet_docx(
+                entries,
+                child_name=child.name,
+                subject=body.subject,
+                output_dir=SHEET_DOCX_DIR,
+            )
+        except Exception:
+            logger.exception("Failed to build text practice sheet")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to generate text practice sheet. Please try again later.",
+            )
+
+        docx_url = build_signed_docx_url(str(request.base_url), docx_path) or ""
+        questions = [
+            SheetQuestionResponse(
+                question_number=e.question_number,
+                question_type=e.question_type,
+                subject=e.subject,
+                question_text=e.question_text,
+                question_latex=e.question_latex,
+                question_image_path=build_signed_url(
+                    str(request.base_url), e.question_image_path
+                ),
+                source_submission_id=e.source_submission_id,
+            )
+            for e in entries
+        ]
+
+        return GenerateSheetResponse(
+            format="text",
+            question_count=len(entries),
+            questions=questions,
+            docx_url=docx_url,
+        )
+
+    # image format (default, backward compatible)
     query = query.order_by(ErrorQuestion.last_error_at.desc()).limit(body.count)
     result = await db.execute(query)
     errors = result.scalars().all()
@@ -231,14 +297,11 @@ async def generate_error_sheet(
             detail="No error questions match the given filters.",
         )
 
-    # Get child name for the title
-    child_name = child.name
-
-    # Generate the practice sheet
+    # Generate the practice sheet image
     try:
         sheet_path = compose_sheet(
             errors=errors,
-            child_name=child_name,
+            child_name=child.name,
             subject=body.subject,
         )
     except Exception:
@@ -252,6 +315,34 @@ async def generate_error_sheet(
     image_url = build_signed_url(str(request.base_url), sheet_path) or ""
 
     return GenerateSheetResponse(
+        format="image",
         image_url=image_url,
         question_count=len(errors),
     )
+
+
+@router.get("/sheets/{filename}")
+async def serve_sheet_docx(
+    filename: str,
+    token: str = Query(..., description="HMAC signature (base64url)"),
+    expires: int = Query(..., description="Expiry as a Unix timestamp"),
+):
+    """Serve a generated .docx sheet via a signed URL.
+
+    Authentication is via the same HMAC token + expiry scheme as image URLs
+    (kind ``sheets``), so no Authorization header is required. Ownership was
+    verified when the signed URL was issued.
+    """
+    if not SAFE_FILENAME.match(filename) or ".." in filename:
+        raise HTTPException(status_code=404, detail="Invalid sheet filename")
+
+    if not verify("sheets", filename, token, expires):
+        raise HTTPException(
+            status_code=403, detail="Invalid or expired sheet signature"
+        )
+
+    file_path = os.path.join(SHEET_DOCX_DIR, filename)
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail="Sheet file not found")
+
+    return FileResponse(file_path, media_type=DOCX_MEDIA_TYPE, filename=filename)

@@ -47,6 +47,7 @@ async def create_test_db():
     test_img_dir = _test_image_dir.name
 
     # Redirect image storage paths to the temp directory
+    import app.routers.error_collections as ec_router
     import app.routers.submissions as sub_router
     import app.services.grading as grading_mod
 
@@ -56,6 +57,7 @@ async def create_test_db():
     _orig_grading_annotated = grading_mod.IMAGE_ANNOTATED
     _orig_grading_thumbnails = grading_mod.IMAGE_THUMBNAILS
     _orig_grading_questions = grading_mod.IMAGE_QUESTIONS
+    _orig_ec_docx_dir = ec_router.SHEET_DOCX_DIR
 
     sub_router.IMAGE_ORIGINALS = f"{test_img_dir}/originals"
     sub_router.IMAGE_ROOT = test_img_dir
@@ -63,6 +65,7 @@ async def create_test_db():
     grading_mod.IMAGE_ANNOTATED = f"{test_img_dir}/annotated"
     grading_mod.IMAGE_THUMBNAILS = f"{test_img_dir}/thumbnails"
     grading_mod.IMAGE_QUESTIONS = f"{test_img_dir}/questions"
+    ec_router.SHEET_DOCX_DIR = f"{test_img_dir}/sheets"
 
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -75,6 +78,7 @@ async def create_test_db():
     grading_mod.IMAGE_ANNOTATED = _orig_grading_annotated
     grading_mod.IMAGE_THUMBNAILS = _orig_grading_thumbnails
     grading_mod.IMAGE_QUESTIONS = _orig_grading_questions
+    ec_router.SHEET_DOCX_DIR = _orig_ec_docx_dir
 
     # Clean up temp directory and its contents
     _test_image_dir.cleanup()

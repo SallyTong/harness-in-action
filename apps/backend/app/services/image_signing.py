@@ -77,3 +77,27 @@ def build_signed_url(
     token = sign(kind, filename, expires)
     base = base_url.rstrip("/")
     return f"{base}/api/images/{kind}/{filename}?token={token}&expires={expires}"
+
+
+def build_signed_docx_url(
+    base_url: str,
+    rel_path: str | None,
+    ttl: int = DEFAULT_TTL_SECONDS,
+) -> str | None:
+    """Build a signed URL to a generated .docx sheet.
+
+    ``rel_path`` is the storage path returned by ``sheet_docx.build_sheet_docx``
+    (e.g. ``data/images/sheets/{uuid}.docx``). The URL points at
+    ``GET /api/sheets/{filename}``, which verifies the same HMAC token as image
+    URLs (kind ``sheets``). Returns None for empty/None input.
+    """
+    if not rel_path:
+        return None
+    normalized = rel_path.replace("\\", "/")
+    filename = normalized.rsplit("/", 1)[-1]
+    if not filename:
+        return None
+    expires = int(time.time()) + ttl
+    token = sign("sheets", filename, expires)
+    base = base_url.rstrip("/")
+    return f"{base}/api/sheets/{filename}?token={token}&expires={expires}"
