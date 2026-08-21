@@ -197,7 +197,7 @@ cd apps/miniapp && npx tsc --noEmit && npm test
 
 **目标：** 错题试卷默认文字试卷（模板拼装），支持 .docx 导出；图片方案保留为可切换格式。
 
-**工期预期：** 1.5–2 天
+**工期预期：** 2–2.5 天（含小程序）
 
 ### 覆盖范围
 
@@ -207,7 +207,7 @@ cd apps/miniapp && npx tsc --noEmit && npm test
 | 架构决策 | AD-25（模板拼装）、AD-26（python-docx + LaTeX→PNG） |
 | 数据模型 | 无新增（复用 `ErrorQuestion.question_text/question_latex`） |
 | API 端点 | `POST /api/error-collections/generate` + `format`（**向后兼容**）；响应 `GeneratedSheet` |
-| 前端 | 生成页格式切换、文字试卷预览、.docx 下载 |
+| 前端 | Web：格式切换、文字预览（KaTeX）、docx 下载；小程序：格式切换、文字预览（截图兜底）、docx 预览 |
 
 ### 后端工作
 
@@ -219,11 +219,17 @@ cd apps/miniapp && npx tsc --noEmit && npm test
 3. **`generate` 端点**：+ `format`（默认 `image` 兼容）；`format=text` 返回 `{format, question_count, questions[], docx_url}`；`image` 保持现有 `{image_url, question_count}`
 4. **测试**：文字试卷拼装（随机取/数量不足/残缺回退）、docx 生成（含 LaTeX→PNG）、format 参数（默认 image 兼容、text 新结构）
 
-### 前端工作
+### 前端工作（Web）
 
 1. **生成页**：+ 「试卷格式」分段控件（文字默认 / 图片）
 2. **文字试卷预览**：拿到 `questions` 后 HTML 渲染题干（数学 KaTeX）
 3. **下载**：`.docx` 下载按钮
+
+### 前端工作（小程序）
+
+1. **生成页**（`/pages/error-generate`）：+ 「试卷格式」分段控件（文字默认 / 图片）
+2. **文字试卷预览**：题干文字为主、数学题截图兜底（小程序内不渲染 LaTeX）
+3. **docx 预览**：`wx.downloadFile` 下载 → `wx.openDocument({ fileType: 'docx' })` 预览（不落手机系统文件）
 
 ### 验收标准
 
@@ -233,6 +239,7 @@ cd apps/miniapp && npx tsc --noEmit && npm test
 - [ ] **AC-X4.4:** 生成页默认「文字」，可切「图片」
 - [ ] **AC-X4.5:** 符合条件的错题不足 count 时返回实际数量（不补空白题）
 - [ ] **AC-X4.6:** 后端 `pytest` 全绿；Web/小程序 `tsc` + 测试通过
+- [ ] **AC-X4.7:** 小程序生成页「文字/图片」切换；文字预览数学题截图兜底不渲染 LaTeX；docx 经 `wx.openDocument` 预览
 
 ### 完成标志
 
@@ -242,6 +249,7 @@ cd apps/backend && ruff check . && python -m pytest tests/ -v
 curl -X POST localhost:8000/api/error-collections/generate -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' -d '{"child_id":1,"subject":"math","count":10,"format":"text"}'  # → {questions[], docx_url}
 cd apps/frontend && npx tsc --noEmit && npx vitest run && npm run build
+cd apps/miniapp && npx tsc --noEmit && npm test && npm run build:weapp
 ```
 
 ---

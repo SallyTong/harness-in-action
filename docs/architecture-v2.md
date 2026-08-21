@@ -204,6 +204,8 @@ POST /api/error-collections/generate {child_id, subject, ..., format:"text", cou
 
 **代价（已接受）：** 嵌入的公式为图片、不可再编辑；家庭自用「打印重做」场景完全够用。
 
+**小程序端 docx 预览：** 小程序经 `wx.downloadFile` 下载 `.docx` 到临时路径，再用 `wx.openDocument({ fileType: 'docx' })` 在小程序内预览（微信官方支持 docx）。受微信沙盒隔离限制，docx 仅能**预览 / 分享**，无法写入手机系统文件（相册 / 文件管理器）；需长期保存时走 Web 端下载。
+
 ---
 
 ## 2. 数据模型变更汇总

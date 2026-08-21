@@ -89,6 +89,7 @@
 - **AC-03:** 图片试卷 = 保留现有截图拼图方案（`POST /api/error-collections/generate` 的图片输出路径不变）。
 - **AC-04:** Word 导出用 python-docx；数学 `question_latex` 渲染成 PNG 嵌入；**不含标准答案**（学生重做用，答案家长看原卷即可）。
 - **AC-05:** 文字试卷支持页面预览 + 下载 `.docx`。
+- **AC-06:** 小程序生成页同样支持「文字（默认）/ 图片」格式切换；文字试卷预览以题干文字为主、数学题截图兜底（小程序内不渲染 LaTeX）；`.docx` 经 `wx.downloadFile` 下载后 `wx.openDocument` 在小程序内预览（受沙盒隔离限制，不落手机系统文件）。
 
 ---
 
