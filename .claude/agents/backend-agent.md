@@ -163,3 +163,11 @@ business endpoints; signed-URL image auth; `POST /api/wechat-login` removed.
 (Math); `GradedQuestion` + redundant `ErrorQuestion` persist both fields;
 `QuestionTextExtractor` abstraction (AD-24) with `VisionModelExtractor` impl.
 **Done when:** AC-X3.1~X3.6 pass; `ruff check` + `pytest` green.
+
+### Phase X4: Text Sheet + Word Export ✅ Complete
+**Scope:** Text sheet assembly (`sheet_text.py`) from `question_text`/
+`question_latex`; `.docx` export (`sheet_docx.py`, python-docx + matplotlib
+mathtext LaTeX→PNG, no answer key); generate endpoint `format` switch (default
+`image` backward-compatible, `text` → `{questions[], docx_url}`); signed docx
+download `GET /api/sheets/{filename}`.
+**Done when:** AC-X4.1~X4.6 pass; `ruff check` + `pytest` green.
