@@ -149,3 +149,6 @@ You MUST update `[[MEMORY]].md` after every implementation session. This is NOT 
 
 ### Phase X3: Question Text ✅ Complete
 **Scope:** Error-card stem text — English plain text (`question_text`), Math KaTeX rendering (`question_latex`, `trust:false` XSS-safe). Empty stem falls back to the question screenshot; `QuestionText` returns `null` (no empty shell).
+
+### Phase X4: Text Sheet + Word ✅ Complete
+**Scope:** Generate page (`/errors/generate`) adds a 「试卷格式」 segmented control (文字试卷 default / 图片试卷) and sends `format` explicitly. `format=text` renders a text-sheet preview (reuses `QuestionText` KaTeX `trust:false`; falls back to the cropped screenshot when no usable stem) with a 「下载 Word」 link to the signed `docx_url`. `GenerateSheetResponse`/`SheetQuestion` types mirror the contract.

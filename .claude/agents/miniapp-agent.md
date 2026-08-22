@@ -105,3 +105,4 @@ See `docs/phase-plan-wechat-miniapp.md` (authoritative) for W1~W4; X1 in `docs/p
 ### Phase W4: 内测打磨 + 集成验证 + 收尾 ✅ Complete
 ### Phase X1: 认证登录（SMS + JWT，去 phone 化，移除 wechat-login） ✅ Complete
 ### Phase X3: 错题题干文字（英语纯文本 / 数学截图为主，不渲染 LaTeX） ✅ Complete
+### Phase X4: 文字试卷 + Word（格式切换 / 文字预览截图兜底 / docx wx.openDocument 预览） ✅ Complete
