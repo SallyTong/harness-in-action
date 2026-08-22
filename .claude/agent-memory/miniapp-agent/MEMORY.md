@@ -7,6 +7,7 @@
 - **X1 认证登录（SMS + JWT，去 phone 化，移除 wechat-login）** — ✅ 完成 → [phase-X1-auth-jwt.md](phase-X1-auth-jwt.md)
 - **X3 错题题干文字（英语纯文本 / 数学截图为主不渲染 LaTeX）** — ✅ 完成 → [phase-X3-question-text.md](phase-X3-question-text.md)
 - **X4 文字试卷 + Word（格式切换 / 文字预览截图兜底 / docx wx.openDocument 预览）** — ✅ 完成 → [phase-X4-text-sheet-docx.md](phase-X4-text-sheet-docx.md)
+- **X5 儿童编辑（小程序管理页增删改 + 首页入口跳转）** — ✅ 完成 → [phase-X5-child-edit.md](phase-X5-child-edit.md)
 
 > 权威计划：`docs/phase-plan-wechat-miniapp.md`（W1~W4）、`docs/phase-plan-v2.md`（X1 起）。每阶段完成后新建 `phase-<N>-<slug>.md` 并更新本索引。
 

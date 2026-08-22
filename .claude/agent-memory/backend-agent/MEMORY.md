@@ -9,6 +9,7 @@
 - [Phase X2: Vision Model Abstraction](phase-X2-vision-model-abstraction.md) — ✅ Complete. VisionModel GLM/Qwen providers, factory, multi-provider cost log
 - [Phase X3: Question Text](phase-X3-question-text.md) — ✅ Complete. Vision model emits question_text/question_latex, persisted + redundant to ErrorQuestion
 - [Phase X4: Text Sheet + Word](phase-X4-text-sheet-docx.md) — ✅ Complete. sheet_text.py assembly + sheet_docx.py (python-docx + mathtext LaTeX→PNG) + generate `format` switch + signed docx download
+- [Phase X5: Child Edit](phase-X5-child-edit.md) — ✅ Complete. Child + grade/note/avatar, POST/PUT children accept grade (default 五年级) + note
 
 ## Miniapp W1 — WeChat login increment (2026-08-15, removed in X1)
 

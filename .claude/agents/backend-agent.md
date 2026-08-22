@@ -171,3 +171,10 @@ mathtext LaTeX→PNG, no answer key); generate endpoint `format` switch (default
 `image` backward-compatible, `text` → `{questions[], docx_url}`); signed docx
 download `GET /api/sheets/{filename}`.
 **Done when:** AC-X4.1~X4.6 pass; `ruff check` + `pytest` green.
+
+### Phase X5: Child Edit ✅ Complete
+**Scope:** `Child` + `grade` VARCHAR(20) NOT NULL DEFAULT '五年级' / `note`
+VARCHAR(200) NULL / `avatar` VARCHAR(500) NULL (reserved); `POST/PUT /api/children`
+accept optional `grade` (default 五年级) + `note` (maxLength 200); `Child`
+response + `grade`/`note`/`avatar`. `avatar` not uploadable/editable this phase.
+**Done when:** AC-X5.1~X5.2 pass (backend); `ruff check` + `pytest` green.

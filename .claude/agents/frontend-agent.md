@@ -152,3 +152,6 @@ You MUST update `[[MEMORY]].md` after every implementation session. This is NOT 
 
 ### Phase X4: Text Sheet + Word ✅ Complete
 **Scope:** Generate page (`/errors/generate`) adds a 「试卷格式」 segmented control (文字试卷 default / 图片试卷) and sends `format` explicitly. `format=text` renders a text-sheet preview (reuses `QuestionText` KaTeX `trust:false`; falls back to the cropped screenshot when no usable stem) with a 「下载 Word」 link to the signed `docx_url`. `GenerateSheetResponse`/`SheetQuestion` types mirror the contract.
+
+### Phase X5: Child Edit ✅ Complete
+**Scope:** `ChildrenPage` adds grade (enum 一年级~六年级, default 五年级) + note (max 200 chars, pure display) editing via a shared `ChildForm` sub-component (name + grade `<select>` + note `<textarea>` with `N/200` counter). `Child` type gains `grade`/`note`/`avatar`; `avatar` is reserved (not edited/displayed). Edit button relabeled 「保存修改」.

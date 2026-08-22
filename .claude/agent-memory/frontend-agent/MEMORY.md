@@ -8,5 +8,6 @@
 - [Phase X1: Auth Login](phase-X1-auth-jwt.md) — ✅ Complete. Login page, Bearer transport + 401 redirect, signed-URL rendering
 - [Phase X3: Question Text](phase-X3-question-text.md) — ✅ Complete. Error-card stem text (English plain / Math KaTeX, XSS-safe)
 - [Phase X4: Text Sheet + Word](phase-X4-text-sheet-docx.md) — ✅ Complete. Generate-page format switch (text default), text-sheet preview (KaTeX), .docx download
+- [Phase X5: Child Edit](phase-X5-child-edit.md) — ✅ Complete. Grade enum (default 五年级) + note (200 chars) edit; avatar reserved
 
 > Cross-cutting rules: [shared/cross-cutting.md](../shared/cross-cutting.md)
