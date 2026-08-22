@@ -8,6 +8,9 @@
 export interface Child {
   id: number;
   name: string;
+  grade: string;
+  note: string | null;
+  avatar: string | null;
   submission_count: number;
   created_at: string;
 }

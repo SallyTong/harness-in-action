@@ -5,12 +5,111 @@ import { apiGet, apiPost, apiPut, apiDelete } from "../lib/api";
 import { clearToken } from "../lib/auth";
 import Toast, { type ToastType } from "../components/ui/Toast";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
+import type { Child } from "../types";
 
-interface Child {
-  id: number;
+// Contract (openapi.yaml v0.2.0): grade is a string enum over the six primary
+// school grades; note is optional (max 200 chars, pure display — no business
+// logic). avatar is reserved and not edited/displayed in this phase.
+const GRADES = ["一年级", "二年级", "三年级", "四年级", "五年级", "六年级"] as const;
+const DEFAULT_GRADE = "五年级";
+const NOTE_MAX_LENGTH = 200;
+
+interface ChildFormValues {
   name: string;
-  submission_count: number;
+  grade: string;
+  note: string;
 }
+
+function ChildForm({
+  values,
+  onChange,
+  onSubmit,
+  onCancel,
+  submitLabel,
+}: {
+  values: ChildFormValues;
+  onChange: (next: ChildFormValues) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  submitLabel: string;
+}) {
+  const set = (patch: Partial<ChildFormValues>) => onChange({ ...values, ...patch });
+
+  return (
+    <div className="space-y-3 rounded-[14px] border border-border-light bg-white p-4 shadow-sm">
+      <label className="block">
+        <span className="mb-1.5 block text-[13px] font-medium text-text-secondary">名字</span>
+        <input
+          type="text"
+          value={values.name}
+          onChange={(e) => set({ name: e.target.value })}
+          placeholder="小朋友名字"
+          maxLength={50}
+          autoFocus
+          className="w-full rounded-[10px] border border-border px-3 py-2.5 text-[15px] text-text-primary placeholder-[#A39D97] focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSubmit();
+            if (e.key === "Escape") onCancel();
+          }}
+        />
+      </label>
+
+      <label className="block">
+        <span className="mb-1.5 block text-[13px] font-medium text-text-secondary">年级</span>
+        <select
+          value={values.grade}
+          onChange={(e) => set({ grade: e.target.value })}
+          className="w-full rounded-[10px] border border-border bg-white px-3 py-2.5 text-[15px] text-text-primary focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
+        >
+          {GRADES.map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="block">
+        <span className="mb-1.5 flex items-center justify-between text-[13px] font-medium text-text-secondary">
+          <span>备注</span>
+          <span className="text-[11px] font-normal text-text-tertiary">
+            {values.note.length}/{NOTE_MAX_LENGTH}
+          </span>
+        </span>
+        <textarea
+          value={values.note}
+          onChange={(e) => set({ note: e.target.value })}
+          placeholder="选填，最多 200 字"
+          maxLength={NOTE_MAX_LENGTH}
+          rows={2}
+          className="w-full resize-none rounded-[10px] border border-border px-3 py-2.5 text-[15px] leading-relaxed text-text-primary placeholder-[#A39D97] focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
+        />
+      </label>
+
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={onCancel}
+          className="min-h-11 rounded-xl px-4 py-2 text-[14px] font-medium text-text-secondary transition-colors hover:bg-brand-hover"
+        >
+          取消
+        </button>
+        <button
+          onClick={onSubmit}
+          disabled={!values.name.trim()}
+          className="min-h-11 rounded-xl bg-accent px-4 py-2 text-[14px] font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
+        >
+          {submitLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const emptyForm = (): ChildFormValues => ({
+  name: "",
+  grade: DEFAULT_GRADE,
+  note: "",
+});
 
 export default function ChildrenPage() {
   const navigate = useNavigate();
@@ -18,9 +117,9 @@ export default function ChildrenPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [newName, setNewName] = useState("");
+  const [addForm, setAddForm] = useState<ChildFormValues>(emptyForm());
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editName, setEditName] = useState("");
+  const [editForm, setEditForm] = useState<ChildFormValues>(emptyForm());
   const [deleteTarget, setDeleteTarget] = useState<Child | null>(null);
   const [toast, setToast] = useState<{
     message: string;
@@ -49,11 +148,15 @@ export default function ChildrenPage() {
   };
 
   const handleAdd = async () => {
-    const name = newName.trim();
+    const name = addForm.name.trim();
     if (!name) return;
     try {
-      await apiPost("/api/children", { name });
-      setNewName("");
+      await apiPost("/api/children", {
+        name,
+        grade: addForm.grade,
+        note: addForm.note.trim() || null,
+      });
+      setAddForm(emptyForm());
       setAdding(false);
       showToast("已添加" + name, "success");
       fetchChildren();
@@ -62,24 +165,25 @@ export default function ChildrenPage() {
     }
   };
 
+  const startEdit = (child: Child) => {
+    setEditingId(child.id);
+    setEditForm({ name: child.name, grade: child.grade, note: child.note ?? "" });
+  };
+
   const handleEdit = async (child: Child) => {
-    if (editingId === child.id) {
-      const name = editName.trim();
-      if (!name || name === child.name) {
-        setEditingId(null);
-        return;
-      }
-      try {
-        await apiPut("/api/children/" + child.id, { name });
-        setEditingId(null);
-        showToast("已改名为" + name, "success");
-        fetchChildren();
-      } catch (err) {
-        showToast(err instanceof Error ? err.message : "编辑失败", "error");
-      }
-    } else {
-      setEditingId(child.id);
-      setEditName(child.name);
+    const name = editForm.name.trim();
+    if (!name) return;
+    try {
+      await apiPut("/api/children/" + child.id, {
+        name,
+        grade: editForm.grade,
+        note: editForm.note.trim() || null,
+      });
+      setEditingId(null);
+      showToast("已保存修改", "success");
+      fetchChildren();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "编辑失败", "error");
     }
   };
 
@@ -134,7 +238,7 @@ export default function ChildrenPage() {
           </button>
         </div>
       )}
-      {!loading && !error && children.length === 0 && (
+      {!loading && !error && children.length === 0 && !adding && (
         <div className="flex flex-col items-center gap-3 py-12">
           <p className="text-[15px] text-text-secondary">请先添加小朋友</p>
           <button
@@ -145,55 +249,44 @@ export default function ChildrenPage() {
           </button>
         </div>
       )}
-      {!loading && !error && children.length > 0 && (
+      {!loading && !error && (children.length > 0 || adding) && (
         <div className="space-y-3">
-          {children.map((child) => (
-            <div
-              key={child.id}
-              className="flex items-center gap-3 rounded-[14px] bg-white p-4 shadow-sm"
-            >
-              <div className="flex-1">
-                {editingId === child.id ? (
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    maxLength={50}
-                    className="w-full rounded-[10px] border border-accent px-3 py-2 text-[18px] font-medium text-text-primary focus:ring-2 focus:ring-accent focus:outline-none"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleEdit(child);
-                      if (e.key === "Escape") setEditingId(null);
-                    }}
-                  />
-                ) : (
-                  <button
-                    onClick={() => handleEdit(child)}
-                    className="text-left text-[18px] font-medium leading-[26px] text-text-primary transition-colors hover:text-accent"
-                  >
-                    {child.name}
-                  </button>
-                )}
-                <p className="mt-1 text-[13px] leading-[18px] text-text-tertiary">
-                  已批改 {child.submission_count} 次
-                </p>
-              </div>
-              {editingId === child.id ? (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setEditingId(null)}
-                    className="min-h-11 rounded-xl px-3 py-2 text-[13px] text-text-secondary transition-colors hover:bg-brand-hover"
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={() => handleEdit(child)}
-                    className="min-h-11 rounded-xl bg-accent px-3 py-2 text-[13px] font-medium text-white"
-                  >
-                    保存
-                  </button>
+          {children.map((child) =>
+            editingId === child.id ? (
+              <ChildForm
+                key={child.id}
+                values={editForm}
+                onChange={setEditForm}
+                onSubmit={() => handleEdit(child)}
+                onCancel={() => setEditingId(null)}
+                submitLabel="保存修改"
+              />
+            ) : (
+              <div
+                key={child.id}
+                className="flex items-start gap-3 rounded-[14px] bg-white p-4 shadow-sm"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => startEdit(child)}
+                      className="text-left text-[18px] font-medium leading-[26px] text-text-primary transition-colors hover:text-accent"
+                    >
+                      {child.name}
+                    </button>
+                    <span className="rounded-full bg-accent-subtle px-2.5 py-0.5 text-[12px] font-medium text-accent">
+                      {child.grade}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[13px] leading-[18px] text-text-tertiary">
+                    已批改 {child.submission_count} 次
+                  </p>
+                  {child.note && child.note.trim() && (
+                    <p className="mt-1 truncate text-[13px] leading-[18px] text-text-secondary">
+                      {child.note}
+                    </p>
+                  )}
                 </div>
-              ) : (
                 <button
                   onClick={() => setDeleteTarget(child)}
                   className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-text-tertiary transition-colors hover:bg-error-bg hover:text-error"
@@ -201,10 +294,22 @@ export default function ChildrenPage() {
                 >
                   <Trash2 size={16} strokeWidth={1.5} />
                 </button>
-              )}
-            </div>
-          ))}
-          {!adding && (
+              </div>
+            ),
+          )}
+
+          {adding ? (
+            <ChildForm
+              values={addForm}
+              onChange={setAddForm}
+              onSubmit={handleAdd}
+              onCancel={() => {
+                setAdding(false);
+                setAddForm(emptyForm());
+              }}
+              submitLabel="确认"
+            />
+          ) : (
             <button
               onClick={() => setAdding(true)}
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-[15px] text-text-secondary transition-colors hover:border-accent hover:text-accent"
@@ -212,42 +317,6 @@ export default function ChildrenPage() {
               <Plus size={18} strokeWidth={1.5} />
               添加小朋友
             </button>
-          )}
-          {adding && (
-            <div className="flex items-center gap-2 rounded-[14px] bg-white p-4 shadow-sm">
-              <input
-                type="text"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="小朋友名字"
-                maxLength={50}
-                className="flex-1 rounded-[10px] border border-border px-3 py-3 text-[15px] text-text-primary placeholder-[#A39D97] focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAdd();
-                  if (e.key === "Escape") {
-                    setAdding(false);
-                    setNewName("");
-                  }
-                }}
-              />
-              <button
-                onClick={handleAdd}
-                disabled={!newName.trim()}
-                className="min-h-11 rounded-xl bg-accent px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
-              >
-                确认
-              </button>
-              <button
-                onClick={() => {
-                  setAdding(false);
-                  setNewName("");
-                }}
-                className="min-h-11 rounded-xl px-3 py-2 text-[13px] text-text-secondary transition-colors hover:bg-brand-hover"
-              >
-                取消
-              </button>
-            </div>
           )}
         </div>
       )}

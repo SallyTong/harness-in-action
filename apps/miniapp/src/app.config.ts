@@ -8,6 +8,7 @@ export default defineAppConfig({
     'pages/history-detail/index',
     'pages/error-book/index',
     'pages/error-generate/index',
+    'pages/children/index',
   ],
   window: {
     backgroundTextStyle: 'light',

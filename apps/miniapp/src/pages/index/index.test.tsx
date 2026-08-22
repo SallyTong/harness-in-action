@@ -73,13 +73,32 @@ describe('Home > 拍照上传页', () => {
     })
   })
 
-  it('shows guidance when no children are available', async () => {
+  it('shows an entry to the manage page when no children are available', async () => {
     mockApiGet.mockResolvedValue([])
     render(<Home />)
 
     await waitFor(() =>
-      expect(screen.getByText('请先在网页版添加小朋友')).toBeInTheDocument(),
+      expect(screen.getByText(/去添加小朋友/)).toBeInTheDocument(),
     )
+  })
+
+  it('navigates to the manage page from the empty-child entry', async () => {
+    mockApiGet.mockResolvedValue([])
+    render(<Home />)
+
+    await waitFor(() => expect(screen.getByText(/去添加小朋友/)).toBeInTheDocument())
+    fireEvent.click(screen.getByText(/去添加小朋友/))
+
+    expect(Taro.navigateTo).toHaveBeenCalledWith({ url: '/pages/children/index' })
+  })
+
+  it('navigates to the manage page from the manage link', async () => {
+    render(<Home />)
+
+    await waitFor(() => expect(screen.getByText(/小朋友1/)).toBeInTheDocument())
+    fireEvent.click(screen.getByText('管理'))
+
+    expect(Taro.navigateTo).toHaveBeenCalledWith({ url: '/pages/children/index' })
   })
 
   it('logs out: clears token and returns to login', async () => {

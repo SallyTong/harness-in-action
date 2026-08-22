@@ -26,6 +26,14 @@ export const Input = ({ onInput, value, maxlength, placeholderClass, ...props }:
     onChange: (e: any) => onInput && onInput({ detail: { value: e.target.value } }),
   })
 
+// Taro `<Textarea>` maps to `<textarea>`; mirrors Input's onInput payload shape.
+export const Textarea = ({ onInput, value, maxlength, placeholderClass, ...props }: Props) =>
+  createElement('textarea', {
+    ...props,
+    value: value ?? '',
+    onChange: (e: any) => onInput && onInput({ detail: { value: e.target.value } }),
+  })
+
 // Taro `<Image>` maps to `<img>`; `ariaLabel` becomes `alt` so tests can use
 // `getByAltText`. `mode`/`lazyLoad` are Taro-only props, not valid DOM attrs.
 export const Image = ({ src, mode, lazyLoad, ariaLabel, onClick, ...props }: Props) =>

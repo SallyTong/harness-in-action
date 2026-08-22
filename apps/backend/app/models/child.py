@@ -19,6 +19,11 @@ class Child(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     parent_id: Mapped[int] = mapped_column(ForeignKey("parents.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
+    grade: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="五年级", server_default="五年级"
+    )
+    note: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    avatar: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         default=lambda: datetime.now(timezone.utc)
     )

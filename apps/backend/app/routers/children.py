@@ -52,6 +52,9 @@ async def list_children(
         ChildResponse(
             id=c.id,
             name=c.name,
+            grade=c.grade,
+            note=c.note,
+            avatar=c.avatar,
             submission_count=counts.get(c.id, 0),
             created_at=c.created_at,
         )
@@ -76,7 +79,7 @@ async def create_child(
             status_code=409, detail="Child with this name already exists"
         )
 
-    child = Child(parent_id=parent_id, name=body.name)
+    child = Child(parent_id=parent_id, name=body.name, grade=body.grade, note=body.note)
     db.add(child)
     await db.flush()
     await db.refresh(child)
@@ -84,6 +87,9 @@ async def create_child(
     return ChildResponse(
         id=child.id,
         name=child.name,
+        grade=child.grade,
+        note=child.note,
+        avatar=child.avatar,
         submission_count=0,
         created_at=child.created_at,
     )
@@ -112,6 +118,8 @@ async def update_child(
         )
 
     child.name = body.name
+    child.grade = body.grade
+    child.note = body.note
     await db.flush()
     await db.refresh(child)
 
@@ -119,6 +127,9 @@ async def update_child(
     return ChildResponse(
         id=child.id,
         name=child.name,
+        grade=child.grade,
+        note=child.note,
+        avatar=child.avatar,
         submission_count=counts.get(child.id, 0),
         created_at=child.created_at,
     )

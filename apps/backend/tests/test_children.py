@@ -22,6 +22,9 @@ async def test_list_children_returns_defaults(client):
     assert "小朋友2" in names
     for c in data:
         assert c["submission_count"] == 0
+        assert c["grade"] == "五年级"
+        assert c["note"] is None
+        assert c["avatar"] is None
         assert "id" in c
         assert "created_at" in c
 
@@ -103,6 +106,75 @@ async def test_delete_nonexistent_child_returns_404(client):
     token = await login(client, PHONE_A)
     response = await client.delete("/api/children/99999", headers=_auth(token))
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_child_with_grade_and_note(client):
+    token = await login(client, PHONE_A)
+    response = await client.post(
+        "/api/children",
+        json={"name": "小明", "grade": "三年级", "note": "数学薄弱"},
+        headers=_auth(token),
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["grade"] == "三年级"
+    assert data["note"] == "数学薄弱"
+    assert data["avatar"] is None
+
+
+@pytest.mark.asyncio
+async def test_create_child_grade_defaults_to_fifth(client):
+    token = await login(client, PHONE_A)
+    response = await client.post(
+        "/api/children", json={"name": "缺年级"}, headers=_auth(token)
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["grade"] == "五年级"
+    assert data["note"] is None
+
+
+@pytest.mark.asyncio
+async def test_create_child_invalid_grade_returns_422(client):
+    token = await login(client, PHONE_A)
+    response = await client.post(
+        "/api/children", json={"name": "坏年级", "grade": "高三"}, headers=_auth(token)
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_child_note_too_long_returns_422(client):
+    token = await login(client, PHONE_A)
+    response = await client.post(
+        "/api/children",
+        json={"name": "备注超长", "note": "x" * 201},
+        headers=_auth(token),
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_update_child_grade_and_note(client):
+    token = await login(client, PHONE_A)
+    create_resp = await client.post(
+        "/api/children",
+        json={"name": "旧名字", "grade": "一年级", "note": "旧备注"},
+        headers=_auth(token),
+    )
+    child_id = create_resp.json()["id"]
+
+    response = await client.put(
+        f"/api/children/{child_id}",
+        json={"name": "新名字", "grade": "六年级", "note": "新备注"},
+        headers=_auth(token),
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "新名字"
+    assert data["grade"] == "六年级"
+    assert data["note"] == "新备注"
 
 
 @pytest.mark.asyncio

@@ -16,6 +16,17 @@ vi.mock("../lib/api", () => ({
   apiDelete: (...args: unknown[]) => mockApiDelete(...args),
 }));
 
+const child = (overrides: Record<string, unknown> = {}) => ({
+  id: 1,
+  name: "小明",
+  grade: "三年级",
+  note: null,
+  avatar: null,
+  submission_count: 5,
+  created_at: "2026-07-01T00:00:00Z",
+  ...overrides,
+});
+
 describe("ChildrenPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -30,10 +41,10 @@ describe("ChildrenPage", () => {
     cleanup();
   });
 
-  it("renders children list", async () => {
+  it("renders children list with grade and note", async () => {
     mockApiGet.mockResolvedValue([
-      { id: 1, name: "小明", submission_count: 5 },
-      { id: 2, name: "小红", submission_count: 3 },
+      child({ id: 1, name: "小明", grade: "三年级", note: "喜欢数学" }),
+      child({ id: 2, name: "小红", grade: "五年级", note: null }),
     ]);
     render(
       <MemoryRouter>
@@ -43,6 +54,8 @@ describe("ChildrenPage", () => {
     await waitFor(() => {
       expect(screen.getByText("小明")).toBeInTheDocument();
       expect(screen.getByText("小红")).toBeInTheDocument();
+      expect(screen.getByText("三年级")).toBeInTheDocument();
+      expect(screen.getByText("喜欢数学")).toBeInTheDocument();
     });
   });
 
@@ -55,6 +68,67 @@ describe("ChildrenPage", () => {
     );
     await waitFor(() => {
       expect(screen.getByText("请先添加小朋友")).toBeInTheDocument();
+    });
+  });
+
+  it("adds a child with grade and note", async () => {
+    mockApiGet.mockResolvedValue([]);
+    render(
+      <MemoryRouter>
+        <ChildrenPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText("请先添加小朋友")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("添加"));
+
+    fireEvent.change(screen.getByPlaceholderText("小朋友名字"), {
+      target: { value: "小刚" },
+    });
+    fireEvent.change(screen.getByLabelText("年级"), { target: { value: "四年级" } });
+    fireEvent.change(screen.getByPlaceholderText("选填，最多 200 字"), {
+      target: { value: "数学较弱" },
+    });
+
+    fireEvent.click(screen.getByText("确认"));
+
+    await waitFor(() => {
+      expect(mockApiPost).toHaveBeenCalledWith("/api/children", {
+        name: "小刚",
+        grade: "四年级",
+        note: "数学较弱",
+      });
+    });
+  });
+
+  it("edits a child's grade and note", async () => {
+    mockApiGet.mockResolvedValue([child({ id: 1, name: "小明", grade: "三年级", note: null })]);
+    render(
+      <MemoryRouter>
+        <ChildrenPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText("小明")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("小明"));
+
+    fireEvent.change(await screen.findByLabelText("年级"), { target: { value: "六年级" } });
+    fireEvent.change(screen.getByPlaceholderText("选填，最多 200 字"), {
+      target: { value: "喜欢数学" },
+    });
+
+    fireEvent.click(screen.getByText("保存修改"));
+
+    await waitFor(() => {
+      expect(mockApiPut).toHaveBeenCalledWith("/api/children/1", {
+        name: "小明",
+        grade: "六年级",
+        note: "喜欢数学",
+      });
     });
   });
 

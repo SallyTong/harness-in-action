@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, Button, Image, Picker } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 
@@ -28,27 +28,40 @@ export default function Home() {
   const [compressing, setCompressing] = useState(false)
   const [uploading, setUploading] = useState(false)
 
-  useEffect(() => {
-    let active = true
-    apiGet<Child[]>('/api/children')
-      .then((list) => {
-        if (!active) return
-        setChildren(list)
-        if (list.length > 0) setSelectedChildId(list[0].id)
+  const loadChildren = useCallback(async (showLoading = true) => {
+    if (showLoading) setChildrenLoading(true)
+    setChildrenError(false)
+    try {
+      const list = await apiGet<Child[]>('/api/children')
+      setChildren(list)
+      setSelectedChildId((prev) => {
+        if (list.length === 0) return null
+        if (prev !== null && list.some((c) => c.id === prev)) return prev
+        return list[0].id
       })
-      .catch(() => {
-        if (active) setChildrenError(true)
-      })
-      .finally(() => {
-        if (active) setChildrenLoading(false)
-      })
-    return () => {
-      active = false
+    } catch {
+      if (showLoading) setChildrenError(true)
+    } finally {
+      if (showLoading) setChildrenLoading(false)
     }
   }, [])
 
-  // 切回批改 tab 时同步自定义 tabBar 选中态。
-  useDidShow(() => notifyTabBarSelected(0))
+  useEffect(() => {
+    void loadChildren()
+  }, [loadChildren])
+
+  const initialShown = useRef(false)
+
+  // 切回批改 tab / 从管理页返回时：同步自定义 tabBar 选中态，并静默刷新小朋友列表
+  // （管理页可能新增 / 改名 / 移除，回来需反映最新状态）。
+  useDidShow(() => {
+    notifyTabBarSelected(0)
+    if (!initialShown.current) {
+      initialShown.current = true
+      return
+    }
+    void loadChildren(false)
+  })
 
   const chooseImage = async (sourceType: 'camera' | 'album') => {
     try {
@@ -83,6 +96,11 @@ export default function Home() {
   }
 
   const handleRemoveImage = () => setSelectedImage(null)
+
+  // 跳转小朋友管理页（添加 / 编辑 / 移除小朋友）。
+  const goManageChildren = () => {
+    Taro.navigateTo({ url: '/pages/children/index' })
+  }
 
   // 登出：清 token 回登录页（服务端无登出端点）。
   const handleLogout = () => {
@@ -145,26 +163,31 @@ export default function Home() {
           <Text className='home__picker-value home__picker-value--muted'>加载中…</Text>
         </View>
       ) : childrenError || children.length === 0 ? (
-        <View className='home__picker'>
+        <View className='home__picker' hoverClass='brand-hover' onClick={goManageChildren}>
           <Text className='home__picker-label'>小朋友</Text>
-          <Text className='home__picker-value home__picker-value--muted'>
-            请先在网页版添加小朋友
+          <Text className='home__picker-value home__picker-value--accent'>
+            去添加小朋友 →
           </Text>
         </View>
       ) : (
-        <Picker
-          mode='selector'
-          range={children.map((c) => c.name)}
-          value={pickerValue}
-          onChange={handleChildChange}
-        >
-          <View className='home__picker'>
-            <Text className='home__picker-label'>小朋友</Text>
-            <Text className='home__picker-value'>
-              {selectedChild ? selectedChild.name : children[0].name} ▾
-            </Text>
-          </View>
-        </Picker>
+        <View className='home__picker-wrap'>
+          <Picker
+            mode='selector'
+            range={children.map((c) => c.name)}
+            value={pickerValue}
+            onChange={handleChildChange}
+          >
+            <View className='home__picker home__picker--flex'>
+              <Text className='home__picker-label'>小朋友</Text>
+              <Text className='home__picker-value'>
+                {selectedChild ? selectedChild.name : children[0].name} ▾
+              </Text>
+            </View>
+          </Picker>
+          <Text className='home__manage' onClick={goManageChildren}>
+            管理
+          </Text>
+        </View>
       )}
 
       <View className='home__subject'>

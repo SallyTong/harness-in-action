@@ -66,6 +66,31 @@
       color: var(--color-text-tertiary);
       font-weight: 400;
     }
+
+    &--accent {
+      color: var(--color-accent);
+    }
+  }
+
+  &__picker-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+    margin-bottom: 24rpx;
+  }
+
+  &__picker--flex {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+  &__manage {
+    flex-shrink: 0;
+    padding: 16rpx 4rpx 16rpx 16rpx;
+    font-size: 26rpx;
+    line-height: 40rpx;
+    font-weight: 500;
+    color: var(--color-accent);
   }
 
   &__subject {
