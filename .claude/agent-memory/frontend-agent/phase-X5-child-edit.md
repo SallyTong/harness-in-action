@@ -27,8 +27,8 @@
 
 ## Cross-agent / miniapp note
 
-- **Miniapp X5 (儿童编辑) is still outstanding.** `apps/miniapp` has no `/pages/children` management page yet — the miniapp agent still needs to build list/add/edit/delete with grade enum + note per phase-plan-v2 X5 (AC-X5.3, AC-X5.5).
-- `apps/frontend/src/test/mocks/handlers.ts` still defines a local `Child` interface missing `grade`/`note`/`avatar`; it is **not wired into any test** (no `setupServer`) and can be refreshed or removed when MSW mocking is adopted.
+- **Miniapp X5 (儿童编辑) completed** — miniapp-agent built the `/pages/children` management page (list/add/edit/delete, grade enum + note); see miniapp `phase-X5-child-edit.md`.
+- ~~`apps/frontend/src/test/mocks/handlers.ts` dead mock~~ **removed (v2 cleanup)** — stale `Child` schema (no `grade`/`note`/`avatar`) and never wired into any test. Deleted rather than refreshed; MSW adoption should start fresh from the v0.2.0 contract. The `msw` devDependency is left in place for that future adoption.
 
 ## Contract deviations
 
