@@ -62,3 +62,8 @@ header, and the docx must never be exposed as a bare file path.
   `wx.openDocument({ filePath, fileType: "docx" })`.
 - Never hand-assemble `docx_url` / `question_image_path` — render/download the
   returned URL verbatim (1h TTL, so generate then present promptly).
+
+## Pre-release backlog
+
+Accepted technical debt and release blockers across v1 + v2 are consolidated in
+[release-backlog.md](release-backlog.md) — review before any public release.

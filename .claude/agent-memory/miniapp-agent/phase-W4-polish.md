@@ -75,9 +75,12 @@ docker compose -f infra/docker-compose.yml build   # 成功（backend + frontend
 - 小程序仅移动端、无桌面断点（`rpx` 天然适配），故清单 #17（桌面 480px 居中）与 #32 的 768px 分支不适用，按 N/A 计。
 
 ### 残留技术债（正式发布前统一待办）
+
+> 已统一收敛至 [shared/release-backlog.md](../shared/release-backlog.md)，此处保留 v1 视角的原始记录。
+
 - 备案域名 + HTTPS + `PUBLIC_BASE_URL`（AD-17，后端 + 小程序）
-- `getPhoneNumber`/短信手机号真实性校验（AD-13）
-- 小程序小朋友 CRUD 页（UX §2.3）
+- `getPhoneNumber`/短信手机号真实性校验（AD-13）——**短信验证码已由 v2 X1 引入**（真实性校验已解决）；`getPhoneNumber` 一键登录仍排除（需企业主体）。
+- ~~小程序小朋友 CRUD 页（UX §2.3）~~ —— **已由 v2 X5 完成**（`/pages/children` 管理页）。
 - 错题试卷保存到相册
 - Lucide 图标映射（Taro 版）：当前功能图标用 emoji（📸✏️🔍📋🎉💡✨），品牌 §7 要求 Lucide；小程序无现成 Taro 版 Lucide 组件，全量引入属新功能，超出 W4 打磨范围。
 
