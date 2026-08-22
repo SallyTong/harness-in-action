@@ -176,6 +176,14 @@
     margin-top: 48rpx;
   }
 
+  &__result-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24rpx;
+    margin-bottom: 20rpx;
+  }
+
   &__result-title {
     display: block;
     margin-bottom: 20rpx;
@@ -183,6 +191,128 @@
     line-height: 40rpx;
     font-weight: 500;
     color: var(--color-text-secondary);
+
+    &--inline {
+      flex: 1;
+      margin-bottom: 0;
+    }
+  }
+
+  &__docx-btn {
+    height: 72rpx;
+    line-height: 72rpx;
+    padding: 0 28rpx;
+    margin: 0;
+    font-size: 26rpx;
+    font-weight: 500;
+    color: #ffffff;
+    background: var(--color-accent);
+    border-radius: 20rpx;
+
+    &::after {
+      border: none;
+    }
+  }
+
+  &__sheet-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24rpx;
+  }
+
+  &__qcard {
+    padding: 28rpx 24rpx;
+    background: var(--color-bg-card);
+    border: 2rpx solid var(--color-border-light);
+    border-radius: 28rpx;
+    box-shadow: 0 2rpx 8rpx rgba(30, 27, 24, 0.04);
+  }
+
+  &__qcard-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20rpx;
+  }
+
+  &__qcard-meta {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+  }
+
+  &__qcard-no {
+    font-size: 28rpx;
+    line-height: 40rpx;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+
+  &__qcard-badge {
+    padding: 4rpx 20rpx;
+    font-size: 22rpx;
+    line-height: 32rpx;
+    font-weight: 500;
+    color: var(--color-accent);
+    background: var(--color-accent-subtle);
+    border-radius: 9999rpx;
+  }
+
+  &__qcard-subject {
+    font-size: 22rpx;
+    line-height: 32rpx;
+    color: var(--color-text-tertiary);
+  }
+
+  &__qcard-img {
+    display: block;
+    width: 100%;
+    margin-bottom: 20rpx;
+    border-radius: 20rpx;
+    overflow: hidden;
+  }
+
+  &__qcard-stem {
+    margin-bottom: 20rpx;
+  }
+
+  &__qcard-stem-label {
+    display: block;
+    margin-bottom: 8rpx;
+    font-size: 22rpx;
+    line-height: 32rpx;
+    font-weight: 500;
+    color: var(--color-text-tertiary);
+  }
+
+  &__qcard-stem-text {
+    display: block;
+    font-size: 26rpx;
+    line-height: 40rpx;
+    color: var(--color-text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  &__qcard-missing {
+    display: block;
+    margin-bottom: 20rpx;
+    font-size: 24rpx;
+    line-height: 36rpx;
+    color: var(--color-text-tertiary);
+  }
+
+  &__qcard-answer {
+    padding: 28rpx 0 8rpx;
+    border-top: 2rpx dashed var(--color-border);
+  }
+
+  &__qcard-answer-text {
+    display: block;
+    font-size: 22rpx;
+    line-height: 32rpx;
+    color: var(--color-text-tertiary);
+    text-align: center;
   }
 
   &__result-img {

@@ -105,9 +105,25 @@ export interface FixQuestionResponse {
   new_score: ScoreSummary;
 }
 
+export interface SheetQuestion {
+  question_number: string;
+  question_type: string;
+  subject: "english" | "math";
+  question_text: string | null;
+  question_latex: string | null;
+  question_image_path: string | null;
+  source_submission_id: number;
+}
+
 export interface GenerateSheetResponse {
-  image_url: string;
+  format: "text" | "image";
   question_count: number;
+  /** Present when format=image. Signed URL to the generated sheet image. */
+  image_url: string | null;
+  /** Present when format=text. Randomly selected error questions. */
+  questions: SheetQuestion[] | null;
+  /** Present when format=text. Signed URL to download the .docx sheet. */
+  docx_url: string | null;
 }
 
 // ── Auth (SMS verification-code login) ─────────────

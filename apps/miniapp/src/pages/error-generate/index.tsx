@@ -3,7 +3,7 @@ import { View, Text, Button, Image, Picker } from '@tarojs/components'
 import Taro, { useRouter } from '@tarojs/taro'
 
 import { apiGet, apiPost } from '../../lib/api'
-import { TYPE_LABELS } from '../../lib/display'
+import { SUBJECT_LABELS, TYPE_LABELS } from '../../lib/display'
 import type { Child, GenerateSheetResponse } from '@homework/api-types'
 
 import './index.scss'
@@ -29,6 +29,7 @@ export default function ErrorGenerate() {
     initialType && TYPE_KEYS.includes(initialType) ? new Set([initialType]) : new Set(),
   )
   const [count, setCount] = useState(10)
+  const [format, setFormat] = useState<'text' | 'image'>('text')
   const [generating, setGenerating] = useState(false)
   const [result, setResult] = useState<GenerateSheetResponse | null>(null)
 
@@ -72,7 +73,7 @@ export default function ErrorGenerate() {
     setGenerating(true)
     setResult(null)
     try {
-      const body: Record<string, unknown> = { child_id: childId, subject, count }
+      const body: Record<string, unknown> = { child_id: childId, subject, count, format }
       if (selectedTypes.size > 0) body.question_types = Array.from(selectedTypes)
       const data = await apiPost<GenerateSheetResponse>('/api/error-collections/generate', body)
       setResult(data)
@@ -89,6 +90,34 @@ export default function ErrorGenerate() {
   const previewImage = () => {
     if (result?.image_url) {
       Taro.previewImage({ urls: [result.image_url], current: result.image_url })
+    }
+  }
+
+  const previewQuestionImage = (url: string) => {
+    Taro.previewImage({ current: url, urls: [url] })
+  }
+
+  /** docx 预览：下载到临时路径 → wx.openDocument 在小程序内打开（不落手机系统文件）。 */
+  const previewDocx = async () => {
+    const url = result?.docx_url
+    if (!url) return
+    Taro.showLoading({ title: '正在打开…', mask: true })
+    try {
+      const res = await Taro.downloadFile({ url })
+      if (res.statusCode !== 200) {
+        Taro.showToast({ title: '下载失败，请重试', icon: 'none' })
+        return
+      }
+      await Taro.openDocument({ filePath: res.tempFilePath, fileType: 'docx', showMenu: true })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      const tooLarge = /exceed max size|文件过大|too large/i.test(msg)
+      Taro.showToast({
+        title: tooLarge ? '文件过大，请到网页端下载' : '预览失败，请重试',
+        icon: 'none',
+      })
+    } finally {
+      Taro.hideLoading()
     }
   }
 
@@ -130,6 +159,26 @@ export default function ErrorGenerate() {
               onClick={() => handleSubjectChange('math')}
             >
               数学
+            </Button>
+          </View>
+        </View>
+
+        <View className='generate__block'>
+          <Text className='generate__label'>试卷格式</Text>
+          <View className='generate__seg'>
+            <Button
+              className={`generate__seg-item${format === 'text' ? ' generate__seg-item--active' : ''}`}
+              hoverClass='brand-hover'
+              onClick={() => setFormat('text')}
+            >
+              文字试卷
+            </Button>
+            <Button
+              className={`generate__seg-item${format === 'image' ? ' generate__seg-item--active' : ''}`}
+              hoverClass='brand-hover'
+              onClick={() => setFormat('image')}
+            >
+              图片试卷
             </Button>
           </View>
         </View>
@@ -189,7 +238,78 @@ export default function ErrorGenerate() {
         {generating ? '正在生成…' : '生成错题试卷'}
       </Button>
 
-      {result && (
+      {result && result.format === 'text' && result.questions && (
+        <View className='generate__result'>
+          <View className='generate__result-head'>
+            <Text className='generate__result-title generate__result-title--inline'>
+              已生成 {result.question_count} 道错题试卷
+            </Text>
+            <Button className='generate__docx-btn' hoverClass='brand-hover' onClick={previewDocx}>
+              预览 Word
+            </Button>
+          </View>
+
+          <View className='generate__sheet-list'>
+            {result.questions.map((q) => {
+              const text = q.question_text && q.question_text.trim()
+              const imagePath = q.question_image_path
+              const isMath = q.subject === 'math'
+              // 数学题截图为主、不渲染 LaTeX；英语题文字为主，无文字回退截图。
+              const showImage = !!imagePath && (isMath || !text)
+              const showText = !!text && (!isMath || !imagePath)
+              return (
+                <View className='generate__qcard' key={`${q.source_submission_id}-${q.question_number}`}>
+                  <View className='generate__qcard-head'>
+                    <View className='generate__qcard-meta'>
+                      <Text className='generate__qcard-no'>第 {q.question_number} 题</Text>
+                      <Text className='generate__qcard-badge'>
+                        {TYPE_LABELS[q.question_type] ?? q.question_type}
+                      </Text>
+                    </View>
+                    <Text className='generate__qcard-subject'>{SUBJECT_LABELS[q.subject] ?? q.subject}</Text>
+                  </View>
+
+                  {showImage && (
+                    <Image
+                      className='generate__qcard-img'
+                      src={imagePath as string}
+                      mode='widthFix'
+                      ariaLabel={`第${q.question_number}题`}
+                      onClick={() => previewQuestionImage(imagePath as string)}
+                    />
+                  )}
+                  {showText && (
+                    <View className='generate__qcard-stem'>
+                      <Text className='generate__qcard-stem-label'>题干</Text>
+                      <Text className='generate__qcard-stem-text'>{text}</Text>
+                    </View>
+                  )}
+                  {!showImage && !showText && (
+                    <Text className='generate__qcard-missing'>题干文字缺失，可查看原图</Text>
+                  )}
+
+                  <View className='generate__qcard-answer'>
+                    <Text className='generate__qcard-answer-text'>作答区域</Text>
+                  </View>
+                </View>
+              )
+            })}
+          </View>
+
+          <Button
+            className='generate__regenerate'
+            hoverClass='brand-hover'
+            onClick={() => {
+              setResult(null)
+              void handleGenerate()
+            }}
+          >
+            重新生成
+          </Button>
+        </View>
+      )}
+
+      {result && result.format === 'image' && result.image_url && (
         <View className='generate__result'>
           <Text className='generate__result-title'>已生成 {result.question_count} 道错题试卷</Text>
           <Image
